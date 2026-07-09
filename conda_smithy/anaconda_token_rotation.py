@@ -62,10 +62,6 @@ def rotate_anaconda_token(
 
     anaconda_token = _get_anaconda_token()
 
-    gh = None
-    if github_actions:
-        gh = Github(gh_token())
-
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
     failed = False
@@ -145,8 +141,7 @@ def rotate_anaconda_token(
                             raise e
                         else:
                             err_msg = (
-                                f"Failed to rotate token for {user}/{project}"
-                                " on azure!"
+                                f"Failed to rotate token for {user}/{project} on azure!"
                             )
                             failed = True
                             raise RuntimeError(err_msg)
@@ -168,7 +163,7 @@ def rotate_anaconda_token(
                             raise RuntimeError(err_msg)
 
                 if github_actions:
-                    assert gh is not None
+                    gh = Github(gh_token())
                     try:
                         rotate_token_in_github_actions(
                             user, project, anaconda_token, token_name, gh
