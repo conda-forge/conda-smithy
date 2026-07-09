@@ -4164,6 +4164,7 @@ def test_lint_recipe_v1_invalid_schema_version():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
             f.write(textwrap.dedent("""
+                    $schema: ./schema.json
                     schema_version: 2
 
                     package:

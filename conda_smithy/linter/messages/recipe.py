@@ -71,7 +71,7 @@ class UnexpectedSection(LinterMessage, _AnyRecipeMessage):
     section: str
 
     @classmethod
-    def _documentation_variables(cls) -> str:
+    def _documentation_variables(cls) -> dict[str, str]:
         from conda_smithy.linter.conda_recipe_v1_linter import (
             EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER,
             EXPECTED_SINGLE_OUTPUT_SECTION_ORDER,
