@@ -18,7 +18,7 @@ jobs:
     name: tests
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Set up Conda env
@@ -28,10 +28,9 @@ jobs:
           micromamba-version: 1.5.12-0
           cache-environment: true
           create-args: >-
-            python=3.11
             coverage
             coveralls
-            conda-forge-tick
+            conda-forge-tick>=2026.0
 
       - name: install conda-smithy
         run: |
@@ -61,7 +60,7 @@ jobs:
           popd
           pip uninstall conda-smithy --yes
 
-          python -m pip install -v --no-build-isolation -e .
+          python -m pip install -v --no-build-isolation .
 
       - name: test data and templates files in sdist
         run: |
@@ -74,8 +73,15 @@ jobs:
           test -f sdist-content/conda_smithy-*/conda_smithy/templates/github-actions.yml.tmpl
           rm -r sdist-content/
 
+      # we remove the local package and set some env vars to emulate the smithy feedstock
+      # CI env in the hopes that we catch errors here.
       - name: run tests
         run: |
+          rm -rf conda_smithy
+          export CONDA_BUILD=1
+          export CONDA_BUILD_STATE=TEST
+          export RATTLER_BUILD_COLOR=always
+          export RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION=true
           pytest tests --cov conda_smithy --cov-report lcov --cov-report term-missing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

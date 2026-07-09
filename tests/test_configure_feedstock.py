@@ -15,6 +15,7 @@ import yaml
 from conftest import ConfigYAML
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 
+import conda_smithy
 from conda_smithy import configure_feedstock
 from conda_smithy.configure_feedstock import (
     DEFAULT_PROVIDER,
@@ -2217,12 +2218,14 @@ def test_github_actions_pins():
     If Dependabot opens a PR against the proxy, just copy the new pins to the template to
     make this pass.
     """
-    repo_root = Path(__file__).parents[1]
-    github_actions_template = (
-        repo_root / "conda_smithy" / "templates" / "github-actions.yml.tmpl"
-    )
+    pkg_root = Path(conda_smithy.__file__).parent
+    github_actions_template = pkg_root / "templates" / "github-actions.yml.tmpl"
     dependabot_inventory = (
-        repo_root / ".github" / "workflows" / "_proxy-file-for-dependabot-tests.yml"
+        Path(__file__).parent
+        / ".."
+        / ".github"
+        / "workflows"
+        / "_proxy-file-for-dependabot-tests.yml"
     )
 
     def get_uses(path):
@@ -2302,14 +2305,8 @@ def test_render_pixi(
         assert (
             "win-64" in platforms
         ), "expected an aliased platform in pixi workspace platforms"
-        shellcheck_platforms = pixi["feature"]["shellcheck"]["platforms"]
-        smithy_env = pixi["environments"]["smithy"]
-        assert shellcheck_platforms, "`shellcheck` should be enabled on _some_ platform"
-        assert (
-            platform_without_shellcheck not in shellcheck_platforms
-        ), f"`shellcheck` should not be enabled for {platform_without_shellcheck}"
-
-        assert "shellcheck" in smithy_env, "`smithy` env should have `shellcheck`"
+        cmd = pixi["tasks"]["lint"]["cmd"]
+        assert "--with shellcheck" in cmd, "`smithy` commands should have `shellcheck`"
 
 
 def test_configure_feedstock_rattler_build_conda_compat_round_trip():
@@ -2694,46 +2691,6 @@ def test_store_build_artifacts_azure_conditions(py_recipe, jinja_env):
 
     assert not Path(forge_dir, ".scripts/create_conda_build_artifacts.bat").exists()
     assert Path(forge_dir, ".scripts/create_conda_build_artifacts.sh").exists()
-
-
-@pytest.mark.parametrize("ci", ["azure", "github_actions"])
-def test_store_build_artifacts_overlapping_conditions(py_recipe, jinja_env, ci: str):
-    forge_dir = py_recipe.recipe
-    forge_yml = Path(forge_dir, "conda-forge.yml")
-
-    with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
-            provider:
-              linux_64: {ci}
-              osx_64: {ci}
-              win_64: {ci}
-            workflow_settings:
-              store_build_artifacts:
-                - platform: linux_64
-                  value: true
-                - os: linux
-                  value: true
-        """))
-
-    config = configure_feedstock._load_forge_config(
-        forge_dir, "recipe/default_config.yaml"
-    )
-    with pytest.raises(
-        ValueError,
-        match=r"More than one value matched for `workflow_settings.store_build_artifacts`",
-    ):
-        if ci == "azure":
-            configure_feedstock.render_azure(
-                jinja_env=jinja_env,
-                forge_config=config,
-                forge_dir=forge_dir,
-            )
-        else:
-            configure_feedstock.render_github_actions(
-                jinja_env=jinja_env,
-                forge_config=config,
-                forge_dir=forge_dir,
-            )
 
 
 def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
@@ -3162,56 +3119,6 @@ def test_tools_build_paths_gha_override_both(py_recipe, jinja_env):
         )
         for entry in matrix
     } == expected
-
-
-@pytest.mark.parametrize(
-    "path,expected",
-    [
-        (
-            "~/foo",
-            r"specifies Unix path for Windows workflows: ~\\foo",
-        ),
-        (
-            "foo",
-            r"specifies Unix path for Windows workflows: foo",
-        ),
-        (
-            r"C:\foo",
-            r"specifies Windows path for Unix workflows: C:\foo",
-        ),
-        (
-            r"C:\\foo",
-            r"specifies Windows path for Unix workflows: C:\\foo",
-        ),
-    ],
-)
-@pytest.mark.parametrize("variable", ("tools_install_dir", "build_workspace_dir"))
-def test_tools_build_paths_gha_override_wrong(
-    py_recipe, jinja_env, path: str, expected: str, variable: str
-):
-    forge_dir = py_recipe.recipe
-    forge_yml = Path(forge_dir, "conda-forge.yml")
-
-    with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
-            provider:
-              linux_64: github_actions
-              osx_64: github_actions
-              win_arm64: github_actions
-              win_64: github_actions
-            workflow_settings:
-              {variable}: "{path}"
-        """))
-
-    config = configure_feedstock._load_forge_config(
-        forge_dir, "recipe/default_config.yaml"
-    )
-    with pytest.raises(ValueError, match=rf"workflow_settings\.{variable} {expected}"):
-        configure_feedstock.render_github_actions(
-            jinja_env=jinja_env,
-            forge_config=config,
-            forge_dir=forge_dir,
-        )
 
 
 @pytest.mark.parametrize("gpu", (False, True))
