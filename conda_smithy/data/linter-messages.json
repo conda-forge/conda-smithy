@@ -214,7 +214,7 @@
       "kind": "lint",
       "added_in": "<3.56",
       "deprecated_in": "",
-      "documentation": "Recipe files must not contain unknown top-level keys.\n\nFor recipe version 0, the allowed keys are (in this order):\n\n- `package`\n- `source`\n- `build`\n- `requirements`\n- `test`\n- `app`\n- `outputs`\n- `about`\n- `extra`\n\nFor recipe version 1, it depends if you are generating one or\nmultiple artifacts. For single artifacts, the expected keys are\n(in this order):\n\n- `schema_version`\n- `context`\n- `package`\n- `source`\n- `build`\n- `requirements`\n- `tests`\n- `about`\n- `extra`\n\nFor multiple artifacts, the expected keys are (in this order):\n\n- `schema_version`\n- `context`\n- `recipe`\n- `source`\n- `build`\n- `outputs`\n- `about`\n- `extra`",
+      "documentation": "Recipe files must not contain unknown top-level keys.\n\nFor recipe version 0, the allowed keys are (in this order):\n\n- `package`\n- `source`\n- `build`\n- `requirements`\n- `test`\n- `app`\n- `outputs`\n- `about`\n- `extra`\n\nFor recipe version 1, it depends if you are generating one or\nmultiple artifacts. For single artifacts, the expected keys are\n(in this order):\n\n- `$schema`\n- `schema_version`\n- `context`\n- `package`\n- `source`\n- `build`\n- `requirements`\n- `tests`\n- `about`\n- `extra`\n\nFor multiple artifacts, the expected keys are (in this order):\n\n- `$schema`\n- `schema_version`\n- `context`\n- `recipe`\n- `source`\n- `build`\n- `outputs`\n- `about`\n- `extra`",
       "message": "The top level meta key ${section} is unexpected",
       "examples": [],
       "path": "recipe/(meta|recipe).yaml"
