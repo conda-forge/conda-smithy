@@ -9,6 +9,8 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
+from conda.models.version import VersionOrder
+
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.utils import (
@@ -377,8 +379,10 @@ def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
         return
 
     global_python_min = get_global_pinning_python_min()
-    if global_python_min is not None and Version(str(declared)) <= Version(global_python_min):
-        hints.append(msg.r.RedundantPythonMin(value=global_python_min).as_string())
+    if global_python_min is not None and VersionOrder(str(declared)) <= VersionOrder(
+        global_python_min
+    ):
+        hints.append(msg.r.RedundantPythonMin(value=str(declared)).as_string())
 
 
 def hint_space_separated_specs(

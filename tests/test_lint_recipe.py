@@ -4260,6 +4260,20 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
             "3.10",
             False,
         ),
+        # v1: redefining to a lower floor than the default -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.9"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            True,
+        ),
         # v1: no python_min in context -> no hint
         (
             "recipe.yaml",
@@ -4325,7 +4339,7 @@ def test_lint_recipe_hint_redundant_python_min(
         with open(os.path.join(tmpdir, recipe_name), "w") as f:
             f.write(text)
         _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
-        has_hint = any("Remove the redefinition" in h for h in hints)
+        has_hint = any("remove the redefinition" in h for h in hints)
         assert has_hint == expected_hint, hints
 
 
@@ -5089,7 +5103,7 @@ def test_run_conda_forge_specific_routes_unverified_to_lints(monkeypatch):
     # None from the existence check fails the lint (asking for a retry),
     # rather than reporting the maintainer as missing
     monkeypatch.setattr(linter, "_maintainer_exists", lambda m: None)
-    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
     meta = {"extra": {"recipe-maintainers": ["chrisburr"]}}
     lints, hints = [], []
     linter.run_conda_forge_specific(meta, None, lints, hints)
@@ -5102,7 +5116,7 @@ def test_run_conda_forge_specific_routes_unverified_to_lints(monkeypatch):
 
 def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
     monkeypatch.setattr(linter, "_maintainer_exists", lambda m: False)
-    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
     meta = {"extra": {"recipe-maintainers": ["nope"]}}
     lints, hints = [], []
     linter.run_conda_forge_specific(meta, None, lints, hints)
@@ -5111,7 +5125,7 @@ def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
 
 
 def test_run_conda_forge_specific_missing_linter_hints_table(monkeypatch):
-    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
     meta = {
         "package": {"name": "foo"},
         "requirements": {"run": ["python"]},

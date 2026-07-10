@@ -841,11 +841,13 @@
       "identifier": "R-052",
       "category": "R",
       "kind": "hint",
-      "added_in": "2026.6",
+      "added_in": "2026.7",
       "deprecated_in": "",
-      "documentation": "conda-forge's global pinning already provides the `python_min` variable,\nso recipes should not redefine it to the same value. Only override\n`python_min` when the package needs a higher floor than the global\ndefault.",
-      "message": "The recipe sets `python_min` to ${value}, which is identical to the default provided by conda-forge's global pinning. Remove the redefinition; it is redundant and unintentionally overrides platforms where the global default differs. Only set `python_min` when the package needs a higher floor than the global default.",
-      "examples": [],
+      "documentation": "conda-forge's global pinning already provides the `python_min` variable,\nso recipes should not redefine it to the same (or a lower) value. Doing so\nis redundant and unintentionally overrides platforms where the global\ndefault differs. Only override `python_min` when the package needs a\nhigher floor than the global default.",
+      "message": "The recipe sets `python_min` to ${value}, which is equal or lower than the default provided by conda-forge's global pinning. Please remove the redefinition.",
+      "examples": [
+        "The recipe sets `python_min` to 3.9, which is equal or lower than the default provided by conda-forge's global pinning. Please remove the redefinition."
+      ],
       "path": "recipe/(meta|recipe).yaml"
     },
     {
