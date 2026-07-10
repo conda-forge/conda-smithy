@@ -36,6 +36,7 @@ from conda_smithy.linter.hints import (
     hint_os_version,
     hint_pip_no_build_backend,
     hint_pip_usage,
+    hint_python_version_independent_test_latest,
     hint_rattler_build_bld_bat,
     hint_shellcheck_usage,
     hint_sources_should_not_mention_pypi_io_but_pypi_org,
@@ -790,6 +791,20 @@ def run_conda_forge_specific(
             requirements_section.get("run") or [],
             outputs_section,
             noarch_value,
+            recipe_version,
+            hints,
+        )
+
+    # 10c: python version-independent (abi3) recipes should test latest too
+    if (
+        "hint_python_version_independent_test_latest" not in lints_to_skip
+        and recipe_version == 1
+    ):
+        hint_python_version_independent_test_latest(
+            get_section(meta, "tests", lints, recipe_version),
+            requirements_section.get("run") or [],
+            outputs_section,
+            build_section,
             recipe_version,
             hints,
         )
