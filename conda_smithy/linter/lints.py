@@ -31,7 +31,11 @@ from conda_smithy.linter.utils import (
     jinja_lines,
     selector_lines,
 )
-from conda_smithy.utils import ensure_standard_strings, get_yaml
+from conda_smithy.utils import (
+    ensure_standard_strings,
+    filter_conditional_values,
+    get_yaml,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -831,7 +835,7 @@ def lint_stdlib(
         )
     else:
         pat_compiler_stub = re.compile(
-            r"^\${{ compiler\('(m2w64_)?(c|cxx|fortran|rust|go-cgo)"
+            r"^\${{ compiler\(['\"](m2w64_)?(c|cxx|fortran|rust|go-cgo)"
         )
 
     outputs = get_section(meta, "outputs", lints, recipe_version)
@@ -1018,3 +1022,120 @@ def lint_floats_quoted(
 
     for key, value in meta.items():
         process_recursively(key, value)
+
+
+def lint_invalid_workflow_settings(
+    forge_config: dict,
+    lints: list[str],
+):
+    """Lint for invalid values in `workflow_settings`"""
+
+    workflow_settings = forge_config.get("workflow_settings", {})
+
+    # generic checks for conditions
+    for key, value in workflow_settings.items():
+        # normalize the values
+        value = filter_conditional_values(workflow_settings.get(key, []))
+
+        # (os, platform, provider)
+        covered_tuples = {}
+
+        for index, wf_setting in enumerate(value):
+            oses = wf_setting.os
+            platforms = wf_setting.platform
+            providers = wf_setting.provider
+
+            # we need to explode the lists and check every os/platform/provider combination separately
+            covered_keys = []
+            for os_val in oses or [""]:
+                for platform in platforms or [""]:
+                    for provider in providers or [""]:
+                        covered_keys.append((os_val, platform, provider))
+
+            # first, make a list of all the conditions that we have entries for
+            for covered_key in covered_keys:
+                covered_tuples.setdefault(covered_key, []).append((index, wf_setting))
+
+            # check for mismatched platform/os combinations
+            if platforms is not None and oses is not None:
+                oses_from_platforms = {x.split("_")[0] for x in platforms}
+                if oses_from_platforms != set(oses):
+                    lints.append(
+                        msg.cf.WorkflowSettingsPlatformOSMismatch(
+                            setting=key,
+                            index=index,
+                            os=oses,
+                            platform=platforms,
+                        ).as_string()
+                    )
+
+        # determine if any of the conditions actually overlap with any other
+        overlaps_found = []
+        for os_entry, platform, provider in covered_tuples:
+            # we're covering both direct overlap and superset
+            # (e.g. provider condition may overlap with os condition)
+            potential_overlap_keys = {
+                (a, b, c)
+                for a in (os_entry, "")
+                for b in (platform, "")
+                for c in (provider, "")
+            }
+
+            entries = sorted(
+                itertools.chain.from_iterable(
+                    covered_tuples.get(k, []) for k in potential_overlap_keys
+                )
+            )
+            # deduplicate since the same overlap can be found from different keys
+            if len(entries) > 1 and entries not in overlaps_found:
+                overlaps_found.append(entries)
+
+        for entries in overlaps_found:
+            lints.append(
+                msg.cf.WorkflowSettingsOverlappingEntries(
+                    setting=key,
+                    entries=entries,
+                ).as_string()
+            )
+
+    # check for path variables without platform differentiation
+    for key in ("tools_install_dir", "build_workspace_dir"):
+        # normalize the values
+        value = filter_conditional_values(workflow_settings.get(key, []))
+        for index, wf_setting in enumerate(value):
+            os = wf_setting.applicable_os
+            unix = bool(os.intersection({"linux", "osx"}))
+            win = "win" in os
+            if unix and win:
+                lints.append(
+                    msg.cf.WorkflowSettingsNonPlatformSpecificPath(
+                        setting=key,
+                        index=index,
+                        value=wf_setting.value,
+                        os=sorted(os),
+                    ).as_string()
+                )
+
+    # check for variables that are applicable only to a subset of workflows
+    applicable = {"resize_partitions": {"os": {"win"}, "provider": {"github_actions"}}}
+    for key, restrictions in applicable.items():
+        # normalize the values
+        value = filter_conditional_values(workflow_settings.get(key, []))
+        for index, wf_setting in enumerate(value):
+            mismatched = []
+            if (os_restriction := restrictions.get("os")) is not None:
+                os = wf_setting.applicable_os
+                if os != os_restriction:
+                    mismatched.append("os")
+            if (provider_restriction := restrictions.get("provider")) is not None:
+                if set(wf_setting.provider or []) != provider_restriction:
+                    mismatched.append("provider")
+            if mismatched:
+                lints.append(
+                    msg.cf.WorkflowSettingsSpecificEntryTooLoose(
+                        setting=key,
+                        index=index,
+                        mismatched=mismatched,
+                        restrictions=restrictions,
+                    ).as_string()
+                )
