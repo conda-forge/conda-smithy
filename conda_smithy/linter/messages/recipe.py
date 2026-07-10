@@ -1244,4 +1244,30 @@ class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
+    """
+    Python version-independent packages (e.g. abi3) are built once against
+    `python_min` but install on every Python version at or above it, so tests
+    should cover both ends of that range.
+    """
+
+    kind = "hint"
+    identifier = "R1-005"
+    added_in = "2026.7"
+    message = (
+        "This package is Python version-independent (e.g. abi3): it is built "
+        "once but installs on every Python version at or above `python_min`, "
+        "yet the Python test only runs against a single version. Consider "
+        "testing against both the minimum and the latest supported Python:\n"
+        "```yaml\n"
+        "tests:\n"
+        "  - python:\n"
+        "      python_version:\n"
+        "        - ${{ python_min }}.*\n"
+        '        - "*"\n'
+        "```"
+    )
+
+
 # endregion

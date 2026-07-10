@@ -16,6 +16,7 @@ from conda_smithy.linter.utils import (
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
+    get_version_independent,
     is_selector_line,
 )
 from conda_smithy.utils import get_yaml
@@ -361,7 +362,7 @@ def hint_noarch_python_use_python_min(
         hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
 
 
-def _noarch_python_tests_cover_latest(tests_section, run_reqs):
+def _python_tests_cover_latest(tests_section, run_reqs):
     """True if every python test covers the latest Python via a "*" entry,
     or if the run requirements cap python's upper bound (making a latest-python
     test entry redundant)."""
@@ -417,8 +418,46 @@ def hint_noarch_python_test_latest(
         scopes.append((tests_section, run_reqs, noarch_value))
 
     for tests, run, noarch in scopes:
-        if noarch == "python" and not _noarch_python_tests_cover_latest(tests, run):
+        if noarch == "python" and not _python_tests_cover_latest(tests, run):
             hints.append(msg.r.NoarchPythonTestLatest().as_string())
+            return
+
+
+def hint_python_version_independent_test_latest(
+    tests_section,
+    run_reqs,
+    outputs_section,
+    build_section,
+    recipe_version,
+    hints,
+):
+    if recipe_version != 1:
+        return
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            requirements = output.get("requirements", {})
+            output_run_reqs = (
+                requirements.get("run")
+                if isinstance(requirements, Mapping)
+                else requirements
+            )
+            scopes.append(
+                (
+                    output.get("tests"),
+                    output_run_reqs,
+                    output.get("build", {}),
+                )
+            )
+    else:
+        scopes.append((tests_section, run_reqs, build_section))
+
+    for tests, run, build in scopes:
+        if get_version_independent(
+            build or {}, "python", recipe_version
+        ) and not _python_tests_cover_latest(tests, run):
+            hints.append(msg.r.PythonVersionIndependentTestLatest().as_string())
             return
 
 
