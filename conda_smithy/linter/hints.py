@@ -377,10 +377,10 @@ def _noarch_python_tests_cover_latest(tests_section, run_reqs):
             python_version = [python_version]
         if not isinstance(python_version, list):
             python_version = []
-        # The latest-Python marker is the exact entry `"*"`. We match it by
-        # equality, so the `.*` in a min-pin like `${{ python_min }}.*` (or its
-        # rendered `3.10.*`) is never mistaken for it. (The v1 parser also
-        # forbids a bare `- *`, so `"*"` is always a quoted string here.)
+        # Check that the latest-Python marker is the exact entry `"*"`. Since
+        # flatten_v1_if_else always returns a list, `"*" in ...` will never
+        # (substring-)match for version pins like `${{ python_min }}.*`;
+        # v1 also forbids bare `- *`, so we know it must be a string.
         if "*" not in flatten_v1_if_else(python_version):
             return False
     return True
