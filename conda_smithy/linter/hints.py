@@ -373,7 +373,7 @@ def _python_tests_cover_latest(tests_section, run_reqs):
     for test in tests_section or []:
         if not isinstance(test, Mapping) or "python" not in test:
             continue
-        python_version = (test.get("python") or {}).get("python_version")
+        python_version = test.get("python", {}).get("python_version", {})
         if isinstance(python_version, str):
             python_version = [python_version]
         if not isinstance(python_version, list):
