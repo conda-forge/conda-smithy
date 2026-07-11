@@ -1228,7 +1228,6 @@ class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
     kind = "hint"
     identifier = "R1-004"
     added_in = "2026.7"
-    added_in: "2026.6"
     message = (
         "`noarch: python` packages install on every Python version at or "
         "above `python_min`, but the Python test only runs against a single "
