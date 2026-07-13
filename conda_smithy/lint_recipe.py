@@ -51,6 +51,7 @@ from conda_smithy.linter.lints import (
     lint_feedstock_name_not_end_with_feedstock,
     lint_floats_quoted,
     lint_go_licenses_are_bundled,
+    lint_invalid_workflow_settings,
     lint_jinja_var_references,
     lint_jinja_variables_definitions,
     lint_legacy_usage_of_compilers,
@@ -709,7 +710,7 @@ def run_conda_forge_specific(
             else:
                 run_reqs += _req
 
-    specific_hints = (load_linter_toml_metdata() or {}).get("hints", [])
+    specific_hints = (load_linter_toml_metdata() or {}).get("hints", {})
     all_reqs = build_reqs + host_reqs + run_reqs
     if recipe_version == 1:
         all_reqs = flatten_v1_if_else(all_reqs)
@@ -863,6 +864,9 @@ def run_conda_forge_specific(
     # 17: Check for deprecated conda-forge.yml variables (that cannot be caught
     # via the schema)
     hint_deprecated_environment_variables(feedstock_config, hints)
+
+    # 18: Check for invalid values in workflow_settings in conda-forge.yml
+    lint_invalid_workflow_settings(feedstock_config, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

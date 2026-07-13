@@ -10,7 +10,7 @@ from inspect import cleandoc
 from typing import Annotated, Any, Literal, Optional, Union
 
 import yaml
-from conda.base.constants import KNOWN_SUBDIRS
+from conda.base.constants import PLATFORMS
 from pydantic import BaseModel, ConfigDict, Field, WithJsonSchema, create_model
 
 # use relative imports to ensure that we don't pick up the data paths from
@@ -420,7 +420,7 @@ class PlatformsAliases(StrEnum):
 
 
 def get_subdirs():
-    return [subdir.replace("-", "_") for subdir in KNOWN_SUBDIRS if "-" in subdir]
+    return [platform.replace("-", "_") for platform in PLATFORMS]
 
 
 Platforms = StrEnum("Platforms", get_subdirs())
@@ -734,6 +734,7 @@ class ConfigModel(BaseModel):
             osx_64: osx_64
             osx_arm64: osx_arm64
             win_64: win_64
+            win_arm64: win_arm64
         ```
         """),
     )
@@ -854,30 +855,33 @@ class ConfigModel(BaseModel):
 
         * `linux_64`
         * `osx_64`
+        * `osx_arm64`
         * `win_64`
+        * `win_arm64`
         * `linux_aarch64`
         * `linux_ppc64le`
         * `linux_s390x`
         * `linux_armv7l`
 
-        The following CI services are available:
+        The following CI services are recognized:
 
         * `azure`
-        * `circle`
-        * `travis`
-        * `appveyor`
+        * `github_actions`
+        * `circle` (deprecated)
+        * `travis` (deprecated)
+        * `appveyor` (deprecated)
         * `None` or `False` to disable a build platform.
         * `default` to choose an appropriate CI (only if available)
         * `native` to choose an appropriate CI for native compiling (only if available)
         * `emulated` to choose an appropriate CI for compiling inside an emulation
           of the target platform (only if available)
 
-        For example, making explicit that linux_64 & osx_64 build on azure (by default),
+        For example, making explicit that linux_64 builds on github actions, osx_64 builds on azure,
         and switching win_64 to Appveyor:
 
         ```yaml
         provider:
-            linux_64: azure
+            linux_64: github_actions
             osx_64: azure
             win_64: appveyor
         ```
@@ -888,11 +892,13 @@ class ConfigModel(BaseModel):
 
         ```yaml
         provider:
-            linux_64: azure
+            linux_64: github_actions
             osx_64: azure
-            win_64: azure
+            win_64: github_actions
             linux_ppc64le: None
             linux_aarch64: None
+            osx_arm64: None
+            win_arm64: None
         ```
 
         To enable `linux_ppc64le` and `linux_aarch64` add the following:
