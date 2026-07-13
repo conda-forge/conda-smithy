@@ -16,6 +16,7 @@ from conda_smithy.linter.utils import (
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
+    get_version_independent,
     is_selector_line,
 )
 from conda_smithy.utils import get_yaml
@@ -359,6 +360,105 @@ def hint_noarch_python_use_python_min(
 
     if recommendations:
         hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
+
+
+def _python_tests_cover_latest(tests_section, run_reqs):
+    """True if every python test covers the latest Python via a "*" entry,
+    or if the run requirements cap python's upper bound (making a latest-python
+    test entry redundant)."""
+    for req in flatten_v1_if_else(run_reqs or []):
+        if isinstance(req, str) and req.strip().split()[0] == "python" and "<" in req:
+            return True
+
+    for test in tests_section or []:
+        if not isinstance(test, Mapping) or "python" not in test:
+            continue
+        python_version = test.get("python", {}).get("python_version", {})
+        if isinstance(python_version, str):
+            python_version = [python_version]
+        if not isinstance(python_version, list):
+            python_version = []
+        # Check that the latest-Python marker is the exact entry `"*"`. Since
+        # flatten_v1_if_else always returns a list, `"*" in ...` will never
+        # (substring-)match for version pins like `${{ python_min }}.*`;
+        # v1 also forbids bare `- *`, so we know it must be a string.
+        if "*" not in flatten_v1_if_else(python_version):
+            return False
+    return True
+
+
+def hint_noarch_python_test_latest(
+    tests_section,
+    run_reqs,
+    outputs_section,
+    noarch_value,
+    recipe_version,
+    hints,
+):
+    if recipe_version != 1:
+        return
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            requirements = output.get("requirements", {})
+            output_run_reqs = (
+                requirements.get("run")
+                if isinstance(requirements, Mapping)
+                else requirements
+            )
+            scopes.append(
+                (
+                    output.get("tests"),
+                    output_run_reqs,
+                    output.get("build", {}).get("noarch"),
+                )
+            )
+    else:
+        scopes.append((tests_section, run_reqs, noarch_value))
+
+    for tests, run, noarch in scopes:
+        if noarch == "python" and not _python_tests_cover_latest(tests, run):
+            hints.append(msg.r.NoarchPythonTestLatest().as_string())
+            return
+
+
+def hint_python_version_independent_test_latest(
+    tests_section,
+    run_reqs,
+    outputs_section,
+    build_section,
+    recipe_version,
+    hints,
+):
+    if recipe_version != 1:
+        return
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            requirements = output.get("requirements", {})
+            output_run_reqs = (
+                requirements.get("run")
+                if isinstance(requirements, Mapping)
+                else requirements
+            )
+            scopes.append(
+                (
+                    output.get("tests"),
+                    output_run_reqs,
+                    output.get("build", {}),
+                )
+            )
+    else:
+        scopes.append((tests_section, run_reqs, build_section))
+
+    for tests, run, build in scopes:
+        if get_version_independent(
+            build or {}, "python", recipe_version
+        ) and not _python_tests_cover_latest(tests, run):
+            hints.append(msg.r.PythonVersionIndependentTestLatest().as_string())
+            return
 
 
 def hint_space_separated_specs(

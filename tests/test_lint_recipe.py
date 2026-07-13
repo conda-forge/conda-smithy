@@ -4229,6 +4229,315 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
         )
 
 
+@pytest.mark.parametrize(
+    "text,expected_hint",
+    [
+        # scalar python_version only tests python_min -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            True,
+        ),
+        # python_min AND latest -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - ${{ python_min }}.*
+                        - "*"
+                """),
+            False,
+        ),
+        # upper-bounded python in run caps the test env -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }},<3.12
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            False,
+        ),
+        # abi3-style conditional list including "*" -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - if: is_abi3
+                          then: ${{ python_min }}.*
+                        - "*"
+                """),
+            False,
+        ),
+        # not noarch -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                requirements:
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            False,
+        ),
+        # no python test at all -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_noarch_python_test_latest(text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any(
+            "testing against both the minimum and the latest" in h for h in hints
+        )
+        assert has_hint == expected_hint, hints
+
+
+@pytest.mark.parametrize(
+    "text,expected_hint",
+    [
+        # version-independent, only tests python_min -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            True,
+        ),
+        # version-independent, tests python_min AND latest -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - ${{ python_min }}.*
+                        - "*"
+                """),
+            False,
+        ),
+        # abi3 example recipe shape (conditional python_min + "*") -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: ${{ is_abi3 }}
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - if: is_abi3
+                          then: ${{ python_min }}.*
+                        - "*"
+                """),
+            False,
+        ),
+        # not version-independent -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                requirements:
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            False,
+        ),
+        # version-independent but no python test -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+        # abi3 via `${{ is_abi3 }}`, only tests python_min -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: ${{ is_abi3 }}
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            True,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_python_version_independent_test_latest(text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("version-independent (e.g. abi3)" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
@@ -4755,14 +5064,14 @@ tests:
 outputs:
   - package:
       name: foo
-{textwrap.indent(midpart, '    ')}\
+{textwrap.indent(midpart, "    ")}\
 """
 
     recipe = f"""\
 context:
   version: "1.0"
 
-{'recipe' if outputs else 'package'}:
+{"recipe" if outputs else "package"}:
   name: foo
   version: ${{{{ version }}}}
 
