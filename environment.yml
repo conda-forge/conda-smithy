@@ -40,5 +40,5 @@ dependencies:
   - jsonschema
   - exceptiongroup
   # py-rattler's APIs are subject to change, pin to minor versions
-  - py-rattler>=0.22,<0.23
+  - py-rattler>=0.25.0,<0.26.0a0
   - rattler-build-conda-compat>=1.4.15,<2.0.0a0
