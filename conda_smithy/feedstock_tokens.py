@@ -738,10 +738,7 @@ def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):
     else:
         variables = ed.variables
 
-    if "FEEDSTOCK_TOKEN" in variables:
-        have_feedstock_token = True
-    else:
-        have_feedstock_token = False
+    have_feedstock_token = "FEEDSTOCK_TOKEN" in variables
 
     if not have_feedstock_token or (have_feedstock_token and clobber):
         variables["FEEDSTOCK_TOKEN"] = BuildDefinitionVariable(
