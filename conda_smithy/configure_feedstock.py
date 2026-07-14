@@ -1710,7 +1710,9 @@ def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
 
-def _render_template_exe_files(forge_config, jinja_env, template_files, forge_dir):
+def _render_template_files(
+    forge_config, jinja_env, template_files, forge_dir, add_exe=False
+):
     for template_file in template_files:
         template = jinja_env.get_template(os.path.basename(template_file) + ".tmpl")
         target_fname = os.path.join(forge_dir, template_file)
@@ -1742,8 +1744,16 @@ def _render_template_exe_files(forge_config, jinja_env, template_files, forge_di
                     )
         with write_file(target_fname) as fh:
             fh.write(new_file_contents)
-        # Fix permission of template shell files
-        set_exe_file(target_fname, True)
+
+        if add_exe:
+            # Fix permission of template shell files
+            set_exe_file(target_fname, True)
+
+
+def _render_template_exe_files(forge_config, jinja_env, template_files, forge_dir):
+    _render_template_files(
+        forge_config, jinja_env, template_files, forge_dir, add_exe=True
+    )
 
 
 def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
@@ -2064,10 +2074,17 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         # fmt: on
 
     forge_config["azure_yaml"] = yaml.dump(azure_settings)
+    nonexe_template_files = [fname for fname in template_files if fname.endswith("yml")]
+    _render_template_files(
+        forge_config=forge_config,
+        jinja_env=jinja_env,
+        template_files=nonexe_template_files,
+        forge_dir=forge_dir,
+    )
     _render_template_exe_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
-        template_files=template_files,
+        template_files=list(set(template_files) - set(nonexe_template_files)),
         forge_dir=forge_dir,
     )
 
