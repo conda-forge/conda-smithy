@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 from rattler_build_conda_compat.jinja.jinja import (
     RecipeWithContext,
-    render_recipe_with_context,
+    resolve_recipe_metadata,
 )
 from rattler_build_conda_compat.outputs import is_staging_output
 
@@ -113,14 +113,14 @@ def hint_noarch_usage(
 
 
 def get_recipe_name(recipe_content: RecipeWithContext) -> str:
-    rendered_context_recipe = render_recipe_with_context(recipe_content)
+    rendered_context_recipe = resolve_recipe_metadata(recipe_content)
     package_name = rendered_context_recipe.get("package", {}).get("name", "").strip()
     recipe_name = rendered_context_recipe.get("recipe", {}).get("name", "").strip()
     return package_name or recipe_name
 
 
 def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
-    rendered_context_recipe = render_recipe_with_context(recipe_content)
+    rendered_context_recipe = resolve_recipe_metadata(recipe_content)
     package_version = rendered_context_recipe.get("package", {}).get("version")
     recipe_version = rendered_context_recipe.get("recipe", {}).get("version")
 
