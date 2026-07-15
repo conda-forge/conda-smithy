@@ -32,3 +32,4 @@ $ pyrefly check --python-interpreter-path $(which python) --output-format min-te
 ```
 
 If you encounter pyrefly issues that you don't agree with, feel free to add a `# pyrefly: ignore[<error-type>]` comment to that line.
+An ignored `pyrefly` error is insufficient reason to block the merge of a pull request.
