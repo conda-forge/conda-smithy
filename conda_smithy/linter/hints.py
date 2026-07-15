@@ -70,21 +70,19 @@ def hint_suggest_noarch(
             )
         else:
             with open(recipe_fname, encoding="utf-8") as fh:
-                in_runreqs = False
-                runreqs_spacing = ""
+                runreqs_spacing = None
                 no_arch_possible = True
                 for line in fh:
                     line_s = line.strip()
                     if line_s == "host:" or line_s == "run:":
-                        in_runreqs = True
                         runreqs_spacing = line[: -len(line.lstrip())]
                         continue
                     if line_s.startswith("skip:") and is_selector_line(line):
                         no_arch_possible = False
                         break
-                    if in_runreqs:
+                    if runreqs_spacing is not None:
                         if runreqs_spacing == line[: -len(line.lstrip())]:
-                            in_runreqs = False
+                            runreqs_spacing = None
                             continue
                         if is_selector_line(line):
                             no_arch_possible = False

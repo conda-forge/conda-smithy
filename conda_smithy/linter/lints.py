@@ -327,12 +327,10 @@ def lint_noarch_and_runtime_dependencies(
         return
     noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
     with open(meta_fname, encoding="utf-8") as fh:
-        in_runreqs = False
-        runreqs_spacing = ""
+        runreqs_spacing = None
         for line_number, line in enumerate(fh, 1):
             line_s = line.strip()
             if line_s == "host:" or line_s == "run:":
-                in_runreqs = True
                 runreqs_spacing = line[: -len(line.lstrip())]
                 continue
             if line_s.startswith("skip:") and is_selector_line(line):
@@ -345,9 +343,9 @@ def lint_noarch_and_runtime_dependencies(
                     ).as_string()
                 )
                 break
-            if in_runreqs:
+            if runreqs_spacing is not None:
                 if runreqs_spacing == line[: -len(line.lstrip())]:
-                    in_runreqs = False
+                    runreqs_spacing = None
                     continue
                 if is_selector_line(
                     line,
