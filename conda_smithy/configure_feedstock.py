@@ -2040,7 +2040,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
         )
         # fmt: off
         if platform == "linux":
-            if docker_image := data.get("config"):
+            if docker_image := data.get("config", {}).get("docker_image"):
                 config_rendered["DOCKER_IMAGE"] = docker_image[-1]
         elif platform == "win":
             config_rendered["build_platform"] = data["build_platform"]
