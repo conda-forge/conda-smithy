@@ -189,7 +189,7 @@ call :end_group
 
 :: Build the recipe
 echo Building recipe
-{%- if conda_build_tool.startswith(("conda-build", "mambabuild") %}
+{%- if conda_build_tool.startswith(("conda-build", "mambabuild")) %}
 set "_OLD_CONDA_SUBDIR=%CONDA_SUBDIR%"
 set "CONDA_SUBDIR=%BUILD_PLATFORM%"
 {%- endif %}
@@ -207,7 +207,7 @@ conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-varia
 rattler-build.exe build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --build-platform %BUILD_PLATFORM% --target-platform %HOST_PLATFORM%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
-{%- if conda_build_tool.startswith(("conda-build", "mambabuild") %}
+{%- if conda_build_tool.startswith(("conda-build", "mambabuild")) %}
 set "_OLD_CONDA_SUBDIR="
 set "CONDA_SUBDIR=%_OLD_CONDA_SUBDIR%"
 {%- endif %}
