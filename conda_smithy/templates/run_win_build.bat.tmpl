@@ -131,6 +131,12 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 {%- endif %}
 
 :: Set basic configuration
+if [%BUILD_PLATFORM%]==[] (
+    echo Defining build platform
+    if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "BUILD_PLATFORM=win-64"
+    if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "BUILD_PLATFORM=win-arm64"
+    if "%PROCESSOR_ARCHITECTURE%"=="x86"   set "BUILD_PLATFORM=win-32"
+)
 echo Setting up configuration
 setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
 if !errorlevel! neq 0 exit /b !errorlevel!
