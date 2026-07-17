@@ -2039,9 +2039,12 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             }
         )
         # fmt: off
-        if "docker_image" in data["config"] and platform == "linux":
-            config_rendered["DOCKER_IMAGE"] = data["config"]["docker_image"][-1]
-        if platform == "osx":
+        if platform == "linux":
+            if docker_image := data.get("config"):
+                config_rendered["DOCKER_IMAGE"] = docker_image[-1]
+        elif platform == "win":
+            config_rendered["build_platform"] = data["build_platform"]
+        elif platform == "osx":
             if data["build_platform"] == "osx-64":
                 config_rendered["VMIMAGE"] = "macOS-15"
             elif data["build_platform"] == "osx-arm64":
