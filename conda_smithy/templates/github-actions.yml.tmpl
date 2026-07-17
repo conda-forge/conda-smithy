@@ -61,7 +61,7 @@ jobs:
         {%- endif %}
             STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts is true }}
             UPLOAD_PACKAGES: {{ data.upload }}
-        {%- if data.build_platform.startswith("win") %}    
+        {%- if data.build_platform.startswith("win") %}
             build_platform: {{ data.build_platform }}
         {%- endif %}
             build_workspace_dir: {{ data.build_workspace_dir }}
