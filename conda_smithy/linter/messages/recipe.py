@@ -1037,6 +1037,31 @@ class DuplicateRecipes(LinterMessage, _AnyRecipeMessage):
     )
 
 
+@dataclass(kw_only=True)
+class RedundantPythonMin(LinterMessage, _AnyRecipeMessage):
+    """
+    conda-forge's global pinning already provides the `python_min` variable,
+    so recipes should not redefine it to the same (or a lower) value. Doing so
+    is redundant and unintentionally overrides platforms where the global
+    default differs. Only override `python_min` when the package needs a
+    higher floor than the global default.
+    """
+
+    kind = "hint"
+    identifier = "R-052"
+    added_in = "2026.7"
+    message = (
+        "The recipe sets `python_min` to ${value}, which is equal or lower "
+        "than the default provided by conda-forge's global pinning. Please "
+        "remove the redefinition."
+    )
+    value: str
+
+    @classmethod
+    def examples(cls) -> list[Self]:
+        return [cls(value="3.9")]
+
+
 # endregion
 # region Recipe v0
 
