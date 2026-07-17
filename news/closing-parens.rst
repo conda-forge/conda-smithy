@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Added missing parenthesis in Azure's ``ARTIFACT_STAGING_DIR`` definition.
+* Added missing parenthesis in Azure's ``ARTIFACT_STAGING_DIR`` definition. (#2624)
 
 **Security:**
 
