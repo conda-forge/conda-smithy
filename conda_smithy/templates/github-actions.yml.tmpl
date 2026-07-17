@@ -61,6 +61,7 @@ jobs:
         {%- endif %}
             STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts is true }}
             UPLOAD_PACKAGES: {{ data.upload }}
+            build_platform: {{ data.build_platform }}
             build_workspace_dir: {{ data.build_workspace_dir }}
             docker_run_args: {{ data.docker_run_args }}
             free_disk_space: {{ data.free_disk_space }}
@@ -231,6 +232,8 @@ jobs:
         set "sha=%GITHUB_SHA%"
         call ".scripts\run_win_build.bat"
       env:
+        {#- BUILD_PLATFORM needed to distinguish emulated/native builds #}
+        BUILD_PLATFORM: {% raw %}${{ matrix.build_platform }}{% endraw %}
         CI: github_actions
         CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
