@@ -134,7 +134,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     #   - --clobber-file vs. none
     #   - none vs. --target-platform
     {%- if conda_build_tool.startswith("conda-build") %}
-    conda debug \
+    CONDA_SUBDIR="${BUILD_PLATFORM}" conda debug \
         "${RECIPE_ROOT}" \
         -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         ${EXTRA_CB_OPTIONS:-} \
@@ -166,7 +166,7 @@ else
     #   - none vs. --target-platform
     #   - --extra-meta a=b c=d vs. --extra-meta a=b --extra-meta c=d
     {%- if conda_build_tool != "rattler-build" %}
-    {{ BUILD_CMD }} \
+    CONDA_SUBDIR="${BUILD_PLATFORM}" {{ BUILD_CMD }} \
         "${RECIPE_ROOT}" \
         -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         ${EXTRA_CB_OPTIONS:-} \
