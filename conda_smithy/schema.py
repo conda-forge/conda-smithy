@@ -1197,13 +1197,14 @@ class ConfigModel(BaseModel):
             # toggle for storing the conda build_artifacts directory (including the
             # built packages) as an Azure pipeline artifact that can be downloaded
             store_build_artifacts: False
-            # toggle for freeing up some extra space on the default Azure Pipelines
-            # linux image before running the Docker container for building
-            free_disk_space: False
             # limit the amount of CI jobs running concurrently at a given time
             # each OS will get its proportional share of the configured value
             max_parallel: 25
         ```
+
+        Freeing up disk space before a build is no longer configured here. Use the
+        top-level `workflow_settings.free_disk_space` option instead, which accepts
+        `skip` (default), `quick` or `max`.
 
         Below is an example configuration for setting up a self-hosted Azure agent for Linux:
 
