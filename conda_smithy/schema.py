@@ -141,7 +141,13 @@ class AzureConfig(BaseModel):
         deprecated=True,
         description=cleandoc("""
             Deprecated. Use `workflow_settings.free_disk_space` instead.
-            The only allowed values there are `skip`, `quick`, and `max`.
+            This setting accepts a boolean or a list containing `apt`, `cache`,
+            and `docker`. When set to `true`, only `apt` and `cache` are cleaned
+            up. Set it to the full list to clean up all components.
+
+            The replacement setting uses the values `skip`, `quick`, and `max`
+            instead; the values accepted by this deprecated setting are not valid
+            for the replacement setting.
             """),
     )
 
@@ -282,7 +288,13 @@ class GithubActionsConfig(BaseModel):
         deprecated=True,
         description=cleandoc("""
             Deprecated. Use `workflow_settings.free_disk_space` instead.
-            The only allowed values there are `skip`, `quick`, and `max`.
+            This setting accepts a boolean or a list containing `apt`, `cache`,
+            and `docker`. When set to `true`, only `apt` and `cache` are cleaned
+            up. Set it to the full list to clean up all components.
+
+            The replacement setting uses the values `skip`, `quick`, and `max`
+            instead; the values accepted by this deprecated setting are not valid
+            for the replacement setting.
             """),
     )
 
