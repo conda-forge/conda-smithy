@@ -9,6 +9,7 @@ import tempfile
 import textwrap
 import unittest
 from collections import OrderedDict
+from collections.abc import Iterator
 from contextlib import contextmanager
 from itertools import count
 from pathlib import Path
@@ -29,7 +30,7 @@ _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 
 @contextmanager
-def get_recipe_in_dir(recipe_name: str) -> Path:
+def get_recipe_in_dir(recipe_name: str) -> Iterator[Path]:
     base_dir = Path(__file__).parent
     recipe_path = base_dir / "recipes" / recipe_name
     assert recipe_path.exists(), f"Recipe {recipe_name} does not exist"

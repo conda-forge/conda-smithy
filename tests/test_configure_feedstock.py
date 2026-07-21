@@ -1041,9 +1041,8 @@ def test_forge_yml_alt_path(config_yaml: ConfigYAML):
 def test_cos7_env_render(py_recipe, jinja_env):
     forge_config = copy.deepcopy(py_recipe.config)
     forge_config["os_version"] = {"linux_64": "cos7"}
-    has_env = "DEFAULT_LINUX_VERSION" in os.environ
-    if has_env:
-        old_val = os.environ["DEFAULT_LINUX_VERSION"]
+    old_val = os.environ.get("DEFAULT_LINUX_VERSION")
+    if old_val is not None:
         del os.environ["DEFAULT_LINUX_VERSION"]
 
     try:
@@ -1065,7 +1064,7 @@ def test_cos7_env_render(py_recipe, jinja_env):
         assert len(os.listdir(matrix_dir)) == 6
 
     finally:
-        if has_env:
+        if old_val is not None:
             os.environ["DEFAULT_LINUX_VERSION"] = old_val
         else:
             if "DEFAULT_LINUX_VERSION" in os.environ:
@@ -1074,9 +1073,8 @@ def test_cos7_env_render(py_recipe, jinja_env):
 
 def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
     forge_config = copy.deepcopy(cuda_enabled_recipe.config)
-    has_env = "CF_CUDA_ENABLED" in os.environ
-    if has_env:
-        old_val = os.environ["CF_CUDA_ENABLED"]
+    old_val = os.environ.get("CF_CUDA_ENABLED")
+    if old_val is not None:
         del os.environ["CF_CUDA_ENABLED"]
 
     try:
@@ -1099,7 +1097,7 @@ def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
         assert len(os.listdir(matrix_dir)) == 6
 
     finally:
-        if has_env:
+        if old_val is not None:
             os.environ["CF_CUDA_ENABLED"] = old_val
         else:
             if "CF_CUDA_ENABLED" in os.environ:
