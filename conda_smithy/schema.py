@@ -141,10 +141,13 @@ class AzureConfig(BaseModel):
         deprecated=True,
         description=cleandoc("""
             Deprecated. Use `workflow_settings.free_disk_space` instead.
-            Free up disk space before build.
-            The following components can be cleaned up: `apt`, `cache`, `docker`.
-            When set to `true`, only `apt` and `cache` are cleaned up.
-            Set it to the full list to clean up all components.
+            This setting accepts a boolean or a list containing `apt`, `cache`,
+            and `docker`. When set to `true`, only `apt` and `cache` are cleaned
+            up. Set it to the full list to clean up all components.
+
+            The replacement setting uses the values `skip`, `quick`, and `max`
+            instead; the values accepted by this deprecated setting are not valid
+            for the replacement setting.
             """),
     )
 
@@ -285,10 +288,13 @@ class GithubActionsConfig(BaseModel):
         deprecated=True,
         description=cleandoc("""
             Deprecated. Use `workflow_settings.free_disk_space` instead.
-            Free up disk space building.
-            The following components can be cleaned up: `apt`, `cache`, `docker`.
-            When set to `true`, only `apt` and `cache` are cleaned up.
-            Set it to the full list to clean up all components.
+            This setting accepts a boolean or a list containing `apt`, `cache`,
+            and `docker`. When set to `true`, only `apt` and `cache` are cleaned
+            up. Set it to the full list to clean up all components.
+
+            The replacement setting uses the values `skip`, `quick`, and `max`
+            instead; the values accepted by this deprecated setting are not valid
+            for the replacement setting.
             """),
     )
 

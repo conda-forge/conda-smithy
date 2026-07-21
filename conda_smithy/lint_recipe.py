@@ -31,11 +31,14 @@ from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
+    hint_noarch_python_test_latest,
     hint_noarch_python_use_python_min,
     hint_os_version,
     hint_pip_no_build_backend,
     hint_pip_usage,
+    hint_python_version_independent_test_latest,
     hint_rattler_build_bld_bat,
+    hint_redundant_python_min,
     hint_shellcheck_usage,
     hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_space_separated_specs,
@@ -88,7 +91,7 @@ from conda_smithy.linter.utils import (
     flatten_v1_if_else,
     get_all_test_requirements,
     get_section,
-    load_linter_toml_metdata,
+    load_linter_toml_metadata,
 )
 from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
@@ -708,7 +711,7 @@ def run_conda_forge_specific(
             else:
                 run_reqs += _req
 
-    specific_hints = (load_linter_toml_metdata() or {}).get("hints", {})
+    specific_hints = (load_linter_toml_metadata() or {}).get("hints", {})
     all_reqs = build_reqs + host_reqs + run_reqs
     if recipe_version == 1:
         all_reqs = flatten_v1_if_else(all_reqs)
@@ -783,6 +786,31 @@ def run_conda_forge_specific(
             hints,
         )
 
+    # 10b: noarch python recipes should test the minimum AND latest python
+    if "hint_noarch_python_test_latest" not in lints_to_skip and recipe_version == 1:
+        hint_noarch_python_test_latest(
+            get_section(meta, "tests", lints, recipe_version),
+            requirements_section.get("run") or [],
+            outputs_section,
+            noarch_value,
+            recipe_version,
+            hints,
+        )
+
+    # 10c: python version-independent (abi3) recipes should test latest too
+    if (
+        "hint_python_version_independent_test_latest" not in lints_to_skip
+        and recipe_version == 1
+    ):
+        hint_python_version_independent_test_latest(
+            get_section(meta, "tests", lints, recipe_version),
+            requirements_section.get("run") or [],
+            outputs_section,
+            build_section,
+            recipe_version,
+            hints,
+        )
+
     if os.path.exists(recipe_fname):
         with open(recipe_fname, encoding="utf-8") as fh:
             recipe_text = fh.read()
@@ -794,6 +822,15 @@ def run_conda_forge_specific(
             hints,
             recipe_version=recipe_version,
         )
+
+        # 11b: redefining python_min to the global pinning default is redundant
+        if "hint_redundant_python_min" not in lints_to_skip:
+            hint_redundant_python_min(
+                meta,
+                recipe_text,
+                recipe_version,
+                hints,
+            )
 
         # 12: ensure is_abi3 is boolean
         lint_recipe_is_abi3_bool(

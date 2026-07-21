@@ -42,7 +42,7 @@
           ],
           "default": false,
           "deprecated": true,
-          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space before build.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nThis setting accepts a boolean or a list containing `apt`, `cache`,\nand `docker`. When set to `true`, only `apt` and `cache` are cleaned\nup. Set it to the full list to clean up all components.\n\nThe replacement setting uses the values `skip`, `quick`, and `max`\ninstead; the values accepted by this deprecated setting are not valid\nfor the replacement setting.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
@@ -703,7 +703,7 @@
           ],
           "default": false,
           "deprecated": true,
-          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space building.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nThis setting accepts a boolean or a list containing `apt`, `cache`,\nand `docker`. When set to `true`, only `apt` and `cache` are cleaned\nup. Set it to the full list to clean up all components.\n\nThe replacement setting uses the values `skip`, `quick`, and `max`\ninstead; the values accepted by this deprecated setting are not valid\nfor the replacement setting.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
