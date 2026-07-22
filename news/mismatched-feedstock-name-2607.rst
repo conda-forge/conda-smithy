@@ -1,6 +1,6 @@
 **Added:**
 
-* A check for ``feedstock-name`` not matching the feedstock repository. (#2607)
+* A check for a recipe's ``extra.feedstock-name`` not matching the feedstock repository name. (#2607)
 
 **Changed:**
 
