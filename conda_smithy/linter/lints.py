@@ -1145,6 +1145,7 @@ def lint_invalid_workflow_settings(
 
 def lint_feedstock_name(
     meta,
+    feedstock_config,
     recipe_version: int,
     recipe_dir: str,
     lints: list[str],
@@ -1159,6 +1160,7 @@ def lint_feedstock_name(
     )
     recipe_name = recipe_section.get("name")
     feedstock_name = meta.get("extra", {}).get("feedstock-name") or recipe_name
+    user_or_org = feedstock_config.get("github", {}).get("user_or_org", "conda-forge")
 
     # If we have no feedstock_name (which falls back to recipe name) or no
     # recipe dir, something is wrong. Return early not to raise exceptions.
@@ -1185,7 +1187,7 @@ def lint_feedstock_name(
     if not parsed_url.netloc:
         # Maybe it's ssh-style netloc:path.
         parsed_url = urlsplit(f"git+ssh://{remote.url.replace(':', '/')}")
-    feedstock_name_re = re.compile(r"/conda-forge/([^/]+)-feedstock(?:\.git)?/?")
+    feedstock_name_re = re.compile(rf"/{user_or_org}/([^/]+)-feedstock(?:\.git)?/?")
     if (
         parsed_url.hostname != "github.com"
         or (match := feedstock_name_re.fullmatch(parsed_url.path)) is None

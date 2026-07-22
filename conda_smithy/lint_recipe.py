@@ -880,7 +880,7 @@ def run_conda_forge_specific(
     lint_invalid_workflow_settings(feedstock_config, lints)
 
     # 19: Check for missing feedstock-name (if necessary).
-    lint_feedstock_name(meta, recipe_version, recipe_dir, lints)
+    lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
