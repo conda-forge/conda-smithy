@@ -1037,6 +1037,31 @@ class DuplicateRecipes(LinterMessage, _AnyRecipeMessage):
     )
 
 
+@dataclass(kw_only=True)
+class RedundantPythonMin(LinterMessage, _AnyRecipeMessage):
+    """
+    conda-forge's global pinning already provides the `python_min` variable,
+    so recipes should not redefine it to the same (or a lower) value. Doing so
+    is redundant and unintentionally overrides platforms where the global
+    default differs. Only override `python_min` when the package needs a
+    higher floor than the global default.
+    """
+
+    kind = "hint"
+    identifier = "R-052"
+    added_in = "2026.7"
+    message = (
+        "The recipe sets `python_min` to ${value}, which is equal or lower "
+        "than the default provided by conda-forge's global pinning. Please "
+        "remove the redefinition."
+    )
+    value: str
+
+    @classmethod
+    def examples(cls) -> list[Self]:
+        return [cls(value="3.9")]
+
+
 # endregion
 # region Recipe v0
 
@@ -1215,6 +1240,57 @@ class RattlerBldBat(LinterMessage, _RecipeYamlMessage):
         "Found `bld.bat` in recipe directory, but this is a recipe v1 "
         "(rattler-build recipe). rattler-build uses `build.bat` instead of `bld.bat` "
         "for Windows builds. Consider renaming `bld.bat` to `build.bat`."
+    )
+
+
+@dataclass(kw_only=True)
+class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
+    """
+    `noarch: python` packages install on every Python version at or above
+    `python_min`, so tests should cover both ends of that range.
+    """
+
+    kind = "hint"
+    identifier = "R1-004"
+    added_in = "2026.7"
+    message = (
+        "`noarch: python` packages install on every Python version at or "
+        "above `python_min`, but the Python test only runs against a single "
+        "version. Consider testing against both the minimum and the latest "
+        "supported Python:\n"
+        "```yaml\n"
+        "tests:\n"
+        "  - python:\n"
+        "      python_version:\n"
+        "        - ${{ python_min }}.*\n"
+        '        - "*"\n'
+        "```"
+    )
+
+
+@dataclass(kw_only=True)
+class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
+    """
+    Python version-independent packages (e.g. abi3) are built once against
+    `python_min` but install on every Python version at or above it, so tests
+    should cover both ends of that range.
+    """
+
+    kind = "hint"
+    identifier = "R1-005"
+    added_in = "2026.7"
+    message = (
+        "This package is Python version-independent (e.g. abi3): it is built "
+        "once but installs on every Python version at or above `python_min`, "
+        "yet the Python test only runs against a single version. Consider "
+        "testing against both the minimum and the latest supported Python:\n"
+        "```yaml\n"
+        "tests:\n"
+        "  - python:\n"
+        "      python_version:\n"
+        "        - ${{ python_min }}.*\n"
+        '        - "*"\n'
+        "```"
     )
 
 

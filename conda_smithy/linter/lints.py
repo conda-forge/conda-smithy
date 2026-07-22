@@ -837,7 +837,7 @@ def lint_stdlib(
         )
     else:
         pat_compiler_stub = re.compile(
-            r"^\${{ compiler\('(m2w64_)?(c|cxx|fortran|rust|go-cgo)"
+            r"^\${{ compiler\(['\"](m2w64_)?(c|cxx|fortran|rust|go-cgo)"
         )
 
     outputs = get_section(meta, "outputs", lints, recipe_version)
