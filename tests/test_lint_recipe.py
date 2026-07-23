@@ -4653,6 +4653,92 @@ def test_lint_recipe_hint_redundant_python_min(
         assert has_hint == expected_hint, hints
 
 
+@pytest.mark.parametrize(
+    "recipe_name,text,expected_hint",
+    [
+        # v1: manual `export SP_DIR=...` workaround -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - export SP_DIR=$(python -c "import site; print(site.getsitepackages()[0])")
+                      - abi3audit $SP_DIR/mypackage/mypackage.abi3.so
+                """),
+            True,
+        ),
+        # v1: only *uses* $SP_DIR (no definition) -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit $SP_DIR/mypackage/mypackage.abi3.so
+                """),
+            False,
+        ),
+        # v1: windows-style %SP_DIR% usage -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %SP_DIR%/mypackage/mypackage.pyd
+                """),
+            False,
+        ),
+        # v1: no SP_DIR at all -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+        # v0 (meta.yaml): SP_DIR definition -> no hint (rattler-build only)
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                test:
+                  commands:
+                    - export SP_DIR=$(python -c "import site; print(site.getsitepackages()[0])")
+                """),
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_rattler_build_sp_dir(recipe_name, text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, recipe_name), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("rattler-build now defines" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
