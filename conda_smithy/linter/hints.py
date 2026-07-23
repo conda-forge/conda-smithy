@@ -50,7 +50,7 @@ def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]
             hints.append(msg.r.LegacyPyPIURL().as_string())
 
 
-@deprecated("2026.7", "2027.3", addendum="Use hint_legacy_pypi_url() instead")
+@deprecated("2026.7", "2026.10", addendum="Use hint_legacy_pypi_url() instead")
 def hint_sources_should_not_mention_pypi_io_but_pypi_org(
     sources_section: list[dict[str, Any]], hints: list[str]
 ):

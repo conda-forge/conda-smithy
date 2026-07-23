@@ -1026,7 +1026,7 @@ class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
 
 deprecated.constant(
     "2026.7",
-    "2027.3",
+    "2026.10",
     "UsePyPIOrg",
     LegacyPyPIURL,
     addendum="Use LegacyPyPIURL instead",
