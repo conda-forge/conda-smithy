@@ -104,7 +104,7 @@ MAJOR_VERSION_ID="${VERSION_ID%%.*}"
 if [[ "$ID" == "almalinux" && "$MAJOR_VERSION_ID" -ge 10 ]]; then
     # Enable more repositories for Alma 10
     # e.g. xvfb was in appstream but moved to devel in alma10
-    dnf install almalinux-release-devel
+    /usr/bin/sudo -n dnf install almalinux-release-devel
 fi
 # Due to https://bugzilla.redhat.com/show_bug.cgi?id=1537564 old versions of rpm
 # are drastically slowed down when the number of file descriptors is very high.
