@@ -9,6 +9,7 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
+from conda.deprecations import deprecated
 from conda.models.version import VersionOrder
 
 from conda_smithy.linter import conda_recipe_v1_linter
@@ -35,12 +36,10 @@ def hint_pip_usage(build_section, hints):
                 hints.append(msg.r.UsePip().as_string())
 
 
-def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: list[dict[str, Any]], hints: list[str]
-):
+def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
-    but cannonical url is PyPI.org.
+    but cannonical url is files.pythonhosted.org.
 
     See https://github.com/conda-forge/staged-recipes/pull/27946
     """
@@ -48,7 +47,14 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.UsePyPIOrg().as_string())
+            hints.append(msg.r.LegacyPyPIURL().as_string())
+
+
+@deprecated("2026.7", "2026.10", addendum="Use hint_legacy_pypi_url() instead")
+def hint_sources_should_not_mention_pypi_io_but_pypi_org(
+    sources_section: list[dict[str, Any]], hints: list[str]
+):
+    hint_legacy_pypi_url(sources_section, hints)
 
 
 def hint_suggest_noarch(

@@ -5,6 +5,8 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 from dataclasses import asdict, dataclass
 from typing import ClassVar, Literal, Self, TypeAlias
 
+from conda.deprecations import deprecated
+
 from conda_smithy.linter.messages.base import LinterMessage
 
 CATEGORIES = {
@@ -1006,10 +1008,10 @@ class UsePip(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
+class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
-    but the canonical URL is now PyPI.org.
+    but the canonical URL is now files.pythonhosted.org.
 
     See https://github.com/conda-forge/staged-recipes/pull/27946.
     """
@@ -1017,9 +1019,18 @@ class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
     kind = "hint"
     identifier = "R-050"
     message = (
-        "PyPI default URL is now pypi.org, and not pypi.io."
+        "PyPI default URL is now files.pythonhosted.org, and not pypi.io."
         " You may want to update the default source url."
     )
+
+
+deprecated.constant(
+    "2026.7",
+    "2026.10",
+    "UsePyPIOrg",
+    LegacyPyPIURL,
+    addendum="Use LegacyPyPIURL instead",
+)
 
 
 @dataclass(kw_only=True)
