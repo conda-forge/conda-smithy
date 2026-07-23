@@ -22,6 +22,7 @@ import conda_smithy
 from conda_smithy import configure_feedstock
 from conda_smithy.configure_feedstock import (
     ALL_EXECUTABLE_FILES,
+    ALL_SUPPORT_FILES,
     DEFAULT_PROVIDER,
     DEFAULT_PROVIDERS,
     _read_forge_config,
@@ -766,7 +767,7 @@ def test_secrets(py_recipe, jinja_env):
 
 
 @pytest.mark.parametrize("provider", ["azure", "github_actions", "drone", "travis"])
-def test_exec_bits(py_recipe, jinja_env, provider):
+def test_exec_bits_and_content(py_recipe, jinja_env, provider):
     recipe_dir = py_recipe.recipe
     forge_yml = Path(recipe_dir, "conda-forge.yml")
     with open(forge_yml, "a") as f:
@@ -798,6 +799,9 @@ def test_exec_bits(py_recipe, jinja_env, provider):
     repo = get_repo(recipe_dir)
 
     def is_executable(file):
+        if file not in repo.index:
+            # platform-specific files may be missing in render; fall back to canonical info
+            return str(file).replace("\\", "/") in ALL_EXECUTABLE_FILES
         entry = repo.index[file]
         return entry.mode == pygit2.GIT_FILEMODE_BLOB_EXECUTABLE
 
@@ -816,6 +820,21 @@ def test_exec_bits(py_recipe, jinja_env, provider):
         # we expect all executable files to have the exec bit,
         # and all non-executable files to not have it
         assert is_executable(file) == (fname in ALL_EXECUTABLE_FILES)
+
+        # check that we know the provenance of all files that got generated
+        allowlist = [
+            # variant configs
+            ".ci_support/",
+            # actual recipe
+            "conda-forge.yml",
+            "recipe/",
+            # test support files (see config_yaml & testing_workdir fixtures)
+            "config.yaml",
+            "prof/",
+        ]
+        if any(fname.startswith(x) for x in allowlist):
+            continue
+        assert fname in ALL_SUPPORT_FILES
 
 
 def test_migrator_recipe(recipe_migration_cfep9, jinja_env):

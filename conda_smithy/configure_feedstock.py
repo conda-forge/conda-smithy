@@ -216,7 +216,9 @@ NON_EXECUTABLE_TEMPLATES = [
     ".azure-pipelines/azure-pipelines-linux.yml",
     ".azure-pipelines/azure-pipelines-osx.yml",
     ".azure-pipelines/azure-pipelines-win.yml",
+    ".circleci/config.yml",
     ".drone.yml",
+    ".github/workflows/conda-build.yml",
     ".travis.yml",
     "README.md",
     "appveyor.yml",
@@ -247,6 +249,16 @@ ALL_EXECUTABLE_FILES = EXECUTABLE_TEMPLATES + [
     ".scripts/logging_utils.sh",
     "build-locally.py",
 ]
+
+NON_EXECUTABLE_SUPPORT_FILES = [
+    ".gitattributes",
+    ".gitignore",
+    "LICENSE.txt",
+]
+
+ALL_SUPPORT_FILES = (
+    ALL_EXECUTABLE_FILES + NON_EXECUTABLE_TEMPLATES + NON_EXECUTABLE_SUPPORT_FILES
+)
 
 
 # use lru_cache to avoid repeating warnings endlessly;
