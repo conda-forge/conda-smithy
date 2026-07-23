@@ -147,7 +147,7 @@ def _get_recipe_config_keys(recipe_dir: Optional[str] = None) -> dict:
     return recipe_config_keys
 
 
-def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
+def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> tuple[list, list]:
     feedstock_config_keys = _get_feedstock_config(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
     return validate_json_schema(feedstock_config_keys)
