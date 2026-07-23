@@ -101,7 +101,7 @@ setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 (
 source /etc/os-release
 MAJOR_VERSION_ID="${VERSION_ID%%.*}"
-if [[ "$MAJOR_VERSION_ID" -ge 10 ]]; then
+if [[ "$ID" == "almalinux" && "$MAJOR_VERSION_ID" -ge 10 ]]; then
     # Enable more repositories for Alma 10
     # e.g. xvfb was in appstream but moved to devel in alma10
     dnf install almalinux-release-devel
