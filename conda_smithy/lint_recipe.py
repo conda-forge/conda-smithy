@@ -49,6 +49,7 @@ from conda_smithy.linter.lints import (
     lint_build_section_should_be_before_run,
     lint_build_section_should_have_a_number,
     lint_check_usage_of_whls,
+    lint_feedstock_name,
     lint_feedstock_name_not_end_with_feedstock,
     lint_floats_quoted,
     lint_go_licenses_are_bundled,
@@ -877,6 +878,9 @@ def run_conda_forge_specific(
 
     # 18: Check for invalid values in workflow_settings in conda-forge.yml
     lint_invalid_workflow_settings(feedstock_config, lints)
+
+    # 19: Check for missing feedstock-name (if necessary).
+    lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
