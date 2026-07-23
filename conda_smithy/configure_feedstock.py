@@ -22,6 +22,8 @@ from pathlib import Path, PurePath
 import requests
 import yaml
 
+from conda_smithy.deprecations import deprecated
+
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
 # used when catching an exception won't be the same as the one raised
@@ -1756,7 +1758,7 @@ def _render_template_files(forge_config, jinja_env, template_files, forge_dir):
         # ensure trailing newline
         if new_file_contents[-1] != "\n":
             new_file_contents += "\n"
-        if target_fname in iter_all_templates(forge_dir) and os.path.exists(
+        if target_fname in _iter_all_templates(forge_dir) and os.path.exists(
             target_fname
         ):
             with open(target_fname, encoding="utf-8") as fh:
@@ -3055,9 +3057,18 @@ def clear_variants(forge_dir):
             remove_file(config)
 
 
-def iter_all_templates(forge_dir):
+def _iter_all_templates(forge_dir):
     for file in EXECUTABLE_TEMPLATES + NON_EXECUTABLE_TEMPLATES:
         yield os.path.join(forge_dir, file)
+
+
+deprecated.constant(
+    "2026.7",
+    "2026.10",
+    "get_common_scripts",
+    _iter_all_templates,
+    addendum="Raise an issue if you need this function",
+)
 
 
 def clear_scripts(forge_dir):
