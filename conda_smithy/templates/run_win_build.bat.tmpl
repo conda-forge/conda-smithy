@@ -68,7 +68,8 @@ if "%PIXI_CACHE_DIR%"=="%MINIFORGE_HOME%" (
 )
 move /y pixi.toml pixi.toml.bak
 set "arch=64"
-if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64"
+{#- TODO: Enable this line again once we have bootstrapped all the dependencies for a full base environment on win-arm64; emulate win-64 for now  #}
+{#- if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64" #}
 powershell -NoProfile -ExecutionPolicy unrestricted -Command "(Get-Content pixi.toml.bak -Encoding UTF8) -replace 'platforms = .*', 'platforms = [''win-%arch%'']' | Out-File pixi.toml -Encoding UTF8"
 :: Git on Windows needs to run post link scripts to properly set up SSL certificates
 pixi config set --global run-post-link-scripts insecure
@@ -130,6 +131,12 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 {%- endif %}
 
 :: Set basic configuration
+if [%BUILD_PLATFORM%]==[] (
+    echo Defining build platform
+    if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "BUILD_PLATFORM=win-64"
+    if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "BUILD_PLATFORM=win-arm64"
+    if "%PROCESSOR_ARCHITECTURE%"=="x86"   set "BUILD_PLATFORM=win-32"
+)
 echo Setting up configuration
 setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
 if !errorlevel! neq 0 exit /b !errorlevel!
@@ -182,6 +189,10 @@ call :end_group
 
 :: Build the recipe
 echo Building recipe
+{%- if conda_build_tool.startswith(("conda-build", "mambabuild")) %}
+set "_OLD_CONDA_SUBDIR=%CONDA_SUBDIR%"
+set "CONDA_SUBDIR=%BUILD_PLATFORM%"
+{%- endif %}
 {%- if conda_build_tool == "mambabuild" %}
 conda-mambabuild.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
@@ -193,9 +204,13 @@ conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-varia
 {%- elif conda_build_tool == "conda-build" %}
 conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "rattler-build" %}
-rattler-build.exe build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --target-platform %HOST_PLATFORM%
+rattler-build.exe build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --build-platform %BUILD_PLATFORM% --target-platform %HOST_PLATFORM%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
+{%- if conda_build_tool.startswith(("conda-build", "mambabuild")) %}
+set "_OLD_CONDA_SUBDIR="
+set "CONDA_SUBDIR=%_OLD_CONDA_SUBDIR%"
+{%- endif %}
 
 call :start_group "Inspecting artifacts"
 :: inspect_artifacts was only added in conda-forge-ci-setup 4.9.4
