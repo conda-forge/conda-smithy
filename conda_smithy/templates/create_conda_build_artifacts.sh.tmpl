@@ -57,21 +57,22 @@ echo "ARTIFACT_UNIQUE_ID: $ARTIFACT_UNIQUE_ID"
 # Set a descriptive ID for the archive(s), specialized for this particular job run
 ARCHIVE_UNIQUE_ID="${CI_RUN_ID}_${CONFIG}"
 
-# Make the build artifact zip
+pushd "${CONDA_BLD_PATH}"
+
+# --use-compress-prog= lets us pass the options to GNU tar and libarchive tar
+# -T0 uses all cores
+# 12 gives reasonable compression while remaining fast
+ZSTD="--use-compress-prog=zstd -T0 -12"
+
+# Make the build artifact archive
 if [[ ! -z "$BLD_ARTIFACT_PREFIX" ]]; then
     export BLD_ARTIFACT_NAME="${BLD_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
-    export BLD_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${BLD_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.zip"
+    export BLD_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${BLD_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
 
-    ( startgroup "Archive conda build directory" ) 2> /dev/null
-
-    # Try 7z and fall back to zip if it fails (for cross-platform use)
-    if ! 7z a "$BLD_ARTIFACT_PATH" "$CONDA_BLD_PATH" '-xr!.git/' '-xr!_*_env*/' '-xr!*_cache/' -bb; then
-        pushd "$CONDA_BLD_PATH"
-        zip -r -y -T "$BLD_ARTIFACT_PATH" . -x '*.git/*' '*_*_env*/*' '*_cache/*'
-        popd
-    fi
-
-    ( endgroup "Archive conda build directory" ) 2> /dev/null
+    # All our CI services have either GNU tar or bsdtar, and zstd.
+    # Keep the command compatible with both!
+    tar -c -f "${BLD_ARTIFACT_PATH}" "${ZSTD}" \
+        --exclude='.git' --exclude='_*_env*' --exclude='*_cache' .
 
     echo "BLD_ARTIFACT_NAME: $BLD_ARTIFACT_NAME"
     echo "BLD_ARTIFACT_PATH: $BLD_ARTIFACT_PATH"
@@ -85,21 +86,12 @@ if [[ ! -z "$BLD_ARTIFACT_PREFIX" ]]; then
     fi
 fi
 
-# Make the environments artifact zip
+# Make the environments artifact archive
 if [[ ! -z "$ENV_ARTIFACT_PREFIX" ]]; then
     export ENV_ARTIFACT_NAME="${ENV_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
-    export ENV_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${ENV_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.zip"
+    export ENV_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${ENV_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
 
-    ( startgroup "Archive conda build environments" ) 2> /dev/null
-
-    # Try 7z and fall back to zip if it fails (for cross-platform use)
-    if ! 7z a "$ENV_ARTIFACT_PATH" -r "$CONDA_BLD_PATH"/'_*_env*/' -bb; then
-        pushd "$CONDA_BLD_PATH"
-        zip -r -y -T "$ENV_ARTIFACT_PATH" . -i '*_*_env*/*'
-        popd
-    fi
-
-    ( endgroup "Archive conda build environments" ) 2> /dev/null
+    tar -c -f "${ENV_ARTIFACT_PATH}" "${ZSTD}" $(find -name '*_*_env*' -prune)
 
     echo "ENV_ARTIFACT_NAME: $ENV_ARTIFACT_NAME"
     echo "ENV_ARTIFACT_PATH: $ENV_ARTIFACT_PATH"
@@ -112,3 +104,5 @@ if [[ ! -z "$ENV_ARTIFACT_PREFIX" ]]; then
         echo "ENV_ARTIFACT_PATH=$ENV_ARTIFACT_PATH" >> $GITHUB_OUTPUT
     fi
 fi
+
+popd
