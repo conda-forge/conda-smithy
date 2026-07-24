@@ -4698,6 +4698,34 @@ def test_lint_recipe_hint_redundant_python_min(
                 """),
             False,
         ),
+        # v1: hardcoded %PREFIX%\Lib\site-packages (backslash) -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent(r"""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %PREFIX%\Lib\site-packages\mypackage\mypackage.pyd
+                """),
+            True,
+        ),
+        # v1: hardcoded %PREFIX%/Lib/site-packages (forward slash) -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %PREFIX%/Lib/site-packages/mypackage/mypackage.pyd
+                """),
+            True,
+        ),
         # v1: no SP_DIR at all -> no hint
         (
             "recipe.yaml",

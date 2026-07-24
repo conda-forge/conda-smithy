@@ -609,22 +609,31 @@ SP_DIR_DEFINITION_RE = re.compile(
     r"(?m)^\s*(?:-\s+)?(?:then:\s+)?(?:export\s+)?SP_DIR\s*="
 )
 
+# Matches a hardcoded Windows site-packages path, e.g.
+# `%PREFIX%\Lib\site-packages` or `%PREFIX%/Lib/site-packages`, which should
+# use `%SP_DIR%` instead. Either path separator is accepted.
+PREFIX_SITE_PACKAGES_RE = re.compile(
+    r"%PREFIX%[\\/]+Lib[\\/]+site-packages", re.IGNORECASE
+)
+
 
 def hint_rattler_build_sp_dir(
     recipe_text: str,
     hints: list[str],
     recipe_version: int = 0,
 ):
-    """Hint that manually defining SP_DIR is an obsolete rattler-build workaround.
+    """Hint that handling site-packages manually is an obsolete rattler-build workaround.
 
     rattler-build now defines `$SP_DIR` (the environment's site-packages
-    directory). Older abi3 recipes exported it themselves as a workaround for
-    it previously being undefined; that definition can now be removed.
+    directory, `%SP_DIR%` on Windows). Older abi3 recipes exported it themselves
+    as a workaround for it previously being undefined, or hardcoded a path such
+    as `%PREFIX%\\Lib\\site-packages`; both can now use `$SP_DIR` / `%SP_DIR%`.
     """
     if recipe_version != 1:
         return
 
-    if SP_DIR_DEFINITION_RE.search(recipe_text or ""):
+    text = recipe_text or ""
+    if SP_DIR_DEFINITION_RE.search(text) or PREFIX_SITE_PACKAGES_RE.search(text):
         hints.append(msg.r.RattlerSPDir().as_string())
 
 
