@@ -1,0 +1,3 @@
+**Fixed:**
+
+* Fixed several small typing issues reported by Pyrefly. (#2593)

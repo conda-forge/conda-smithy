@@ -11,11 +11,7 @@ import argparse
 import os
 import platform
 import subprocess
-
-try:
-    from urllib.request import urlretrieve
-except ImportError:
-    from urllib import urlretrieve
+from urllib.request import urlretrieve
 
 MINICONDA_URL_TEMPLATE = (
     "https://repo.continuum.io/miniconda/Miniconda{major_py_version}-"

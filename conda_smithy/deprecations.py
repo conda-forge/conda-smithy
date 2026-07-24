@@ -442,7 +442,8 @@ class DeprecationHandler:
                 raise ValueError(
                     "'deprecate_in' version needs at least three components"
                 )
-            next_version = datetime(*deprecate_in_tuple[:3]) + remove_in
+            year, month, day = deprecate_in_tuple[:3]
+            next_version = datetime(year, month, day) + remove_in
             remove_in = f"{next_version.year}.{next_version.month}.{next_version.day}"
         if self._version_less_than(deprecate_in):
             category = PendingDeprecationWarning
