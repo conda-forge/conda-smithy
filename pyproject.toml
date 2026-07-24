@@ -32,7 +32,7 @@ write_to = "conda_smithy/_version.py"
 write_to_template = "__version__ = '{version}'"
 
 [tool.pyrefly]
-project-includes = ["**/*.py"]
+project-includes = ["conda_smithy/**/*.py", "tests/**/*.py"]
 search-path = [".", "tests"]
 
 [tool.black]
