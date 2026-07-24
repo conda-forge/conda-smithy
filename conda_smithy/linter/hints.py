@@ -490,6 +490,40 @@ def hint_python_version_independent_test_latest(
             return
 
 
+CROSS_PYTHON_RE = re.compile(r"^cross-python(?:_|\s|$)")
+
+
+def hint_abi3_cross_python_run_exports(
+    requirements_section,
+    outputs_section,
+    recipe_version,
+    hints,
+):
+    if recipe_version != 1:
+        return
+
+    scopes = [requirements_section or {}]
+    for output in outputs_section or []:
+        scopes.append(output.get("requirements") or {})
+
+    for requirements in scopes:
+        if not isinstance(requirements, Mapping):
+            continue
+        ignore_run_exports = requirements.get("ignore_run_exports")
+        if not ignore_run_exports:
+            continue
+        # v1 ignore_run_exports is a dict, but rattler-build-conda-compat may
+        # return it wrapped in a length-1 list instead of the dict itself
+        if isinstance(ignore_run_exports, list):
+            ignore_run_exports = ignore_run_exports[0] if ignore_run_exports else {}
+        if not isinstance(ignore_run_exports, Mapping):
+            continue
+        from_package = flatten_v1_if_else(ignore_run_exports.get("from_package") or [])
+        if any(CROSS_PYTHON_RE.match(str(entry).strip()) for entry in from_package):
+            hints.append(msg.r.Abi3CrossPythonRunExports().as_string())
+            return
+
+
 def hint_space_separated_specs(
     requirements_section,
     test_section,

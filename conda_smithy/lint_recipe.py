@@ -28,6 +28,7 @@ from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.hints import (
+    hint_abi3_cross_python_run_exports,
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
@@ -809,6 +810,19 @@ def run_conda_forge_specific(
             requirements_section.get("run") or [],
             outputs_section,
             build_section,
+            recipe_version,
+            hints,
+        )
+
+    # 10d: abi3 recipes no longer need the manual cross-python
+    # `ignore_run_exports` workaround; rattler-build handles it natively
+    if (
+        "hint_abi3_cross_python_run_exports" not in lints_to_skip
+        and recipe_version == 1
+    ):
+        hint_abi3_cross_python_run_exports(
+            requirements_section,
+            outputs_section,
             recipe_version,
             hints,
         )

@@ -1327,4 +1327,45 @@ class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class Abi3CrossPythonRunExports(LinterMessage, _RecipeYamlMessage):
+    """
+    abi3 (Python version-independent) recipes used to carry a manual
+    workaround for a rattler-build limitation: they ignored the `python`
+    run-export coming from the `cross-python_<target_platform>` build
+    dependency, which would otherwise pin the package to a single Python
+    version and defeat the purpose of abi3.
+
+    ```yaml
+    requirements:
+      ignore_run_exports:
+        from_package:
+          - cross-python_${{ target_platform }}
+    ```
+
+    Recent rattler-build filters this run-export automatically for abi3 /
+    `build.python.version_independent` recipes (see
+    prefix-dev/rattler-build#2252), so the manual `ignore_run_exports` entry
+    is now redundant and should be removed.
+    """
+
+    kind = "hint"
+    identifier = "R1-007"
+    added_in = "2026.7"
+    message = (
+        "This recipe manually ignores the `python` run-export from "
+        "`cross-python` via `ignore_run_exports`. This used to be required so "
+        "that abi3 (Python version-independent) packages were not pinned to a "
+        "single Python version. Recent rattler-build strips this run-export "
+        "automatically for abi3 recipes, so the workaround is no longer needed "
+        "and should be removed:\n"
+        "```yaml\n"
+        "requirements:\n"
+        "  ignore_run_exports:\n"
+        "    from_package:\n"
+        "      - cross-python_${{ target_platform }}\n"
+        "```"
+    )
+
+
 # endregion

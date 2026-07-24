@@ -4768,6 +4768,152 @@ def test_lint_recipe_v1_rattler_build_sp_dir(recipe_name, text, expected_hint):
         assert has_hint == expected_hint, hints
 
 
+@pytest.mark.parametrize(
+    "text,expected_hint",
+    [
+        # abi3 recipe still carrying the cross-python workaround -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  build:
+                    - if: build_platform != host_platform
+                      then:
+                        - python
+                        - cross-python_${{ target_platform }}
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # abi3 recipe without the workaround -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # ignores an unrelated package (not cross-python) -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - some-other-pkg
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # workaround wrapped in an if/else selector -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - if: build_platform != host_platform
+                        then: cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # workaround present in a per-output requirements block -> hint
+        (
+            textwrap.dedent("""
+                recipe:
+                  name: mypackage
+                  version: 1.0.0
+
+                outputs:
+                  - package:
+                      name: myoutput
+                    build:
+                      python:
+                        version_independent: true
+                    requirements:
+                      host:
+                        - python ${{ python_min }}.*
+                      run:
+                        - python
+                      ignore_run_exports:
+                        from_package:
+                          - cross-python_${{ target_platform }}
+                    tests:
+                      - python:
+                          imports:
+                            - myoutput
+                """),
+            True,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("run-export from `cross-python`" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
