@@ -1294,4 +1294,23 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
+    """
+    rattler-build defines `$SP_DIR` (the environment's site-packages
+    directory), so recipes no longer need to set it themselves. Older abi3
+    recipes exported it manually as a workaround for it being undefined.
+    """
+
+    kind = "hint"
+    identifier = "R1-006"
+    added_in = "2026.7"
+    message = (
+        "This recipe defines `SP_DIR` itself, which used to be a workaround "
+        "for rattler-build not providing it. rattler-build now defines "
+        "`$SP_DIR` (the site-packages directory), so the manual definition "
+        "can be removed and `$SP_DIR` used directly."
+    )
+
+
 # endregion
