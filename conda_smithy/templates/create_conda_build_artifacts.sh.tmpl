@@ -77,6 +77,27 @@ pushd "${CONDA_BLD_PATH}"
 # 12 gives reasonable compression while remaining fast
 ZSTD="--use-compress-prog=zstd -T0 -12"
 
+# Pattern matching can be quite overzealous, so rather than passing wildcards,
+# we want to expand them into actual paths first.
+shopt -s nullglob
+ENVIRONMENT_PATHS=(
+    # note: always include "./", so that only top-level paths match
+    # conda-build
+    ./*_*/*_env*
+    ./*_*/*_prefix_moved_*
+
+    # rattler-build
+    ./bld/*_*/*_env*
+    ./test/test_*/test_env
+)
+EXCLUDE_FROM_BUILD_ARTIFACTS=(
+    "${ENVIRONMENT_PATHS[@]}"
+
+    ./pkg_cache
+    ./src_cache
+    ./*_*/pip_cache
+)
+
 # Make the build artifact archive
 if [[ ! -z "$BLD_ARTIFACT_PREFIX" ]]; then
     export BLD_ARTIFACT_NAME="${BLD_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
@@ -85,7 +106,7 @@ if [[ ! -z "$BLD_ARTIFACT_PREFIX" ]]; then
     # All our CI services have either GNU tar or bsdtar, and zstd.
     # Keep the command compatible with both!
     tar -c -f "${BLD_ARTIFACT_PATH}" "${ZSTD}" \
-        --exclude='.git' --exclude='_*_env*' --exclude='*_cache' .
+        --exclude='.git' "${EXCLUDE_FROM_BUILD_ARTIFACTS[@]/#/--exclude=}" .
 
     echo "BLD_ARTIFACT_NAME: $BLD_ARTIFACT_NAME"
     echo "BLD_ARTIFACT_PATH: $BLD_ARTIFACT_PATH"
@@ -104,7 +125,7 @@ if [[ ! -z "$ENV_ARTIFACT_PREFIX" ]]; then
     export ENV_ARTIFACT_NAME="${ENV_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
     export ENV_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${ENV_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
 
-    tar -c -f "${ENV_ARTIFACT_PATH}" "${ZSTD}" $(find -name '*_*_env*' -prune)
+    tar -c -f "${ENV_ARTIFACT_PATH}" "${ZSTD}" "${ENVIRONMENT_PATHS[@]}"
 
     echo "ENV_ARTIFACT_NAME: $ENV_ARTIFACT_NAME"
     echo "ENV_ARTIFACT_PATH: $ENV_ARTIFACT_PATH"
