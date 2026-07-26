@@ -795,7 +795,8 @@ def test_exec_bits_and_content(py_recipe, jinja_env, provider):
     )
 
     # sanity check for pytest failure logs: check content of recipe folder
-    subprocess.call(["ls", "-lla"], cwd=recipe_dir, stdout=sys.stderr)
+    show_content = ["dir"] if os.name == "nt" else ["ls", "-lla"]
+    subprocess.call(show_content, cwd=recipe_dir, stdout=sys.stderr)
     repo = get_repo(recipe_dir)
 
     def is_executable(file):
