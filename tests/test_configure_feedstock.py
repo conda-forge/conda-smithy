@@ -466,7 +466,7 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
         if step["name"] == "Build on Linux"
     )
     assert linux_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
-    assert "$(basename $GITHUB_REF)" in linux_step["run"]
+    assert "${GITHUB_REF_NAME}" in linux_step["run"]
 
     macos_step = next(
         step
@@ -474,7 +474,7 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
         if step["name"] == "Build on macOS"
     )
     assert macos_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
-    assert "$(basename $GITHUB_REF)" in macos_step["run"]
+    assert "${GITHUB_REF_NAME}" in macos_step["run"]
 
     win_build_step = next(
         step
@@ -490,7 +490,7 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
         )
     ) as fp:
         build_script_win = fp.read()
-    assert r"%GITHUB_REF:refs/heads/=%" in build_script_win
+    assert r"%GITHUB_REF_NAME%" in build_script_win
 
 
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
