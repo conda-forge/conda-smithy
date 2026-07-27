@@ -47,6 +47,7 @@ from rattler_build_conda_compat.loader import parse_recipe_config_file
 from rattler_build_conda_compat.render import render as rattler_render
 
 from conda_smithy import __version__
+from conda_smithy.deprecations import deprecated
 from conda_smithy.feedstock_io import (
     copy_file,
     remove_file,
@@ -1648,6 +1649,11 @@ def _get_platforms_of_provider(provider, forge_config):
     return platforms, archs, keep_noarchs, upload_packages
 
 
+@deprecated(
+    "2026.7",
+    "2026.10",
+    addendum="CircleCI is deprecated, see #2627",
+)
 def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".circleci", "config.yml")
     template_filename = "circle.yml.tmpl"
@@ -1748,6 +1754,11 @@ def _render_template_exe_files(forge_config, jinja_env, template_files, forge_di
         set_exe_file(target_fname, True)
 
 
+@deprecated(
+    "2026.7",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".travis.yml")
     template_filename = "travis.yml.tmpl"
@@ -1791,6 +1802,11 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
     forge_config["build_setup"] = build_setup
 
 
+@deprecated(
+    "2026.7",
+    "2026.10",
+    addendum="Appveyor is deprecated, see #2627",
+)
 def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".appveyor.yml")
     fast_finish_text = textwrap.dedent("""\
@@ -2131,6 +2147,11 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
     )
 
 
+@deprecated(
+    "2026.7",
+    "2026.10",
+    addendum="Drone is deprecated, see #2627",
+)
 def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".drone.yml")
     template_filename = "drone.yml.tmpl"
@@ -2163,6 +2184,11 @@ def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
 _woodpecker_specific_setup = _drone_specific_setup
 
 
+@deprecated(
+    "2026.7",
+    "2026.10",
+    addendum="Woodpecker is deprecated, see #2627",
+)
 def render_woodpecker(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, ".woodpecker.yml")
     template_filename = "woodpecker.yml.tmpl"
