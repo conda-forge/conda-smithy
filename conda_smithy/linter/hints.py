@@ -9,6 +9,9 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
+from conda.deprecations import deprecated
+from conda.models.version import VersionOrder
+
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.utils import (
@@ -16,6 +19,8 @@ from conda_smithy.linter.utils import (
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
+    get_global_pinning_python_min,
+    get_version_independent,
     is_selector_line,
 )
 from conda_smithy.utils import get_yaml
@@ -31,12 +36,10 @@ def hint_pip_usage(build_section, hints):
                 hints.append(msg.r.UsePip().as_string())
 
 
-def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: list[dict[str, Any]], hints: list[str]
-):
+def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
-    but cannonical url is PyPI.org.
+    but cannonical url is files.pythonhosted.org.
 
     See https://github.com/conda-forge/staged-recipes/pull/27946
     """
@@ -44,7 +47,14 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.UsePyPIOrg().as_string())
+            hints.append(msg.r.LegacyPyPIURL().as_string())
+
+
+@deprecated("2026.7", "2026.10", addendum="Use hint_legacy_pypi_url() instead")
+def hint_sources_should_not_mention_pypi_io_but_pypi_org(
+    sources_section: list[dict[str, Any]], hints: list[str]
+):
+    hint_legacy_pypi_url(sources_section, hints)
 
 
 def hint_suggest_noarch(
@@ -70,20 +80,19 @@ def hint_suggest_noarch(
             )
         else:
             with open(recipe_fname, encoding="utf-8") as fh:
-                in_runreqs = False
+                runreqs_spacing = None
                 no_arch_possible = True
                 for line in fh:
                     line_s = line.strip()
                     if line_s == "host:" or line_s == "run:":
-                        in_runreqs = True
                         runreqs_spacing = line[: -len(line.lstrip())]
                         continue
                     if line_s.startswith("skip:") and is_selector_line(line):
                         no_arch_possible = False
                         break
-                    if in_runreqs:
+                    if runreqs_spacing is not None:
                         if runreqs_spacing == line[: -len(line.lstrip())]:
-                            in_runreqs = False
+                            runreqs_spacing = None
                             continue
                         if is_selector_line(line):
                             no_arch_possible = False
@@ -359,6 +368,126 @@ def hint_noarch_python_use_python_min(
 
     if recommendations:
         hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
+
+
+def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
+    if recipe_version == 1:
+        context = meta.get("context")
+        declared = context.get("python_min") if isinstance(context, Mapping) else None
+    else:
+        match = re.search(
+            r"""{%\s*set\s+python_min\s*=\s*["']([^"']+)["']""",
+            recipe_text or "",
+        )
+        declared = match.group(1) if match else None
+
+    if declared is None:
+        return
+
+    global_python_min = get_global_pinning_python_min()
+    if global_python_min is not None and VersionOrder(str(declared)) <= VersionOrder(
+        global_python_min
+    ):
+        hints.append(msg.r.RedundantPythonMin(value=str(declared)).as_string())
+
+
+def _python_tests_cover_latest(tests_section, run_reqs):
+    """True if every python test covers the latest Python via a "*" entry,
+    or if the run requirements cap python's upper bound (making a latest-python
+    test entry redundant)."""
+    for req in flatten_v1_if_else(run_reqs or []):
+        if isinstance(req, str) and req.strip().split()[0] == "python" and "<" in req:
+            return True
+
+    for test in tests_section or []:
+        if not isinstance(test, Mapping) or "python" not in test:
+            continue
+        python_version = test.get("python", {}).get("python_version", {})
+        if isinstance(python_version, str):
+            python_version = [python_version]
+        if not isinstance(python_version, list):
+            python_version = []
+        # Check that the latest-Python marker is the exact entry `"*"`. Since
+        # flatten_v1_if_else always returns a list, `"*" in ...` will never
+        # (substring-)match for version pins like `${{ python_min }}.*`;
+        # v1 also forbids bare `- *`, so we know it must be a string.
+        if "*" not in flatten_v1_if_else(python_version):
+            return False
+    return True
+
+
+def hint_noarch_python_test_latest(
+    tests_section,
+    run_reqs,
+    outputs_section,
+    noarch_value,
+    recipe_version,
+    hints,
+):
+    if recipe_version != 1:
+        return
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            requirements = output.get("requirements", {})
+            output_run_reqs = (
+                requirements.get("run")
+                if isinstance(requirements, Mapping)
+                else requirements
+            )
+            scopes.append(
+                (
+                    output.get("tests"),
+                    output_run_reqs,
+                    output.get("build", {}).get("noarch"),
+                )
+            )
+    else:
+        scopes.append((tests_section, run_reqs, noarch_value))
+
+    for tests, run, noarch in scopes:
+        if noarch == "python" and not _python_tests_cover_latest(tests, run):
+            hints.append(msg.r.NoarchPythonTestLatest().as_string())
+            return
+
+
+def hint_python_version_independent_test_latest(
+    tests_section,
+    run_reqs,
+    outputs_section,
+    build_section,
+    recipe_version,
+    hints,
+):
+    if recipe_version != 1:
+        return
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            requirements = output.get("requirements", {})
+            output_run_reqs = (
+                requirements.get("run")
+                if isinstance(requirements, Mapping)
+                else requirements
+            )
+            scopes.append(
+                (
+                    output.get("tests"),
+                    output_run_reqs,
+                    output.get("build", {}),
+                )
+            )
+    else:
+        scopes.append((tests_section, run_reqs, build_section))
+
+    for tests, run, build in scopes:
+        if get_version_independent(
+            build or {}, "python", recipe_version
+        ) and not _python_tests_cover_latest(tests, run):
+            hints.append(msg.r.PythonVersionIndependentTestLatest().as_string())
+            return
 
 
 def hint_space_separated_specs(

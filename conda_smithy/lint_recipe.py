@@ -31,13 +31,16 @@ from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
+    hint_legacy_pypi_url,
+    hint_noarch_python_test_latest,
     hint_noarch_python_use_python_min,
     hint_os_version,
     hint_pip_no_build_backend,
     hint_pip_usage,
+    hint_python_version_independent_test_latest,
     hint_rattler_build_bld_bat,
+    hint_redundant_python_min,
     hint_shellcheck_usage,
-    hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_space_separated_specs,
     hint_suggest_noarch,
 )
@@ -46,9 +49,11 @@ from conda_smithy.linter.lints import (
     lint_build_section_should_be_before_run,
     lint_build_section_should_have_a_number,
     lint_check_usage_of_whls,
+    lint_feedstock_name,
     lint_feedstock_name_not_end_with_feedstock,
     lint_floats_quoted,
     lint_go_licenses_are_bundled,
+    lint_invalid_workflow_settings,
     lint_jinja_var_references,
     lint_jinja_variables_definitions,
     lint_legacy_usage_of_compilers,
@@ -87,7 +92,7 @@ from conda_smithy.linter.utils import (
     flatten_v1_if_else,
     get_all_test_requirements,
     get_section,
-    load_linter_toml_metdata,
+    load_linter_toml_metadata,
 )
 from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
@@ -435,8 +440,8 @@ def lintify_meta_yaml(
     # 4: Check for SPDX
     hint_check_spdx(about_section, hints)
 
-    # 5: hint pypi.io -> pypi.org
-    hint_sources_should_not_mention_pypi_io_but_pypi_org(sources_section, hints)
+    # 5: hint pypi.io -> files.pythonhosted.org
+    hint_legacy_pypi_url(sources_section, hints)
 
     # 6: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
@@ -707,7 +712,7 @@ def run_conda_forge_specific(
             else:
                 run_reqs += _req
 
-    specific_hints = (load_linter_toml_metdata() or {}).get("hints", [])
+    specific_hints = (load_linter_toml_metadata() or {}).get("hints", {})
     all_reqs = build_reqs + host_reqs + run_reqs
     if recipe_version == 1:
         all_reqs = flatten_v1_if_else(all_reqs)
@@ -782,6 +787,31 @@ def run_conda_forge_specific(
             hints,
         )
 
+    # 10b: noarch python recipes should test the minimum AND latest python
+    if "hint_noarch_python_test_latest" not in lints_to_skip and recipe_version == 1:
+        hint_noarch_python_test_latest(
+            get_section(meta, "tests", lints, recipe_version),
+            requirements_section.get("run") or [],
+            outputs_section,
+            noarch_value,
+            recipe_version,
+            hints,
+        )
+
+    # 10c: python version-independent (abi3) recipes should test latest too
+    if (
+        "hint_python_version_independent_test_latest" not in lints_to_skip
+        and recipe_version == 1
+    ):
+        hint_python_version_independent_test_latest(
+            get_section(meta, "tests", lints, recipe_version),
+            requirements_section.get("run") or [],
+            outputs_section,
+            build_section,
+            recipe_version,
+            hints,
+        )
+
     if os.path.exists(recipe_fname):
         with open(recipe_fname, encoding="utf-8") as fh:
             recipe_text = fh.read()
@@ -793,6 +823,15 @@ def run_conda_forge_specific(
             hints,
             recipe_version=recipe_version,
         )
+
+        # 11b: redefining python_min to the global pinning default is redundant
+        if "hint_redundant_python_min" not in lints_to_skip:
+            hint_redundant_python_min(
+                meta,
+                recipe_text,
+                recipe_version,
+                hints,
+            )
 
         # 12: ensure is_abi3 is boolean
         lint_recipe_is_abi3_bool(
@@ -836,6 +875,12 @@ def run_conda_forge_specific(
     # 17: Check for deprecated conda-forge.yml variables (that cannot be caught
     # via the schema)
     hint_deprecated_environment_variables(feedstock_config, hints)
+
+    # 18: Check for invalid values in workflow_settings in conda-forge.yml
+    lint_invalid_workflow_settings(feedstock_config, lints)
+
+    # 19: Check for missing feedstock-name (if necessary).
+    lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

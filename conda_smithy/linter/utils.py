@@ -19,7 +19,9 @@ from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
 from requests.exceptions import Timeout
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
+from conda_smithy.utils import get_yaml
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
 
@@ -217,29 +219,70 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
         return msg.r.InvalidVersion(version=ver, error=str(e)).as_string()
 
 
-def load_linter_toml_metadata():
-    # ensure we refresh the cache every hour
-    ttl = 3600
-    time_salt = int(time.time() / ttl)
-    return load_linter_toml_metdata_internal(time_salt)
+PINNING_FEEDSTOCK_RAW = (
+    "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main"
+)
 
 
-load_linter_toml_metdata = load_linter_toml_metadata  # BW Compat
-
-
-@lru_cache(maxsize=1)
-def load_linter_toml_metdata_internal(time_salt):
-    hints_toml_url = "https://raw.githubusercontent.com/conda-forge/conda-forge-pinning-feedstock/main/recipe/linter_hints/hints.toml"
+# cache size should be >= number of urls in use; old epochs are never needed again
+@lru_cache(maxsize=5)
+def _try_fetch_url_content(url: str, epoch_hour: int) -> Optional[str]:
+    """private helper for _try_fetch_url_content_cached"""
     try:
-        hints_toml_req = requests.get(hints_toml_url, timeout=5)
+        payload = requests.get(url, timeout=5)
     except Timeout:
         return None
-    if hints_toml_req.status_code != 200:
+    if payload.status_code != 200:
         # too bad, but not important enough to throw an error;
         # linter will rerun on the next commit anyway
         return None
-    hints_toml_str = hints_toml_req.content.decode("utf-8")
+    return payload.content.decode("utf-8")
+
+
+def _try_fetch_url_content_cached(url: str) -> Optional[str]:
+    """self-limited to update only once per hour"""
+    epoch_hour = int(time.time() / 3600)  # time.time() is in seconds
+    return _try_fetch_url_content(url, epoch_hour)
+
+
+def load_linter_toml_metadata():
+    url = f"{PINNING_FEEDSTOCK_RAW}/recipe/linter_hints/hints.toml"
+    if (hints_toml_str := _try_fetch_url_content_cached(url)) is None:
+        return None
     return tomllib.loads(hints_toml_str)
+
+
+@deprecated(
+    "2026.7",
+    "2026.9",
+    addendum="Use `load_linter_toml_metadata` instead.",
+)
+def load_linter_toml_metdata_internal(time_salt=None):
+    return load_linter_toml_metadata()
+
+
+# BW compat for the (misspelled) public alias
+deprecated.constant(
+    "2026.7",
+    "2026.9",
+    "load_linter_toml_metdata",
+    load_linter_toml_metadata,
+    addendum="Use `load_linter_toml_metadata` instead.",
+)
+
+
+def get_global_pinning_python_min() -> Optional[str]:
+    """The default `python_min` from conda-forge's global pinning, as a
+    string, or None if it cannot be fetched."""
+    url = f"{PINNING_FEEDSTOCK_RAW}/recipe/conda_build_config.yaml"
+    if (pinning_yaml := _try_fetch_url_content_cached(url)) is None:
+        return None
+    python_min = get_yaml().load(pinning_yaml).get("python_min")
+    if isinstance(python_min, Sequence) and not isinstance(python_min, str):
+        # the first entry is the default; later entries are platform
+        # exceptions gated by selector comments (e.g. win-arm64)
+        python_min = python_min[0] if python_min else None
+    return str(python_min) if python_min is not None else None
 
 
 def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:

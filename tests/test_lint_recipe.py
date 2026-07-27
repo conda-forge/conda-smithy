@@ -9,9 +9,11 @@ import tempfile
 import textwrap
 import unittest
 from collections import OrderedDict
+from collections.abc import Iterator
 from contextlib import contextmanager
 from itertools import count
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
@@ -29,7 +31,7 @@ _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 
 @contextmanager
-def get_recipe_in_dir(recipe_name: str) -> Path:
+def get_recipe_in_dir(recipe_name: str) -> Iterator[Path]:
     base_dir = Path(__file__).parent
     recipe_path = base_dir / "recipes" / recipe_name
     assert recipe_path.exists(), f"Recipe {recipe_name} does not exist"
@@ -123,7 +125,8 @@ def test_m2w64_stdlib_legal():
         "go-nocgo",
     ],
 )
-def test_v1_stdlib_hint(comp_lang):
+@pytest.mark.parametrize("quote", ["'", '"'])
+def test_v1_stdlib_hint(comp_lang, quote):
     expected_message = "This recipe is using a compiler"
 
     with tmp_directory() as recipe_dir:
@@ -133,7 +136,7 @@ def test_v1_stdlib_hint(comp_lang):
                 requirements:
                   build:
                     # since we're in an f-string: double up braces (2->4)
-                    - ${{{{ compiler('{comp_lang}') }}}}
+                    - ${{{{ compiler({quote}{comp_lang}{quote}) }}}}
                 """)
         Path(recipe_dir).joinpath("conda-forge.yml").write_text(
             "conda_build_tool: rattler-build"
@@ -2568,7 +2571,7 @@ def test_cfyml_wrong_os_version():
               script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv  # [win]
               number: 3
             """,
-            "PyPI default URL is now pypi.org",
+            "PyPI default URL is now files.pythonhosted.org",
             id="pypi.io",
         )
     ],
@@ -4228,6 +4231,429 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
         )
 
 
+@pytest.mark.parametrize(
+    "text,expected_hint",
+    [
+        # scalar python_version only tests python_min -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            True,
+        ),
+        # python_min AND latest -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - ${{ python_min }}.*
+                        - "*"
+                """),
+            False,
+        ),
+        # upper-bounded python in run caps the test env -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }},<3.12
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            False,
+        ),
+        # abi3-style conditional list including "*" -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - if: is_abi3
+                          then: ${{ python_min }}.*
+                        - "*"
+                """),
+            False,
+        ),
+        # not noarch -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                requirements:
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            False,
+        ),
+        # no python test at all -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_noarch_python_test_latest(text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any(
+            "testing against both the minimum and the latest" in h for h in hints
+        )
+        assert has_hint == expected_hint, hints
+
+
+@pytest.mark.parametrize(
+    "text,expected_hint",
+    [
+        # version-independent, only tests python_min -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            True,
+        ),
+        # version-independent, tests python_min AND latest -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - ${{ python_min }}.*
+                        - "*"
+                """),
+            False,
+        ),
+        # abi3 example recipe shape (conditional python_min + "*") -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: ${{ is_abi3 }}
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - if: is_abi3
+                          then: ${{ python_min }}.*
+                        - "*"
+                """),
+            False,
+        ),
+        # not version-independent -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                requirements:
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            False,
+        ),
+        # version-independent but no python test -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+        # abi3 via `${{ is_abi3 }}`, only tests python_min -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: ${{ is_abi3 }}
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version: ${{ python_min }}.*
+                """),
+            True,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_python_version_independent_test_latest(text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("version-independent (e.g. abi3)" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
+@pytest.mark.parametrize(
+    "recipe_name,text,global_python_min,expected_hint",
+    [
+        # v1: redefining python_min to the global default -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.10"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            True,
+        ),
+        # v1: overriding to a higher floor -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.12"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            False,
+        ),
+        # v1: redefining to a lower floor than the default -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.9"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            True,
+        ),
+        # v1: no python_min in context -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            False,
+        ),
+        # v1: pinning not fetchable -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.10"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            None,
+            False,
+        ),
+        # v0: jinja set matching the global default -> hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                {% set python_min = "3.10" %}
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            True,
+        ),
+        # v0: jinja set with a higher floor -> no hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                {% set python_min = "3.12" %}
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_hint_redundant_python_min(
+    recipe_name, text, global_python_min, expected_hint, monkeypatch
+):
+    monkeypatch.setattr(
+        "conda_smithy.linter.hints.get_global_pinning_python_min",
+        lambda: global_python_min,
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, recipe_name), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("remove the redefinition" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
@@ -4754,14 +5180,14 @@ tests:
 outputs:
   - package:
       name: foo
-{textwrap.indent(midpart, '    ')}\
+{textwrap.indent(midpart, "    ")}\
 """
 
     recipe = f"""\
 context:
   version: "1.0"
 
-{'recipe' if outputs else 'package'}:
+{"recipe" if outputs else "package"}:
   name: foo
   version: ${{{{ version }}}}
 
@@ -4988,7 +5414,7 @@ def test_run_conda_forge_specific_routes_unverified_to_lints(monkeypatch):
     # None from the existence check fails the lint (asking for a retry),
     # rather than reporting the maintainer as missing
     monkeypatch.setattr(linter, "_maintainer_exists", lambda m: None)
-    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
     meta = {"extra": {"recipe-maintainers": ["chrisburr"]}}
     lints, hints = [], []
     linter.run_conda_forge_specific(meta, None, lints, hints)
@@ -5001,12 +5427,280 @@ def test_run_conda_forge_specific_routes_unverified_to_lints(monkeypatch):
 
 def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
     monkeypatch.setattr(linter, "_maintainer_exists", lambda m: False)
-    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
     meta = {"extra": {"recipe-maintainers": ["nope"]}}
     lints, hints = [], []
     linter.run_conda_forge_specific(meta, None, lints, hints)
     assert any('Recipe maintainer "nope" does not exist' in lint for lint in lints)
     assert not any("Could not verify" in hint for hint in hints)
+
+
+def test_run_conda_forge_specific_missing_linter_hints_table(monkeypatch):
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
+    meta = {
+        "package": {"name": "foo"},
+        "requirements": {"run": ["python"]},
+    }
+    lints, hints = [], []
+
+    linter.run_conda_forge_specific(meta, None, lints, hints)
+
+    assert lints == []
+    assert hints == []
+
+
+def test_invalid_workflow_settings(tmp_path):
+    cfyml = tmp_path / "conda-forge.yml"
+    recipe_dir = tmp_path / "recipe"
+    recipe_dir.mkdir()
+    (recipe_dir / "meta.yaml").write_text(textwrap.dedent("""
+        package:
+          name: foo
+        """))
+
+    cfyml.write_text(textwrap.dedent(r"""
+        workflow_settings:
+          # bad: a single value
+          tools_install_dir: C:\test
+          free_disk_space:
+            # [0] good: platforms are subset of os
+            - os: [linux, osx]
+              platform: [linux_64, osx_arm64]
+              value: max
+            # [1] bad: platforms do not include osx
+            - os: [linux, osx]
+              platform: [linux_64]
+              value: skip
+            # [2] bad: platform and os are completely different
+            - os: win
+              platform: osx_arm64
+              value: max
+          build_workspace_dir:
+            # [0] bad: no 'os' qualifier
+            - provider: github_actions
+              value: /foo
+            # [1] bad: os specifies both linux and win
+            - os: [linux, win]
+              value: D:\foo
+            # [2] good: per os
+            - os: linux
+              value: /bar
+            # [3] good: per os
+            - os: win
+              value: C:\bar
+            # [4] good: platform restricts os
+            - platform: [linux_64]
+              value: /baz
+            # [5] bad: platform covers two systems
+            - platform: [osx_arm64, win_64]
+              value: C:\foo
+          resize_partitions:
+            # [0] bad: non-windows
+            - provider: github_actions
+              value: false
+            # [1] bad: non-GHA
+            - os: win
+              value: false
+            # [2] good
+            - os: win
+              provider: github_actions
+              value: true
+            # [3] bad: also non-windows
+            - os: [win, linux]
+              provider: github_actions
+              value: true
+            # [4] bad: also non-GHA
+            - os: win
+              provider: [azure, github_actions]
+              value: true
+            # [5] good: windows via platform
+            - platform: win_64
+              provider: github_actions
+              value: false
+            # [6] bad: non-windows via platform
+            - platform: [win_64, osx_64]
+              provider: github_actions
+              value: true
+        """))
+
+    lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
+
+    expected = {
+        "`workflow_settings.build_workspace_dir has potentially overlapping entries:\n[1]={'value': 'D:\\\\foo', 'os': ['linux', 'win']}\n[2]={'value': '/bar', 'os': ['linux']}.",
+        "`workflow_settings.build_workspace_dir has potentially overlapping entries:\n[1]={'value': 'D:\\\\foo', 'os': ['linux', 'win']}\n[3]={'value': 'C:\\\\bar', 'os': ['win']}.",
+        "`workflow_settings.free_disk_space has potentially overlapping entries:\n[0]={'value': 'max', 'os': ['linux', 'osx'], 'platform': ['linux_64', 'osx_arm64']}\n[1]={'value': 'skip', 'os': ['linux', 'osx'], 'platform': ['linux_64']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[0]={'value': False, 'provider': ['github_actions']}\n[1]={'value': False, 'os': ['win']}\n[2]={'value': True, 'os': ['win'], 'provider': ['github_actions']}\n[3]={'value': True, 'os': ['win', 'linux'], 'provider': ['github_actions']}\n[4]={'value': True, 'os': ['win'], 'provider': ['azure', 'github_actions']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[0]={'value': False, 'provider': ['github_actions']}\n[3]={'value': True, 'os': ['win', 'linux'], 'provider': ['github_actions']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[0]={'value': False, 'provider': ['github_actions']}\n[5]={'value': False, 'platform': ['win_64'], 'provider': ['github_actions']}\n[6]={'value': True, 'platform': ['win_64', 'osx_64'], 'provider': ['github_actions']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[0]={'value': False, 'provider': ['github_actions']}\n[6]={'value': True, 'platform': ['win_64', 'osx_64'], 'provider': ['github_actions']}.",
+        "`workflow_settings.resize_partitions has potentially overlapping entries:\n[1]={'value': False, 'os': ['win']}\n[4]={'value': True, 'os': ['win'], 'provider': ['azure', 'github_actions']}.",
+        "`workflow_settings.free_disk_space[1]` restricts `os` to ['linux', 'osx'] but `platform` to `['linux_64']`.",
+        "`workflow_settings.free_disk_space[2]` restricts `os` to ['win'] but `platform` to `['osx_arm64']`.",
+        "`workflow_settings.build_workspace_dir[0]` specifies path `/foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'osx', 'win']).",
+        "`workflow_settings.build_workspace_dir[1]` specifies path `D:\\foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'win']).",
+        "`workflow_settings.build_workspace_dir[5]` specifies path `C:\\foo` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['osx', 'win']).",
+        "`workflow_settings.tools_install_dir[0]` specifies path `C:\\test` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ['linux', 'osx', 'win']).",
+        "`workflow_settings.resize_partitions[0]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[1]` is not restricted by ['provider'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[3]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[4]` is not restricted by ['provider'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+        "`workflow_settings.resize_partitions[6]` is not restricted by ['os'] to applicable workflows (expected: {'os': {'win'}, 'provider': {'github_actions'}}).",
+    }
+
+    assert {x for x in lints if "workflow_settings" in x} == expected
+
+
+@pytest.mark.parametrize(
+    "remotes,feedstock_name,expected",
+    [
+        # GOOD-ish: no remotes to check against
+        ({}, None, None),
+        ({}, "bar", None),
+        # GOOD: recipe name matches repo name
+        ({"origin": "https://github.com/conda-forge/foo-feedstock"}, None, None),
+        # GOOD: feedstock-name matches repo name
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, "bar", None),
+        # BAD: no feedstock-name
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        # BAD: feedstock-name doesn't match the repository
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, "baz", "bar"),
+        # BAD: URL variations
+        ({"origin": "https://github.com/conda-forge/bar-feedstock/"}, None, "bar"),
+        ({"origin": "https://github.com/conda-forge/bar-feedstock.git"}, None, "bar"),
+        ({"origin": "https://github.com/conda-forge/bar-feedstock.git/"}, None, "bar"),
+        ({"origin": "git+ssh://git@github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        ({"origin": "git@github.com:conda-forge/bar-feedstock"}, None, "bar"),
+        # BAD: using "upstream" remote
+        ({"upstream": "https://github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        # GOOD-ish: unknown remote
+        ({"foo": "https://github.com/conda-forge/bar-feedstock"}, None, None),
+        # GOOD-ish: remote isn't a conda-forge feedstock URL
+        ({"origin": "https://github.com/mgorny/bar-feedstock"}, None, None),
+        # GOOD: "upstream" takes precedence over "origin"
+        (
+            {
+                "origin": "https://github.com/conda-forge/bar-feedstock",
+                "upstream": "https://github.com/conda-forge/foo-feedstock",
+            },
+            None,
+            None,
+        ),
+    ],
+)
+@mock.patch("conda_smithy.linter.lints.get_repo")
+def test_lint_feedstock_name(
+    repo_mock,
+    tmp_path: Path,
+    remotes: dict[str, str],
+    feedstock_name: str | None,
+    expected: str | None,
+) -> None:
+    recipe = """\
+package:
+  name: foo
+  version: "1.2.3"
+
+build:
+  number: 1
+
+test:
+  commands:
+    - true
+
+about:
+  home: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+    if feedstock_name is not None:
+        recipe += f"""\
+  feedstock-name: {feedstock_name}
+"""
+
+    remotes_mock = repo_mock.return_value.remotes
+    remotes_mock.names.return_value = list(remotes)
+    for remote_name, remote_url in remotes.items():
+        remotes_mock[remote_name].url = remote_url
+
+    tmp_path.joinpath("meta.yaml").write_text(recipe)
+    lints = linter.main(tmp_path, conda_forge=True)
+
+    assert lints == (
+        [
+            f"Mismatched feedstock name in the recipe: {feedstock_name or 'foo'}. "
+            f"Specify `extra.feedstock_name: {expected}`."
+        ]
+        if expected is not None
+        else []
+    )
+
+
+@pytest.mark.parametrize("has_outputs", [False, True])
+@mock.patch("conda_smithy.linter.lints.get_repo")
+def test_lint_feedstock_name_v1(
+    repo_mock,
+    tmp_path: Path,
+    has_outputs: bool,
+) -> None:
+    recipe = f"""\
+schema_version: 1
+
+{'recipe' if has_outputs else 'package'}:
+  name: foo
+  version: "1.2.3"
+
+build:
+  number: 1
+"""
+
+    if not has_outputs:
+        recipe += """
+tests:
+  - script:
+      - true
+"""
+    else:
+        recipe += """
+outputs:
+  - package:
+      name: foo
+    tests:
+      - script:
+          - true
+"""
+
+    recipe += """
+about:
+  homepage: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+
+    remotes_mock = repo_mock.return_value.remotes
+    remotes_mock.names.return_value = ["origin"]
+    remotes_mock["origin"].url = "https://github.com/conda-forge/bar-feedstock"
+
+    tmp_path.joinpath("recipe.yaml").write_text(recipe)
+    lints = linter.main(tmp_path, conda_forge=True)
+
+    assert lints == (
+        [
+            "Mismatched feedstock name in the recipe: foo. "
+            "Specify `extra.feedstock_name: bar`."
+        ]
+    )
 
 
 if __name__ == "__main__":

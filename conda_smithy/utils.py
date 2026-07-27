@@ -254,6 +254,14 @@ class ConditionalValue:
     platform: Optional[list[str]] = None
     provider: Optional[list[str]] = None
 
+    @property
+    def applicable_os(self) -> set[str]:
+        """A set of OS-es that this can apply to, after os+platform filtering"""
+        os = set(self.os or ["linux", "osx", "win"])
+        if self.platform is not None:
+            os &= {x.split("_", 1)[0] for x in self.platform}
+        return os
+
     def __str__(self) -> str:
         return str({k: v for k, v in dataclasses.asdict(self).items() if v is not None})
 
@@ -348,36 +356,7 @@ def get_workflow_settings(
             platform=platform,
             os=os,
         )
-        if len(filtered) > 1:
-            raise ValueError(
-                f"More than one value matched for `workflow_settings."
-                f"{setting_key}` when provider={provider} and "
-                f"platform={platform}: {filtered[0]} vs. {filtered[1]}"
-            )
         data[setting_key] = filtered[-1].value if filtered else None
-
-    for path_var in ("tools_install_dir", "build_workspace_dir"):
-        if data[path_var] is None:
-            continue
-        win_path = PureWindowsPath(data[path_var])
-        if os == "win":
-            if not win_path.drive:
-                raise ValueError(
-                    f"workflow_settings.{path_var} specifies Unix path for Windows "
-                    f"workflows: {win_path}"
-                )
-        elif win_path.drive:
-            raise ValueError(
-                f"workflow_settings.{path_var} specifies Windows path for Unix "
-                f"workflows: {win_path}"
-            )
-
-    if data["resize_partitions"]:
-        if os != "win" or provider != "github_actions":
-            raise ValueError(
-                "`workflow_settings.resize_partitions` is only valid for GHA/Windows "
-                f"(enabled for {provider=} / {os=})"
-            )
 
     return data
 
