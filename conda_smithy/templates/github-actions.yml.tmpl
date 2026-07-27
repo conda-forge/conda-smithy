@@ -301,6 +301,7 @@ jobs:
         if [ $JOB_STATUS == "failure" ]; then
           export BLD_ARTIFACT_PREFIX="conda_pkgs_failed"
           export ENV_ARTIFACT_PREFIX="conda_envs"
+          export WRK_ARTIFACT_PREFIX="conda_work"
         else
           export BLD_ARTIFACT_PREFIX="conda_pkgs"
         fi
@@ -316,6 +317,16 @@ jobs:
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
         path: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH }}{% endraw %}
+        retention-days: {{ github_actions.artifact_retention_days }}
+        archive: false
+      continue-on-error: true
+
+    - name: Store conda work directory artifacts
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      if: {% raw %}${{ always() && steps.determine-status.outputs.status == 'failure' && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      with:
+        name: {% raw %}${{ steps.prepare-artifacts.outputs.WRK_ARTIFACT_NAME }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.WRK_ARTIFACT_PATH }}{% endraw %}
         retention-days: {{ github_actions.artifact_retention_days }}
         archive: false
       continue-on-error: true

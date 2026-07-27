@@ -12,6 +12,7 @@ rem Optional:
 rem ARTIFACT_STAGING_DIR (use working directory if unset)
 rem BLD_ARTIFACT_PREFIX (prefix for the conda build artifact name, skip if unset)
 rem ENV_ARTIFACT_PREFIX (prefix for the conda build environments artifact name, skip if unset)
+rem WRK_ARTIFACT_PREFIX (prefix for the conda work directory artifact name, skip if unset)
 
 rem OUTPUTS
 rem
@@ -19,6 +20,8 @@ rem BLD_ARTIFACT_NAME
 rem BLD_ARTIFACT_PATH
 rem ENV_ARTIFACT_NAME
 rem ENV_ARTIFACT_PATH
+rem WRK_ARTIFACT_NAME
+rem WRK_ARTIFACT_PATH
 
 {%- if conda_install_tool == "pixi" %}
 set "PATH=%USERPROFILE%\.pixi\bin;%PATH%"
@@ -59,8 +62,10 @@ cd "%CONDA_BLD_PATH%"
 if errorlevel 1 exit 1
 
 set ENVIRONMENT_PATHS=
+set WORK_PATHS=
 set "EXCLUDE_COMMON=--exclude=.git --exclude=./pkg_cache --exclude=./src_cache"
 set EXCLUDE_FROM_BUILD_ARTIFACTS=
+set EXCLUDE_FROM_WORK=
 
 for /d %%a in (. bld test) do (
     if exist %%a (
@@ -70,10 +75,13 @@ for /d %%a in (. bld test) do (
                 set "EXCLUDE_COMMON=!EXCLUDE_COMMON! --exclude=%%a/%%b/pip_cache"
             )
 
+            set "WORK_PATHS=!WORK_PATHS! %%a/%%b"
+            set "EXCLUDE_FROM_BUILD_ARTIFACTS=!EXCLUDE_FROM_BUILD_ARTIFACTS! --exclude=%%a/%%b"
+
             cd %%b
             for /d %%c in (*_env* *_prefix_moved_*) do (
                 set "ENVIRONMENT_PATHS=!ENVIRONMENT_PATHS! %%a/%%b/%%c"
-                set "EXCLUDE_FROM_BUILD_ARTIFACTS=!EXCLUDE_FROM_BUILD_ARTIFACTS! --exclude=%%a/%%b/%%c"
+                set "EXCLUDE_FROM_WORK=!EXCLUDE_FROM_WORK! --exclude=%%a/%%b/%%c"
             )
             cd ..
         )
@@ -82,6 +90,7 @@ for /d %%a in (. bld test) do (
 )
 
 set "EXCLUDE_FROM_BUILD_ARTIFACTS=%EXCLUDE_COMMON%%EXCLUDE_FROM_BUILD_ARTIFACTS%"
+set "EXCLUDE_FROM_WORK=%EXCLUDE_COMMON%%EXCLUDE_FROM_WORK%"
 
 rem Make the build artifact archive
 if defined BLD_ARTIFACT_PREFIX (
@@ -100,6 +109,26 @@ if defined BLD_ARTIFACT_PREFIX (
     if "%CI%" == "github_actions" (
         echo BLD_ARTIFACT_NAME=!BLD_ARTIFACT_NAME!>> !GITHUB_OUTPUT!
         echo BLD_ARTIFACT_PATH=!BLD_ARTIFACT_PATH!>> !GITHUB_OUTPUT!
+    )
+)
+
+rem Make the work directory artifact archive
+if defined WRK_ARTIFACT_PREFIX (
+    set WRK_ARTIFACT_NAME=!WRK_ARTIFACT_PREFIX!_%ARTIFACT_UNIQUE_ID%
+    echo WRK_ARTIFACT_NAME: !WRK_ARTIFACT_NAME!
+
+    set "WRK_ARTIFACT_PATH=%ARTIFACT_STAGING_DIR%\%FEEDSTOCK_NAME%_%WRK_ARTIFACT_PREFIX%_%ARCHIVE_UNIQUE_ID%.tar.zst"
+    bsdtar -c -f "!WRK_ARTIFACT_PATH!" %ZSTD% %EXCLUDE_FROM_WORK% %WORK_PATHS%
+    if errorlevel 1 exit 1
+    echo WRK_ARTIFACT_PATH: !WRK_ARTIFACT_PATH!
+
+    if "%CI%" == "azure" (
+        echo ##vso[task.setVariable variable=WRK_ARTIFACT_NAME]!WRK_ARTIFACT_NAME!
+        echo ##vso[task.setVariable variable=WRK_ARTIFACT_PATH]!WRK_ARTIFACT_PATH!
+    )
+    if "%CI%" == "github_actions" (
+        echo WRK_ARTIFACT_NAME=!WRK_ARTIFACT_NAME!>> !GITHUB_OUTPUT!
+        echo WRK_ARTIFACT_PATH=!WRK_ARTIFACT_PATH!>> !GITHUB_OUTPUT!
     )
 )
 
