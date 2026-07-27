@@ -5715,11 +5715,11 @@ def test_license_files_up_to_date():
     assert (
         update_licenses_list.update_licenses(write=False)
         == original_licenses.splitlines()
-    )
+    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
     assert (
         update_licenses_list.update_license_exceptions(write=False)
         == original_exceptions.splitlines()
-    )
+    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
 
 
 if __name__ == "__main__":
