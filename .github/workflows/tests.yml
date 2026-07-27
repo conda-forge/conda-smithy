@@ -53,6 +53,13 @@ jobs:
         run: |
           conda install --yes --quiet ${{ matrix.extra-deps }}
 
+      - name: report environment information
+        run: |
+          set -x
+          conda info
+          conda config --show-sources
+          conda list
+
       - name: test versions
         run: |
           pip uninstall conda-smithy --yes
