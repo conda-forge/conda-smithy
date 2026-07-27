@@ -12,7 +12,9 @@ LICENSE_EXCEPTIONS_TXT_PATH = HERE / "license_exceptions.txt"
 def update_licenses(write: bool = True) -> list[str]:
     r = requests.get(LICENSES_URL)
     r.raise_for_status()
-    ids = sorted([license["licenseId"] for license in r.json()["licenses"]], key=str.lower)
+    ids = sorted(
+        [license["licenseId"] for license in r.json()["licenses"]], key=str.lower
+    )
     if write:
         LICENSES_TXT_PATH.write_text("\n".join([*ids, ""]))
     return ids
@@ -21,7 +23,10 @@ def update_licenses(write: bool = True) -> list[str]:
 def update_license_exceptions(write: bool = True) -> list[str]:
     r = requests.get(LICENSE_EXCEPTIONS_URL)
     r.raise_for_status()
-    ids = sorted([license["licenseExceptionId"] for license in r.json()["exceptions"]], key=str.lower)
+    ids = sorted(
+        [license["licenseExceptionId"] for license in r.json()["exceptions"]],
+        key=str.lower,
+    )
     if write:
         LICENSE_EXCEPTIONS_TXT_PATH.write_text("\n".join([*ids, ""]))
     return ids
