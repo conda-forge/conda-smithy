@@ -84,11 +84,11 @@ drone_default_endpoint = "https://cloud.drone.io"
 class LiveServerSession(requests.Session):
     """Utility class to avoid typing out urls all the time"""
 
-    def __init__(self, prefix_url=None, *args, **kwargs):
+    def __init__(self, prefix_url: str = "", *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prefix_url = prefix_url
 
-    def request(self, method, url, *args, **kwargs):
+    def request(self, method, url: str, *args, **kwargs):
         from urllib.parse import urljoin
 
         url = urljoin(self.prefix_url, url)
