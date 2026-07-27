@@ -13,7 +13,12 @@ def update_licenses(write: bool = True) -> list[str]:
     r = requests.get(LICENSES_URL)
     r.raise_for_status()
     ids = sorted(
-        [license["licenseId"] for license in r.json()["licenses"]], key=str.lower
+        [
+            license["licenseId"]
+            for license in r.json()["licenses"]
+            if not license["isDeprecatedLicenseId"]
+        ],
+        key=str.lower,
     )
     if write:
         LICENSES_TXT_PATH.write_text("\n".join([*ids, ""]))
@@ -24,7 +29,11 @@ def update_license_exceptions(write: bool = True) -> list[str]:
     r = requests.get(LICENSE_EXCEPTIONS_URL)
     r.raise_for_status()
     ids = sorted(
-        [license["licenseExceptionId"] for license in r.json()["exceptions"]],
+        [
+            license["licenseExceptionId"]
+            for license in r.json()["exceptions"]
+            if not license["isDeprecatedLicenseId"]
+        ],
         key=str.lower,
     )
     if write:
