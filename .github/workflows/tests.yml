@@ -51,7 +51,7 @@ jobs:
       - name: install additional dependencies
         if: matrix.extra-deps
         run: |
-          conda install --yes ${{ matrix.extra-deps }}
+          conda install --yes --quiet ${{ matrix.extra-deps }}
 
       - name: test versions
         run: |
