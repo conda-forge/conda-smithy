@@ -5,9 +5,9 @@ import subprocess
 import sys
 import tempfile
 import time
+import warnings
 from textwrap import dedent
 from typing import Optional, Union
-import warnings
 
 import conda  # noqa
 from conda_build.metadata import MetaData
@@ -17,7 +17,6 @@ from ruamel.yaml import YAML
 
 import conda_smithy.cirun_utils
 from conda_smithy import __version__, configure_feedstock, feedstock_io
-
 from conda_smithy import lint_recipe as linter
 from conda_smithy.configure_feedstock import (
     _load_forge_config,
