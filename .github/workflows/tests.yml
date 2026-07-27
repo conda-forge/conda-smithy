@@ -42,7 +42,9 @@ jobs:
           python -m pip install -v --no-build-isolation -e .
 
       - name: install conda-forge-tick
+        if: runner.os == 'Linux'
         run: |
+          # Linux-only, can't be specified on environment.yml
           conda install --yes 'conda-forge-tick>=2026.0'
 
       - name: test versions
