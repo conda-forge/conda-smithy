@@ -1305,4 +1305,26 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
+    """
+    rattler-build defines `$SP_DIR` (the environment's site-packages
+    directory, `%SP_DIR%` on Windows), so recipes no longer need to set it
+    themselves or hardcode the path. Older abi3 recipes exported it manually
+    as a workaround for it being undefined, or hardcoded a Windows path such
+    as `%PREFIX%\\Lib\\site-packages`.
+    """
+
+    kind = "hint"
+    identifier = "R1-006"
+    added_in = "2026.7"
+    message = (
+        "This recipe handles the site-packages directory manually, either by "
+        "defining `SP_DIR` itself or by hardcoding a path such as "
+        "`%PREFIX%\\Lib\\site-packages`. rattler-build now defines `$SP_DIR` "
+        "(`%SP_DIR%` on Windows), so the manual definition can be removed and "
+        "hardcoded paths replaced with `$SP_DIR` / `%SP_DIR%`."
+    )
+
+
 # endregion
