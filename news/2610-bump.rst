@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Bump ``py-rattler`` upper bound pin to 0.26. (#2610, #2635)
+* Widen ``py-rattler`` version constraints to ``>=0.22,<0.26.0a0``. (#2610, #2635)
 
 **Deprecated:**
 
