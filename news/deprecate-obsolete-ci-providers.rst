@@ -8,7 +8,7 @@
 
 **Deprecated:**
 
-* All functions and functionality regarding obsolete CI providers (appveyor, circleci, cirrus, drone, travis, woodpecker) have been deprecated.
+* CI integrations for appveyor, circleci, cirrus, drone, travis, woodpecker are now considered deprecated. All functions and functionality regarding these  obsolete CI providers will be removed in 26.10. (#2633)
 
 **Removed:**
 
