@@ -18,7 +18,7 @@ from unittest import mock
 import pytest
 
 import conda_smithy.lint_recipe as linter
-from conda_smithy.linter import hints
+from conda_smithy.linter import hints, update_licenses_list
 from conda_smithy.linter.conda_recipe_v1_linter import lint_recipe_tests
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
@@ -5815,6 +5815,25 @@ extra:
             "Specify `extra.feedstock_name: bar`."
         ]
     )
+
+
+def test_license_files_up_to_date():
+    """
+    If this test fails, run this from an activated conda-smithy environment and commit the result:
+
+    python -m conda_smithy.linter.update_licenses_list
+    """
+    original_licenses = update_licenses_list.LICENSES_TXT_PATH.read_text()
+    original_exceptions = update_licenses_list.LICENSE_EXCEPTIONS_TXT_PATH.read_text()
+
+    assert (
+        update_licenses_list.update_licenses(write=False)
+        == original_licenses.splitlines()
+    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
+    assert (
+        update_licenses_list.update_license_exceptions(write=False)
+        == original_exceptions.splitlines()
+    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
 
 
 if __name__ == "__main__":
