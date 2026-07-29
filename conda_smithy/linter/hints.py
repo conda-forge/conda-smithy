@@ -9,6 +9,7 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
+from conda.deprecations import deprecated
 from conda.models.version import VersionOrder
 
 from conda_smithy.linter import conda_recipe_v1_linter
@@ -35,12 +36,10 @@ def hint_pip_usage(build_section, hints):
                 hints.append(msg.r.UsePip().as_string())
 
 
-def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: list[dict[str, Any]], hints: list[str]
-):
+def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
-    but cannonical url is PyPI.org.
+    but cannonical url is files.pythonhosted.org.
 
     See https://github.com/conda-forge/staged-recipes/pull/27946
     """
@@ -48,7 +47,14 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.UsePyPIOrg().as_string())
+            hints.append(msg.r.LegacyPyPIURL().as_string())
+
+
+@deprecated("2026.7", "2026.10", addendum="Use hint_legacy_pypi_url() instead")
+def hint_sources_should_not_mention_pypi_io_but_pypi_org(
+    sources_section: list[dict[str, Any]], hints: list[str]
+):
+    hint_legacy_pypi_url(sources_section, hints)
 
 
 def hint_suggest_noarch(
@@ -74,20 +80,19 @@ def hint_suggest_noarch(
             )
         else:
             with open(recipe_fname, encoding="utf-8") as fh:
-                in_runreqs = False
+                runreqs_spacing = None
                 no_arch_possible = True
                 for line in fh:
                     line_s = line.strip()
                     if line_s == "host:" or line_s == "run:":
-                        in_runreqs = True
                         runreqs_spacing = line[: -len(line.lstrip())]
                         continue
                     if line_s.startswith("skip:") and is_selector_line(line):
                         no_arch_possible = False
                         break
-                    if in_runreqs:
+                    if runreqs_spacing is not None:
                         if runreqs_spacing == line[: -len(line.lstrip())]:
-                            in_runreqs = False
+                            runreqs_spacing = None
                             continue
                         if is_selector_line(line):
                             no_arch_possible = False
@@ -600,6 +605,41 @@ def hint_rattler_build_bld_bat(
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
         hints.append(msg.r.RattlerBldBat().as_string())
+
+
+# Matches a manual definition of SP_DIR in a script line, e.g.
+# `- export SP_DIR=$(python -c "...")`. It must be an assignment (`SP_DIR=`),
+# so plain uses like `$SP_DIR/foo` or `%SP_DIR%` are not matched.
+SP_DIR_DEFINITION_RE = re.compile(
+    r"(?m)^\s*(?:-\s+)?(?:then:\s+)?(?:export\s+)?SP_DIR\s*="
+)
+
+# Matches a hardcoded Windows site-packages path, e.g.
+# `%PREFIX%\Lib\site-packages` or `%PREFIX%/Lib/site-packages`, which should
+# use `%SP_DIR%` instead. Either path separator is accepted.
+PREFIX_SITE_PACKAGES_RE = re.compile(
+    r"%PREFIX%[\\/]+Lib[\\/]+site-packages", re.IGNORECASE
+)
+
+
+def hint_rattler_build_sp_dir(
+    recipe_text: str,
+    hints: list[str],
+    recipe_version: int = 0,
+):
+    """Hint that handling site-packages manually is an obsolete rattler-build workaround.
+
+    rattler-build now defines `$SP_DIR` (the environment's site-packages
+    directory, `%SP_DIR%` on Windows). Older abi3 recipes exported it themselves
+    as a workaround for it previously being undefined, or hardcoded a path such
+    as `%PREFIX%\\Lib\\site-packages`; both can now use `$SP_DIR` / `%SP_DIR%`.
+    """
+    if recipe_version != 1:
+        return
+
+    text = recipe_text or ""
+    if SP_DIR_DEFINITION_RE.search(text) or PREFIX_SITE_PACKAGES_RE.search(text):
+        hints.append(msg.r.RattlerSPDir().as_string())
 
 
 def _check_pin_overridden(

@@ -5,6 +5,8 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 from dataclasses import asdict, dataclass
 from typing import ClassVar, Literal, Self, TypeAlias
 
+from conda.deprecations import deprecated
+
 from conda_smithy.linter.messages.base import LinterMessage
 
 CATEGORIES = {
@@ -1006,10 +1008,10 @@ class UsePip(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
+class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
-    but the canonical URL is now PyPI.org.
+    but the canonical URL is now files.pythonhosted.org.
 
     See https://github.com/conda-forge/staged-recipes/pull/27946.
     """
@@ -1017,9 +1019,18 @@ class UsePyPIOrg(LinterMessage, _AnyRecipeMessage):
     kind = "hint"
     identifier = "R-050"
     message = (
-        "PyPI default URL is now pypi.org, and not pypi.io."
+        "PyPI default URL is now files.pythonhosted.org, and not pypi.io."
         " You may want to update the default source url."
     )
+
+
+deprecated.constant(
+    "2026.7",
+    "2026.10",
+    "UsePyPIOrg",
+    LegacyPyPIURL,
+    addendum="Use LegacyPyPIURL instead",
+)
 
 
 @dataclass(kw_only=True)
@@ -1291,6 +1302,28 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
         "        - ${{ python_min }}.*\n"
         '        - "*"\n'
         "```"
+    )
+
+
+@dataclass(kw_only=True)
+class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
+    """
+    rattler-build defines `$SP_DIR` (the environment's site-packages
+    directory, `%SP_DIR%` on Windows), so recipes no longer need to set it
+    themselves or hardcode the path. Older abi3 recipes exported it manually
+    as a workaround for it being undefined, or hardcoded a Windows path such
+    as `%PREFIX%\\Lib\\site-packages`.
+    """
+
+    kind = "hint"
+    identifier = "R1-006"
+    added_in = "2026.7"
+    message = (
+        "This recipe handles the site-packages directory manually, either by "
+        "defining `SP_DIR` itself or by hardcoding a path such as "
+        "`%PREFIX%\\Lib\\site-packages`. rattler-build now defines `$SP_DIR` "
+        "(`%SP_DIR%` on Windows), so the manual definition can be removed and "
+        "hardcoded paths replaced with `$SP_DIR` / `%SP_DIR%`."
     )
 
 

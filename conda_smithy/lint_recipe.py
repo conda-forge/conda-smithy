@@ -31,6 +31,7 @@ from conda_smithy.linter.hints import (
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
+    hint_legacy_pypi_url,
     hint_noarch_python_test_latest,
     hint_noarch_python_use_python_min,
     hint_os_version,
@@ -38,9 +39,9 @@ from conda_smithy.linter.hints import (
     hint_pip_usage,
     hint_python_version_independent_test_latest,
     hint_rattler_build_bld_bat,
+    hint_rattler_build_sp_dir,
     hint_redundant_python_min,
     hint_shellcheck_usage,
-    hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_space_separated_specs,
     hint_suggest_noarch,
 )
@@ -49,6 +50,7 @@ from conda_smithy.linter.lints import (
     lint_build_section_should_be_before_run,
     lint_build_section_should_have_a_number,
     lint_check_usage_of_whls,
+    lint_feedstock_name,
     lint_feedstock_name_not_end_with_feedstock,
     lint_floats_quoted,
     lint_go_licenses_are_bundled,
@@ -439,8 +441,8 @@ def lintify_meta_yaml(
     # 4: Check for SPDX
     hint_check_spdx(about_section, hints)
 
-    # 5: hint pypi.io -> pypi.org
-    hint_sources_should_not_mention_pypi_io_but_pypi_org(sources_section, hints)
+    # 5: hint pypi.io -> files.pythonhosted.org
+    hint_legacy_pypi_url(sources_section, hints)
 
     # 6: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
@@ -838,6 +840,14 @@ def run_conda_forge_specific(
             lints,
         )
 
+        # 12b: defining SP_DIR is an obsolete rattler-build workaround
+        if "hint_rattler_build_sp_dir" not in lints_to_skip:
+            hint_rattler_build_sp_dir(
+                recipe_text,
+                hints,
+                recipe_version,
+            )
+
     # 13: no empty conda_build_config.yaml files
     cbc_pth = os.path.join(recipe_dir or "", "conda_build_config.yaml")
     if os.path.exists(cbc_pth):
@@ -877,6 +887,9 @@ def run_conda_forge_specific(
 
     # 18: Check for invalid values in workflow_settings in conda-forge.yml
     lint_invalid_workflow_settings(feedstock_config, lints)
+
+    # 19: Check for missing feedstock-name (if necessary).
+    lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

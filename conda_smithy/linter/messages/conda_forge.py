@@ -259,3 +259,17 @@ class WorkflowSettingsSpecificEntryTooLoose(LinterMessage):
     index: int
     mismatched: list[str]
     restrictions: dict
+
+
+@dataclass(kw_only=True)
+class MismatchedFeedstockName(LinterMessage):
+    """
+    Lint when the feedstock name is mismatched to recipe name.
+    """
+
+    kind = "lint"
+    identifier = "CF-013"
+    added_in = "2026.7"
+    message = "Mismatched feedstock name in the recipe: ${current}. Specify `extra.feedstock_name: ${expected}`.\n"
+    current: str
+    expected: str
