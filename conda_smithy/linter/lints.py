@@ -294,10 +294,24 @@ def lint_subheaders(major_sections, meta, lints):
                         )
 
 
-def lint_noarch(noarch_value: Optional[str], lints):
+def lint_noarch(
+    noarch_value: Optional[str],
+    lints,
+    recipe_version: msg.r.RECIPE_VERSIONS = 0,
+    meta: Optional[dict[str, Any]] = None,
+):
     if noarch_value is not None:
-        if noarch_value not in msg.r.NoarchValue.valid:
-            lints.append(msg.r.NoarchValue(given=noarch_value).as_string())
+        if not msg.r.NoarchValue.is_valid(
+            noarch_value,
+            recipe_version,
+            meta,
+        ):
+            lints.append(
+                msg.r.NoarchValue(
+                    given=noarch_value,
+                    recipe_version=recipe_version,
+                ).as_string()
+            )
 
 
 def lint_recipe_v1_noarch_and_runtime_dependencies(
@@ -306,7 +320,9 @@ def lint_recipe_v1_noarch_and_runtime_dependencies(
     build_section: dict[str, Any],
     noarch_platforms: bool,
     lints: list[str],
+    meta: Optional[dict[str, Any]] = None,
 ) -> None:
+    noarch_value = msg.r.NoarchValue.concrete_noarch_value(noarch_value, 1, meta)
     if noarch_value:
         conda_recipe_v1_linter.lint_usage_of_selectors_for_noarch(
             noarch_value,

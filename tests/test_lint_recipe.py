@@ -651,6 +651,38 @@ class TestLinter(unittest.TestCase):
         lints, hints = linter.lintify_meta_yaml(meta)
         self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
+    def test_recipe_v1_noarch_value_allows_conditional_no_context(self):
+        meta = {"build": {"noarch": '${{ "python" if use_noarch }}'}}
+        expected = "Invalid `noarch` value"
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        self.assertFalse(any(lint.startswith(expected) for lint in lints))
+
+    def test_recipe_v1_noarch_value_allows_rendered_conditional(self):
+        expected = "Invalid `noarch` value"
+        for use_noarch in (True, False):
+            meta = {
+                "context": {"use_noarch": use_noarch},
+                "build": {"noarch": '${{ "python" if use_noarch }}'},
+            }
+            lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+            self.assertFalse(any(lint.startswith(expected) for lint in lints))
+
+    def test_recipe_v1_noarch_value_rejects_invalid_rendered_conditional(self):
+        meta = {
+            "context": {"use_noarch": True},
+            "build": {"noarch": '${{ "banana" if use_noarch else null }}'},
+        }
+        expected = "Invalid `noarch` value"
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+
+    def test_recipe_v1_noarch_value_allows_null_value(self):
+        expected = "Invalid `noarch` value"
+        for noarch_value in ("null", "None", "none", "~"):
+            meta = {"build": {"noarch": noarch_value}}
+            lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+            self.assertFalse(any(lint.startswith(expected) for lint in lints))
+
     def test_maintainers_section(self):
         expected_message = (
             "The recipe could do with some maintainers listed "
@@ -1310,6 +1342,22 @@ linter:
                             """,
                 is_good=True,
                 has_noarch=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: ${{ "python" if use_noarch }}
+                            requirements:
+                              host:
+                                - if: use_noarch
+                                  then: python ${{ python_min }}.*
+                                  else: python
+                              run:
+                                - if: use_noarch
+                                  then: python >=${{ python_min }}
+                                  else: python
+                            """,
+                is_good=True,
             )
             assert_noarch_selector("""
                             build:

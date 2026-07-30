@@ -3,9 +3,10 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 """
 
 from dataclasses import asdict, dataclass
-from typing import ClassVar, Literal, Self, TypeAlias
+from typing import Any, ClassVar, Literal, Self, TypeAlias
 
 from conda.deprecations import deprecated
+from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 
 from conda_smithy.linter.messages.base import LinterMessage
 
@@ -368,16 +369,81 @@ class SourceHash(LinterMessage, _AnyRecipeMessage):
 class NoarchValue(LinterMessage, _AnyRecipeMessage):
     """
     The `build.noarch` field can only take `python` or `generic` as a value.
+    Recipe v1 also accepts `null`, `none`, `None` or `~` to leave `noarch` unset.
     """
 
     kind = "lint"
     identifier = "R-020"
     valid: ClassVar[list[str]] = ["python", "generic"]
+    valid_v1: ClassVar[list[str]] = [*valid, "null", "none", "None", "~"]
     message = "Invalid `noarch` value `${given}`. Should be one of `${valid}`."
     given: str
+    recipe_version: RECIPE_VERSIONS
+
+    @classmethod
+    def valid_values(cls, recipe_version: RECIPE_VERSIONS) -> list[str]:
+        if recipe_version == 1:
+            return cls.valid_v1
+        return cls.valid
+
+    @classmethod
+    def rendered_value(
+        cls,
+        given: object,
+        recipe_version: RECIPE_VERSIONS,
+        meta: dict[str, Any] | None = None,
+    ) -> object | None:
+        """
+        Render the value when a jinja expression is given in v1 recipe
+        Return None if the expression can't be rendered - check ignored
+        """
+        from conda_smithy.linter import conda_recipe_v1_linter
+
+        if (
+            recipe_version == 1
+            and isinstance(given, str)
+            and conda_recipe_v1_linter.JINJA_VAR_PAT.search(given)
+        ):
+            if meta is None:
+                # No context, can't render the jinja expression - skip
+                return None
+            given = render_recipe_with_context(meta).get("build", {}).get("noarch")
+            if given is None or (
+                isinstance(given, str)
+                and conda_recipe_v1_linter.JINJA_VAR_PAT.search(given)
+            ):
+                # expression rendered to unset/null
+                # or expression could not be resolved from known context
+                return None
+        return given
+
+    @classmethod
+    def is_valid(
+        cls,
+        given: object,
+        recipe_version: RECIPE_VERSIONS,
+        meta: dict[str, Any] | None = None,
+    ) -> bool:
+        given = cls.rendered_value(given, recipe_version, meta)
+        return given is None or given in cls.valid_values(recipe_version)
+
+    @classmethod
+    def concrete_noarch_value(
+        cls,
+        given: object,
+        recipe_version: RECIPE_VERSIONS,
+        meta: dict[str, Any] | None = None,
+    ) -> str | None:
+        given = cls.rendered_value(given, recipe_version, meta)
+        if isinstance(given, str) and given in cls.valid:
+            return given
+        return None
 
     def _render_attributes(self):
-        return {"given": self.given, "valid": ", ".join(self.valid)}
+        return {
+            "given": self.given,
+            "valid": ", ".join(self.valid_values(self.recipe_version)),
+        }
 
 
 @dataclass(kw_only=True)
