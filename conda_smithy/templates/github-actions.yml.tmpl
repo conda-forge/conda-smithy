@@ -286,6 +286,7 @@ jobs:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         CONFIG_SHORT: {% raw %}${{ matrix.CONFIG_SHORT }}{% endraw %}
         JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
         OS: {% raw %}${{ matrix.os }}{% endraw %}
       run: |
         export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
