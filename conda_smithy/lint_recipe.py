@@ -823,6 +823,7 @@ def run_conda_forge_specific(
         hint_abi3_cross_python_run_exports(
             requirements_section,
             outputs_section,
+            build_section,
             recipe_version,
             hints,
         )

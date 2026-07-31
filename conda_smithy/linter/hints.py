@@ -496,18 +496,33 @@ CROSS_PYTHON_RE = re.compile(r"^cross-python(?:_|\s|$)")
 def hint_abi3_cross_python_run_exports(
     requirements_section,
     outputs_section,
+    build_section,
     recipe_version,
     hints,
 ):
     if recipe_version != 1:
         return
 
-    scopes = [requirements_section or {}]
-    for output in outputs_section or []:
-        scopes.append(output.get("requirements") or {})
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            scopes.append(
+                (output.get("requirements") or {}, output.get("build") or {})
+            )
+    else:
+        scopes.append((requirements_section or {}, build_section or {}))
 
-    for requirements in scopes:
+    for requirements, build in scopes:
         if not isinstance(requirements, Mapping):
+            continue
+        # the cross-python run-export only pins Python for recipes that are
+        # not tied to a single Python version, i.e. `noarch: python` or
+        # `build.python.version_independent` (abi3) recipes
+        if not isinstance(build, Mapping):
+            continue
+        if build.get("noarch") != "python" and not get_version_independent(
+            build, "python", recipe_version
+        ):
             continue
         ignore_run_exports = requirements.get("ignore_run_exports")
         if not ignore_run_exports:

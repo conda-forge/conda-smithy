@@ -4834,6 +4834,10 @@ def test_lint_recipe_v1_rattler_build_sp_dir(recipe_name, text, expected_hint):
                   name: mypackage
                   version: 1.0.0
 
+                build:
+                  python:
+                    version_independent: true
+
                 requirements:
                   host:
                     - python ${{ python_min }}.*
@@ -4857,6 +4861,10 @@ def test_lint_recipe_v1_rattler_build_sp_dir(recipe_name, text, expected_hint):
                   name: mypackage
                   version: 1.0.0
 
+                build:
+                  python:
+                    version_independent: true
+
                 requirements:
                   host:
                     - python ${{ python_min }}.*
@@ -4873,6 +4881,55 @@ def test_lint_recipe_v1_rattler_build_sp_dir(recipe_name, text, expected_hint):
                         - mypackage
                 """),
             True,
+        ),
+        # `noarch: python` recipe carrying the workaround -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # neither `noarch: python` nor version-independent -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
         ),
         # workaround present in a per-output requirements block -> hint
         (
