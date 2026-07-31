@@ -830,9 +830,14 @@ def run_conda_forge_specific(
         )
 
     # 10e: abi3 recipes should verify their extension modules with abi3audit
-    if "hint_abi3_missing_abi3audit" not in lints_to_skip and recipe_version == 1:
+    if "hint_abi3_missing_abi3audit" not in lints_to_skip:
         hint_abi3_missing_abi3audit(
-            get_section(meta, "tests", lints, recipe_version),
+            get_section(
+                meta,
+                "tests" if recipe_version == 1 else "test",
+                lints,
+                recipe_version,
+            ),
             outputs_section,
             build_section,
             recipe_version,

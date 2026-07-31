@@ -5151,7 +5151,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
                 """),
             True,
         ),
-        # v0 (meta.yaml) recipes are out of scope -> no hint
+        # v0 abi3 recipe without abi3audit -> hint
         (
             "meta.yaml",
             textwrap.dedent("""
@@ -5167,13 +5167,62 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
                     - python
                   run:
                     - python
+
+                test:
+                  imports:
+                    - mypackage
+                """),
+            True,
+        ),
+        # v0 abi3 recipe running abi3audit -> no hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python_version_independent: true
+
+                requirements:
+                  host:
+                    - python
+                  run:
+                    - python
+
+                test:
+                  requires:
+                    - abi3audit
+                  commands:
+                    - abi3audit $SP_DIR/mypackage.abi3.so -s -v
+                """),
+            False,
+        ),
+        # v0 recipe that is not version-independent -> no hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python
+                  run:
+                    - python
+
+                test:
+                  imports:
+                    - mypackage
                 """),
             False,
         ),
     ],
     ids=(f"recipe-{i}" for i in count(1)),
 )
-def test_lint_recipe_v1_abi3_missing_abi3audit(recipe_name, text, expected_hint):
+def test_lint_recipe_abi3_missing_abi3audit(recipe_name, text, expected_hint):
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, recipe_name), "w") as f:
             f.write(text)
