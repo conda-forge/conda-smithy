@@ -20,6 +20,18 @@ rem BLD_ARTIFACT_PATH
 rem ENV_ARTIFACT_NAME
 rem ENV_ARTIFACT_PATH
 
+{%- if conda_install_tool == "pixi" %}
+set "PATH=%USERPROFILE%\.pixi\bin;%PATH%"
+set "ACTIVATE_PIXI=%TMP%\pixi-activate-%RANDOM%.bat"
+pixi shell-hook --environment build > "%ACTIVATE_PIXI%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+call "%ACTIVATE_PIXI%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+{%- else %}
+call "%MINIFORGE_HOME%\Scripts\activate.bat"
+if !errorlevel! neq 0 exit /b !errorlevel!
+{%- endif %}
+
 rem Check that the conda-build directory exists
 if not exist %CONDA_BLD_PATH% (
     echo conda-build directory does not exist
@@ -37,13 +49,47 @@ if not "%ARTIFACT_UNIQUE_ID%" == "%ARTIFACT_UNIQUE_ID:~0,80%" (
     set ARTIFACT_UNIQUE_ID=%CI_RUN_ID%_%CONFIG_SHORT%
 )
 
-rem Make the build artifact zip
+rem --use-compress-prog hangs on Azure, but we can use bsdtar unconditionally.
+set "ZSTD=--zstd --options=zstd:compression-level=12,zstd:threads=0"
+
+rem Mirror the logic from create_conda_build_artifacts.sh.tmpl.
+rem Note that paths to tar must use forward slashes.
+
+cd "%CONDA_BLD_PATH%"
+if errorlevel 1 exit 1
+
+set ENVIRONMENT_PATHS=
+set "EXCLUDE_COMMON=--exclude=.git --exclude=./pkg_cache --exclude=./src_cache"
+set EXCLUDE_FROM_BUILD_ARTIFACTS=
+
+for /d %%a in (. bld test) do (
+    if exist %%a (
+        cd %%a
+        for /d %%b in (*_*) do (
+            if exist %%a\%%b\pip_cache (
+                set "EXCLUDE_COMMON=!EXCLUDE_COMMON! --exclude=%%a/%%b/pip_cache"
+            )
+
+            cd %%b
+            for /d %%c in (*_env* *_prefix_moved_*) do (
+                set "ENVIRONMENT_PATHS=!ENVIRONMENT_PATHS! %%a/%%b/%%c"
+                set "EXCLUDE_FROM_BUILD_ARTIFACTS=!EXCLUDE_FROM_BUILD_ARTIFACTS! --exclude=%%a/%%b/%%c"
+            )
+            cd ..
+        )
+        if not %%a == . cd ..
+    )
+)
+
+set "EXCLUDE_FROM_BUILD_ARTIFACTS=%EXCLUDE_COMMON%%EXCLUDE_FROM_BUILD_ARTIFACTS%"
+
+rem Make the build artifact archive
 if defined BLD_ARTIFACT_PREFIX (
     set BLD_ARTIFACT_NAME=%BLD_ARTIFACT_PREFIX%_%ARTIFACT_UNIQUE_ID%
     echo BLD_ARTIFACT_NAME: !BLD_ARTIFACT_NAME!
 
-    set "BLD_ARTIFACT_PATH=%ARTIFACT_STAGING_DIR%\%FEEDSTOCK_NAME%_%BLD_ARTIFACT_PREFIX%_%ARCHIVE_UNIQUE_ID%.zip"
-    7z a "!BLD_ARTIFACT_PATH!" "%CONDA_BLD_PATH%" -xr^^!.git/ -xr^^!_*_env*/ -xr^^!*_cache/ -bb
+    set "BLD_ARTIFACT_PATH=%ARTIFACT_STAGING_DIR%\%FEEDSTOCK_NAME%_%BLD_ARTIFACT_PREFIX%_%ARCHIVE_UNIQUE_ID%.tar.zst"
+    bsdtar -c -f "!BLD_ARTIFACT_PATH!" %ZSTD% %EXCLUDE_FROM_BUILD_ARTIFACTS% .
     if errorlevel 1 exit 1
     echo BLD_ARTIFACT_PATH: !BLD_ARTIFACT_PATH!
 
@@ -57,13 +103,13 @@ if defined BLD_ARTIFACT_PREFIX (
     )
 )
 
-rem Make the environments artifact zip
+rem Make the environment artifact archive
 if defined ENV_ARTIFACT_PREFIX (
     set ENV_ARTIFACT_NAME=!ENV_ARTIFACT_PREFIX!_%ARTIFACT_UNIQUE_ID%
     echo ENV_ARTIFACT_NAME: !ENV_ARTIFACT_NAME!
 
-    set "ENV_ARTIFACT_PATH=%ARTIFACT_STAGING_DIR%\%FEEDSTOCK_NAME%_%ENV_ARTIFACT_PREFIX%_%ARCHIVE_UNIQUE_ID%.zip"
-    7z a "!ENV_ARTIFACT_PATH!" -r "%CONDA_BLD_PATH%"/_*_env*/ -bb
+    set "ENV_ARTIFACT_PATH=%ARTIFACT_STAGING_DIR%\%FEEDSTOCK_NAME%_%ENV_ARTIFACT_PREFIX%_%ARCHIVE_UNIQUE_ID%.tar.zst"
+    bsdtar -c -f "!ENV_ARTIFACT_PATH!" %ZSTD% %ENVIRONMENT_PATHS%
     if errorlevel 1 exit 1
     echo ENV_ARTIFACT_PATH: !ENV_ARTIFACT_PATH!
 
