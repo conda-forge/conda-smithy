@@ -106,6 +106,7 @@ jobs:
         set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
         set CONDA_BLD_PATH=$(build_workspace_dir)
         set FEEDSTOCK_NAME=$(build.Repository.Name)
+        set FEEDSTOCK_NAME=%FEEDSTOCK_NAME:*/=%
         set MINIFORGE_HOME=$(tools_install_dir)
         if "%AGENT_JOBSTATUS%" == "Failed" (
             set ENV_ARTIFACT_PREFIX=conda_envs
