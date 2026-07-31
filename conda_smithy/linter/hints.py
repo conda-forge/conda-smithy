@@ -537,6 +537,62 @@ def hint_abi3_cross_python_run_exports(
             return
 
 
+def _mentions_abi3audit(tests_section) -> bool:
+    """True if any test declares `abi3audit` as a requirement or runs it."""
+    for test in tests_section or []:
+        if not isinstance(test, Mapping):
+            continue
+        requirements = test.get("requirements") or {}
+        if isinstance(requirements, Mapping):
+            for req in flatten_v1_if_else(requirements.get("run") or []):
+                if isinstance(req, str) and req.strip().split()[:1] == ["abi3audit"]:
+                    return True
+        script = test.get("script")
+        if isinstance(script, str):
+            script = [script]
+        for line in flatten_v1_if_else(script or []):
+            if isinstance(line, str) and "abi3audit" in line:
+                return True
+    return False
+
+
+def hint_abi3_missing_abi3audit(
+    tests_section,
+    outputs_section,
+    build_section,
+    recipe_version,
+    hints,
+):
+    """Hint that abi3 recipes should verify their extension modules with abi3audit.
+
+    abi3 packages are built once against `python_min` but installed on every
+    later Python, so an extension module that accidentally uses non-abi3 CPython
+    API only breaks at runtime. `abi3audit` catches that at build time.
+    """
+    if recipe_version != 1:
+        return
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            scopes.append((output.get("tests"), output.get("build") or {}))
+    else:
+        scopes.append((tests_section, build_section or {}))
+
+    for tests, build in scopes:
+        if not isinstance(build, Mapping):
+            continue
+        # `noarch: python` packages ship no compiled extension, so there is
+        # nothing for abi3audit to check
+        if build.get("noarch") == "python":
+            continue
+        if not get_version_independent(build, "python", recipe_version):
+            continue
+        if not _mentions_abi3audit(tests):
+            hints.append(msg.r.Abi3MissingAbi3Audit().as_string())
+            return
+
+
 def hint_space_separated_specs(
     requirements_section,
     test_section,

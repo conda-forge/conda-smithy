@@ -1368,4 +1368,41 @@ class Abi3CrossPythonRunExports(LinterMessage, _RecipeYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class Abi3MissingAbi3Audit(LinterMessage, _RecipeYamlMessage):
+    """
+    abi3 (Python version-independent) packages are built once against
+    `python_min` but install on every later Python version. An extension
+    module that accidentally links against non-abi3 CPython API therefore
+    only fails at runtime, on a Python version the feedstock never tested.
+
+    [`abi3audit`](https://github.com/pypa/abi3audit) checks the built
+    extension modules against the declared abi3 level, so the problem is
+    caught at build time instead.
+    """
+
+    kind = "hint"
+    identifier = "R1-008"
+    added_in = "2026.7"
+    message = (
+        "This recipe builds a Python version-independent (abi3) package but "
+        "does not run `abi3audit` in its tests. abi3 extension modules are "
+        "built once and installed on every later Python, so accidental use of "
+        "non-abi3 CPython API is only caught at runtime. Consider auditing the "
+        "built extension modules:\n"
+        "```yaml\n"
+        "tests:\n"
+        "  - requirements:\n"
+        "      run:\n"
+        "        - abi3audit\n"
+        "    script:\n"
+        "      - if: unix\n"
+        "        then: abi3audit $SP_DIR/mypackage.abi3.so -s -v "
+        "--assume-minimum-abi3 ${{ python_min }}\n"
+        "        else: abi3audit %SP_DIR%/mypackage.pyd -s -v "
+        "--assume-minimum-abi3 ${{ python_min }}\n"
+        "```"
+    )
+
+
 # endregion
