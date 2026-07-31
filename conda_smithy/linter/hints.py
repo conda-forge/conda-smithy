@@ -506,9 +506,7 @@ def hint_abi3_cross_python_run_exports(
     scopes = []
     if outputs_section:
         for output in outputs_section:
-            scopes.append(
-                (output.get("requirements") or {}, output.get("build") or {})
-            )
+            scopes.append((output.get("requirements") or {}, output.get("build") or {}))
     else:
         scopes.append((requirements_section or {}, build_section or {}))
 
