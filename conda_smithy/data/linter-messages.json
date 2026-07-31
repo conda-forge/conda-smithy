@@ -1007,6 +1007,18 @@
       "path": "recipe/recipe.yaml"
     },
     {
+      "name": "Abi3CrossPythonRunExports",
+      "identifier": "R1-007",
+      "category": "R1",
+      "kind": "hint",
+      "added_in": "2026.7",
+      "deprecated_in": "",
+      "documentation": "abi3 (Python version-independent) recipes used to carry a manual\nworkaround for a rattler-build limitation: they ignored the `python`\nrun-export coming from the `cross-python_<target_platform>` build\ndependency, which would otherwise pin the package to a single Python\nversion and defeat the purpose of abi3.\n\n```yaml\nrequirements:\n  ignore_run_exports:\n    from_package:\n      - cross-python_${{ target_platform }}\n```\n\nRecent rattler-build filters this run-export automatically for abi3 /\n`build.python.version_independent` recipes (see\nprefix-dev/rattler-build#2252), so the manual `ignore_run_exports` entry\nis now redundant and should be removed.",
+      "message": "This recipe manually ignores the `python` run-export from `cross-python` via `ignore_run_exports`. This used to be required so that abi3 (Python version-independent) packages were not pinned to a single Python version. Recent rattler-build strips this run-export automatically for abi3 recipes, so the workaround is no longer needed and should be removed:\n```yaml\nrequirements:\n  ignore_run_exports:\n    from_package:\n      - cross-python_${{ target_platform }}\n```",
+      "examples": [],
+      "path": "recipe/recipe.yaml"
+    },
+    {
       "name": "MacOSDeploymentTargetRename",
       "identifier": "RC-000",
       "category": "RC",
