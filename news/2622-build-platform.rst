@@ -4,8 +4,8 @@
 
 **Changed:**
 
-* ``rattler-build`` is now called with an explicit ``--build-platform`` flag. (#2622)
-* ``pixi`` will provision ``win-64`` tooling while ``win-arm64`` is being bootstrapped. (#2622)
+* ``rattler-build`` and ``conda-build`` are now called explicit build platforms (via ``--build-platform`` and ``CONDA_SUBDIR``, respectively). (#2622)
+* On Windows ARM machines, ``pixi`` will always provision ``win-64`` tooling while the ``win-arm64`` platform is being bootstrapped. (#2622)
 
 **Deprecated:**
 
