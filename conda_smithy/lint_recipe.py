@@ -840,6 +840,7 @@ def run_conda_forge_specific(
             ),
             outputs_section,
             build_section,
+            requirements_section,
             recipe_version,
             hints,
         )

@@ -4988,6 +4988,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
 
                 requirements:
                   host:
+                    - python-abi3
                     - python ${{ python_min }}.*
                   run:
                     - python
@@ -5013,6 +5014,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
 
                 requirements:
                   host:
+                    - python-abi3
                     - python ${{ python_min }}.*
                   run:
                     - python
@@ -5042,6 +5044,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
 
                 requirements:
                   host:
+                    - python-abi3
                     - python ${{ python_min }}.*
                   run:
                     - python
@@ -5055,7 +5058,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
                 """),
             False,
         ),
-        # conditional abi3 (`version_independent: ${{ is_abi3 }}`) -> hint
+        # example-recipe shape: conditional `is_abi3` build and host -> hint
         (
             "recipe.yaml",
             textwrap.dedent("""
@@ -5069,6 +5072,8 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
 
                 requirements:
                   host:
+                    - if: is_abi3
+                      then: python-abi3
                     - python ${{ python_min }}.*
                   run:
                     - python
@@ -5080,6 +5085,31 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
                 """),
             True,
         ),
+        # version-independent but no `python-abi3` host dep -> not abi3, no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
         # not version-independent -> no hint
         (
             "recipe.yaml",
@@ -5090,6 +5120,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
 
                 requirements:
                   host:
+                    - python-abi3
                     - python ${{ python_min }}.*
                   run:
                     - python
@@ -5141,6 +5172,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
                         version_independent: true
                     requirements:
                       host:
+                        - python-abi3
                         - python ${{ python_min }}.*
                       run:
                         - python
@@ -5164,6 +5196,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
 
                 requirements:
                   host:
+                    - python-abi3
                     - python
                   run:
                     - python
@@ -5187,6 +5220,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
 
                 requirements:
                   host:
+                    - python-abi3
                     - python
                   run:
                     - python
@@ -5209,6 +5243,7 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
 
                 requirements:
                   host:
+                    - python-abi3
                     - python
                   run:
                     - python

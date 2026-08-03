@@ -572,10 +572,21 @@ def _mentions_abi3audit(test_section, recipe_version) -> bool:
     return False
 
 
+def _requires_python_abi3(requirements_section) -> bool:
+    """True if `python-abi3` is a host requirement."""
+    if not isinstance(requirements_section, Mapping):
+        return False
+    for req in flatten_v1_if_else(requirements_section.get("host") or []):
+        if isinstance(req, str) and req.strip().split()[:1] == ["python-abi3"]:
+            return True
+    return False
+
+
 def hint_abi3_missing_abi3audit(
     test_section,
     outputs_section,
     build_section,
+    requirements_section,
     recipe_version,
     hints,
 ):
@@ -590,11 +601,17 @@ def hint_abi3_missing_abi3audit(
     scopes = []
     if outputs_section:
         for output in outputs_section:
-            scopes.append((output.get(tests_key), output.get("build") or {}))
+            scopes.append(
+                (
+                    output.get(tests_key),
+                    output.get("build") or {},
+                    output.get("requirements") or {},
+                )
+            )
     else:
-        scopes.append((test_section, build_section or {}))
+        scopes.append((test_section, build_section or {}, requirements_section or {}))
 
-    for tests, build in scopes:
+    for tests, build, requirements in scopes:
         if not isinstance(build, Mapping):
             continue
         # `noarch: python` packages ship no compiled extension, so there is
@@ -602,6 +619,10 @@ def hint_abi3_missing_abi3audit(
         if build.get("noarch") == "python":
             continue
         if not get_version_independent(build, "python", recipe_version):
+            continue
+        # a version-independent recipe is only an abi3 recipe if it builds
+        # against `python-abi3`
+        if not _requires_python_abi3(requirements):
             continue
         if not _mentions_abi3audit(tests, recipe_version):
             hints.append(msg.r.Abi3MissingAbi3Audit().as_string())
