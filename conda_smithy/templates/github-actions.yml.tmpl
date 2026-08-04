@@ -313,7 +313,7 @@ jobs:
 
     - name: Store conda build artifacts
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH != '' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
         path: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH }}{% endraw %}
@@ -323,7 +323,7 @@ jobs:
 
     - name: Store conda work directory artifacts
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      if: {% raw %}${{ always() && steps.determine-status.outputs.status == 'failure' && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.WRK_ARTIFACT_PATH != '' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.WRK_ARTIFACT_NAME }}{% endraw %}
         path: {% raw %}${{ steps.prepare-artifacts.outputs.WRK_ARTIFACT_PATH }}{% endraw %}
@@ -334,7 +334,7 @@ jobs:
     - name: Store conda build environment artifacts
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       # only relevant if build failed, see above
-      if: {% raw %}${{ always() && steps.determine-status.outputs.status == 'failure' && steps.prepare-artifacts.outcome == 'success' }}{% endraw %}
+      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH != '' }}{% endraw %}
       with:
         name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}
         path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
