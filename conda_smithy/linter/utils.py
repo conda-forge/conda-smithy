@@ -253,8 +253,8 @@ def load_linter_toml_metadata():
 
 
 @deprecated(
-    "2026.7",
-    "2026.9",
+    "2026.8",
+    "2026.10",
     addendum="Use `load_linter_toml_metadata` instead.",
 )
 def load_linter_toml_metdata_internal(time_salt=None):
@@ -263,8 +263,8 @@ def load_linter_toml_metdata_internal(time_salt=None):
 
 # BW compat for the (misspelled) public alias
 deprecated.constant(
-    "2026.7",
-    "2026.9",
+    "2026.8",
+    "2026.10",
     "load_linter_toml_metdata",
     load_linter_toml_metadata,
     addendum="Use `load_linter_toml_metadata` instead.",
