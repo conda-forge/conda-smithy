@@ -141,7 +141,7 @@ if [[ ! -z "$BLD_ARTIFACT_PREFIX" ]]; then
 fi
 
 # Make the workdir artifact archive
-if [[ ! -z "$WRK_ARTIFACT_PREFIX" ]]; then
+if [[ ! -z "$WRK_ARTIFACT_PREFIX" && -n ${WORK_PATHS[@]} ]]; then
     export WRK_ARTIFACT_NAME="${WRK_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
     export WRK_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${WRK_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
 
@@ -163,7 +163,7 @@ if [[ ! -z "$WRK_ARTIFACT_PREFIX" ]]; then
 fi
 
 # Make the environments artifact archive
-if [[ ! -z "$ENV_ARTIFACT_PREFIX" ]]; then
+if [[ ! -z "$ENV_ARTIFACT_PREFIX" && -n ${ENVIRONMENT_PATHS[@]} ]]; then
     export ENV_ARTIFACT_NAME="${ENV_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
     export ENV_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${ENV_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
 
