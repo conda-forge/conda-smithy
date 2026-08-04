@@ -22,8 +22,6 @@ from pathlib import Path, PurePath
 import requests
 import yaml
 
-from conda_smithy.deprecations import deprecated
-
 # The `requests` lib uses `simplejson` instead of `json` when available.
 # In consequence the same JSON library must be used or the `JSONDecodeError`
 # used when catching an exception won't be the same as the one raised
@@ -1700,7 +1698,7 @@ def _get_platforms_of_provider(provider, forge_config):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="CircleCI is deprecated, see #2627",
 )
@@ -1813,7 +1811,7 @@ def _add_exec_bit(exe_files, forge_dir):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -1861,7 +1859,7 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Appveyor is deprecated, see #2627",
 )
@@ -2217,7 +2215,7 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )

@@ -197,7 +197,7 @@ def rotate_anaconda_token(
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="CircleCI is deprecated, see #2627",
 )
@@ -242,7 +242,7 @@ def rotate_token_in_circle(user, project, binstar_token, token_name):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
@@ -278,7 +278,7 @@ def rotate_token_in_drone(user, project, binstar_token, token_name, drone_endpoi
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -409,7 +409,7 @@ def rotate_token_in_azure(user, project, binstar_token, token_name):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Appveyor is deprecated, see #2627",
 )
