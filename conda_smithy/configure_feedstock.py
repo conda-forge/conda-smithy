@@ -1699,7 +1699,7 @@ def _get_platforms_of_provider(provider, forge_config):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="CircleCI is deprecated, see #2627",
 )
@@ -1812,7 +1812,7 @@ def _add_exec_bit(exe_files, forge_dir):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -1860,7 +1860,7 @@ def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Appveyor is deprecated, see #2627",
 )
@@ -2216,7 +2216,7 @@ def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
@@ -2253,7 +2253,7 @@ _woodpecker_specific_setup = _drone_specific_setup
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Woodpecker is deprecated, see #2627",
 )

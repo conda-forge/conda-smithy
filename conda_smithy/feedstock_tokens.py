@@ -585,7 +585,7 @@ def register_feedstock_token_with_providers(
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="CircleCI is deprecated, see #2627",
 )
@@ -633,7 +633,7 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
@@ -671,7 +671,7 @@ def add_feedstock_token_to_drone(
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )

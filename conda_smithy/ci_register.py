@@ -97,7 +97,7 @@ class LiveServerSession(requests.Session):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -136,7 +136,7 @@ def travis_headers():
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="CircleCI is deprecated, see #2627",
 )
@@ -154,7 +154,7 @@ def add_token_to_circle(user, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
@@ -165,7 +165,7 @@ def drone_session(drone_endpoint=drone_default_endpoint):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
@@ -192,7 +192,7 @@ def add_token_to_drone(user, project, drone_endpoint=drone_default_endpoint):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
@@ -203,7 +203,7 @@ def drone_sync(drone_endpoint=drone_default_endpoint):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
@@ -218,7 +218,7 @@ def add_project_to_drone(user, project, drone_endpoint=drone_default_endpoint):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
@@ -229,7 +229,7 @@ def regenerate_drone_webhooks(user, project, drone_endpoint=drone_default_endpoi
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="CircleCI is deprecated, see #2627",
 )
@@ -290,7 +290,7 @@ def add_project_to_azure(user, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Appveyor is deprecated, see #2627",
 )
@@ -317,7 +317,7 @@ def add_project_to_appveyor(user, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Appveyor is deprecated, see #2627",
 )
@@ -336,7 +336,7 @@ def appveyor_encrypt_binstar_token(feedstock_config_path, user, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Appveyor is deprecated, see #2627",
 )
@@ -371,7 +371,7 @@ def appveyor_configure(user, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -396,7 +396,7 @@ def travis_wait_until_synced(ignore=False):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -410,7 +410,7 @@ def travis_repo_writable(repo_info):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -429,7 +429,7 @@ def travis_get_repo_info(user, project, show_error=False):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -495,7 +495,7 @@ def add_project_to_travis(user, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -511,7 +511,7 @@ def travis_token_update_conda_forge_config(feedstock_config_path, user, project)
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -547,7 +547,7 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -582,7 +582,7 @@ def travis_configure(user, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -642,7 +642,7 @@ def add_token_to_travis(user, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Travis is deprecated, see #2627",
 )
@@ -653,7 +653,7 @@ def travis_cleanup(org, project):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Cirrus is deprecated, see #2627",
 )
@@ -663,7 +663,7 @@ def enable_cirrus_runners_app(org: str, project: str) -> None:
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Cirrus is deprecated, see #2627",
 )
