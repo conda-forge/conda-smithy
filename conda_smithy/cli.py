@@ -416,6 +416,9 @@ class RegisterCI(Subcommand):
         else:
             print("Azure registration disabled.")
         if args.appveyor:
+            deprecated.topic(
+                "2026.8", "2026.10", addendum="Appveyor CI is deprecated. See #2627."
+            )
             ci_register.add_project_to_appveyor(owner, repo)
             if args.anaconda_token:
                 ci_register.appveyor_encrypt_binstar_token(
@@ -1138,6 +1141,9 @@ class UpdateAnacondaToken(Subcommand):
             f"{args.feedstock_directory}!"
         )
         if args.appveyor:
+            deprecated.topic(
+                "2026.8", "2026.10", addendum="Travis CI is deprecated. See #2627."
+            )
             print(
                 "Appveyor tokens are stored in the repo so you must commit the "
                 "local changes and push them before the new token will be used!"
