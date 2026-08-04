@@ -17,7 +17,7 @@
 **Fixed:**
 
 * Corrected the deprecated ``free_disk_space`` hint to distinguish its values
-  from the supported ``workflow_settings.free_disk_space`` values.
+  from the supported ``workflow_settings.free_disk_space`` values. (#2625)
 
 **Security:**
 

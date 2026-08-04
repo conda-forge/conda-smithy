@@ -201,7 +201,7 @@ class WorkflowSettingsPlatformOSMismatch(LinterMessage):
 
     kind = "lint"
     identifier = "CF-009"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = "`workflow_settings.${setting}[${index}]` restricts `os` to ${os} but `platform` to `${platform}`.\n"
     setting: str
     index: int
@@ -217,7 +217,7 @@ class WorkflowSettingsOverlappingEntries(LinterMessage):
 
     kind = "lint"
     identifier = "CF-010"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = "`workflow_settings.${setting} has potentially overlapping entries:\n${entries}.\n"
     setting: str
     entries: list[tuple[str, dict[str, list[str] | None]]]
@@ -237,7 +237,7 @@ class WorkflowSettingsNonPlatformSpecificPath(LinterMessage):
 
     kind = "lint"
     identifier = "CF-011"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = "`workflow_settings.${setting}[${index}]` specifies path `${value}` without restricting it to Unix / Windows via the `os` or `platform` keys (applies to ${os}).\n"
     setting: str
     index: int
@@ -253,7 +253,7 @@ class WorkflowSettingsSpecificEntryTooLoose(LinterMessage):
 
     kind = "lint"
     identifier = "CF-012"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = "`workflow_settings.${setting}[${index}]` is not restricted by ${mismatched} to applicable workflows (expected: ${restrictions}).\n"
     setting: str
     index: int
@@ -269,7 +269,7 @@ class MismatchedFeedstockName(LinterMessage):
 
     kind = "lint"
     identifier = "CF-013"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = "Mismatched feedstock name in the recipe: ${current}. Specify `extra.feedstock_name: ${expected}`.\n"
     current: str
     expected: str

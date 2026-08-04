@@ -3080,7 +3080,7 @@ def _iter_all_templates(forge_dir):
 
 
 deprecated.constant(
-    "2026.7",
+    "2026.8",
     "2026.10",
     "get_common_scripts",
     _iter_all_templates,
