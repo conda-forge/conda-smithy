@@ -648,8 +648,9 @@ class TestLinter(unittest.TestCase):
     def test_noarch_value(self):
         meta = {"build": {"noarch": "true"}}
         expected = "Invalid `noarch` value `true`. Should be one of"
-        lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
+        for recipe_version in (0, 1):
+            lints, hints = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
+            self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_noarch_value_recipe_v0_rejects_conditional(self):
         meta = {"build": {"noarch": '{{ "python" if use_noarch }}'}}
