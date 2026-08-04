@@ -1025,7 +1025,7 @@ class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
 
 
 deprecated.constant(
-    "2026.7",
+    "2026.8",
     "2026.10",
     "UsePyPIOrg",
     LegacyPyPIURL,
@@ -1060,7 +1060,7 @@ class RedundantPythonMin(LinterMessage, _AnyRecipeMessage):
 
     kind = "hint"
     identifier = "R-052"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "The recipe sets `python_min` to ${value}, which is equal or lower "
         "than the default provided by conda-forge's global pinning. Please "
@@ -1302,7 +1302,7 @@ class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
 
     kind = "hint"
     identifier = "R1-004"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "`noarch: python` packages install on every Python version at or "
         "above `python_min`, but the Python test only runs against a single "
@@ -1328,7 +1328,7 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
 
     kind = "hint"
     identifier = "R1-005"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "This package is Python version-independent (e.g. abi3): it is built "
         "once but installs on every Python version at or above `python_min`, "
@@ -1356,7 +1356,7 @@ class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
 
     kind = "hint"
     identifier = "R1-006"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "This recipe handles the site-packages directory manually, either by "
         "defining `SP_DIR` itself or by hardcoding a path such as "
@@ -1390,7 +1390,7 @@ class Abi3CrossPythonRunExports(LinterMessage, _RecipeYamlMessage):
 
     kind = "hint"
     identifier = "R1-007"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "This recipe manually ignores the `python` run-export from "
         "`cross-python` via `ignore_run_exports`. This used to be required so "

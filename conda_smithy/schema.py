@@ -19,6 +19,7 @@ from .configure_feedstock import (  # noqa: TID252
     DEFAULT_PLATFORMS,
     DEFAULT_PROVIDERS,
 )
+from .deprecations import deprecated  # noqa: TID252
 from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
@@ -54,16 +55,24 @@ image_tags = Literal["alma10", "rocky10", "alma9", "alma8", "ubi8", "cos7"]
 
 class CIservices(StrEnum):
     azure = "azure"
-    circle = "circle"
-    travis = "travis"
-    appveyor = "appveyor"
     github_actions = "github_actions"
-    drone = "drone"
-    woodpecker = "woodpecker"
     default = "default"
     emulated = "emulated"
     native = "native"
     disable = "None"
+
+
+@deprecated("2026.8", "2026.10", addendum="These services are deprecated. See #2627.")
+class DeprecatedCIservices(StrEnum):
+    """
+    These are deprecated as of 2026.8 and will be removed in 2026.10. See #2627.
+    """
+
+    circle = "circle"
+    travis = "travis"
+    appveyor = "appveyor"
+    drone = "drone"
+    woodpecker = "woodpecker"
 
 
 class Lints(StrEnum):
@@ -461,7 +470,13 @@ OSVersion = create_model(
     },
 )
 
-ProviderType = Union[list[CIservices], CIservices, bool, Nullable]
+ProviderType = Union[
+    list[Union[CIservices, DeprecatedCIservices]],
+    CIservices,
+    DeprecatedCIservices,
+    bool,
+    Nullable,
+]
 
 Provider = create_model(
     "provider",
@@ -504,7 +519,14 @@ def conditional_value(typ: type, default: Any = None) -> BaseModel:
             ),
         ),
         provider=(
-            Optional[Union[list[CIservices], CIservices, Nullable]],
+            Optional[
+                Union[
+                    list[Union[CIservices, DeprecatedCIservices]],
+                    CIservices,
+                    DeprecatedCIservices,
+                    Nullable,
+                ]
+            ],
             Field(
                 default=None,
                 description=cleandoc("""

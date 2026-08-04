@@ -7,6 +7,7 @@ import requests
 from conda_build.utils import create_file_with_permissions
 
 from conda_smithy import github
+from conda_smithy.deprecations import deprecated
 from conda_smithy.utils import (
     file_permissions,
     update_conda_forge_config,
@@ -95,6 +96,11 @@ class LiveServerSession(requests.Session):
         return super().request(method, url, *args, **kwargs)
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def travis_headers():
     headers = {
         # If the user-agent isn't defined correctly, we will recieve a 403.
@@ -129,6 +135,11 @@ def travis_headers():
     return headers
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="CircleCI is deprecated, see #2627",
+)
 def add_token_to_circle(user, project):
     anaconda_token = _get_anaconda_token()
     url_template = (
@@ -142,12 +153,22 @@ def add_token_to_circle(user, project):
         raise ValueError(response)
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Drone is deprecated, see #2627",
+)
 def drone_session(drone_endpoint=drone_default_endpoint):
     s = LiveServerSession(prefix_url=drone_endpoint)
     s.headers.update({"Authorization": f"Bearer {drone_token}"})
     return s
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Drone is deprecated, see #2627",
+)
 def add_token_to_drone(user, project, drone_endpoint=drone_default_endpoint):
     anaconda_token = _get_anaconda_token()
     session = drone_session(drone_endpoint=drone_endpoint)
@@ -170,12 +191,22 @@ def add_token_to_drone(user, project, drone_endpoint=drone_default_endpoint):
     response.raise_for_status()
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Drone is deprecated, see #2627",
+)
 def drone_sync(drone_endpoint=drone_default_endpoint):
     session = drone_session(drone_endpoint)
     response = session.post("/api/user/repos?async=true")
     response.raise_for_status()
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Drone is deprecated, see #2627",
+)
 def add_project_to_drone(user, project, drone_endpoint=drone_default_endpoint):
     session = drone_session(drone_endpoint)
     response = session.post(f"/api/repos/{user}/{project}")
@@ -186,12 +217,22 @@ def add_project_to_drone(user, project, drone_endpoint=drone_default_endpoint):
         response.raise_for_status()
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Drone is deprecated, see #2627",
+)
 def regenerate_drone_webhooks(user, project, drone_endpoint=drone_default_endpoint):
     session = drone_session(drone_endpoint)
     response = session.post(f"/api/repos/{user}/{project}/repair")
     response.raise_for_status()
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="CircleCI is deprecated, see #2627",
+)
 def add_project_to_circle(user, project):
     headers = {
         "Content-Type": "application/json",
@@ -248,6 +289,11 @@ def add_project_to_azure(user, project):
         print(f" * {user}/{project} has been enabled on azure pipelines")
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Appveyor is deprecated, see #2627",
+)
 def add_project_to_appveyor(user, project):
     headers = {"Authorization": f"Bearer {appveyor_token}"}
     url = "https://ci.appveyor.com/api/projects"
@@ -270,6 +316,11 @@ def add_project_to_appveyor(user, project):
         print(f" * {user}/{project} has been enabled on appveyor")
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Appveyor is deprecated, see #2627",
+)
 def appveyor_encrypt_binstar_token(feedstock_config_path, user, project):
     anaconda_token = _get_anaconda_token()
     headers = {"Authorization": f"Bearer {appveyor_token}"}
@@ -284,6 +335,11 @@ def appveyor_encrypt_binstar_token(feedstock_config_path, user, project):
         )
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Appveyor is deprecated, see #2627",
+)
 def appveyor_configure(user, project):
     """Configure appveyor so that it skips building if there is no appveyor.yml present."""
     headers = {"Authorization": f"Bearer {appveyor_token}"}
@@ -314,6 +370,11 @@ def appveyor_configure(user, project):
         raise ValueError(response)
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def travis_wait_until_synced(ignore=False):
     headers = travis_headers()
     is_sync_url = f"{travis_endpoint}/user"
@@ -334,6 +395,11 @@ def travis_wait_until_synced(ignore=False):
     return content
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def travis_repo_writable(repo_info):
     if "@permissions" not in repo_info:
         return False
@@ -343,6 +409,11 @@ def travis_repo_writable(repo_info):
     return True
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def travis_get_repo_info(user, project, show_error=False):
     headers = travis_headers()
     url = f"{travis_endpoint}/repo/{user}%2F{project}"
@@ -357,6 +428,11 @@ def travis_get_repo_info(user, project, show_error=False):
     return {}
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def add_project_to_travis(user, project):
     """
     UNUSED
@@ -418,6 +494,11 @@ def add_project_to_travis(user, project):
         print(f" * {user}/{project} registered on travis-ci")
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def travis_token_update_conda_forge_config(feedstock_config_path, user, project):
     anaconda_token = _get_anaconda_token()
     item = f'BINSTAR_TOKEN="{anaconda_token}"'
@@ -429,6 +510,11 @@ def travis_token_update_conda_forge_config(feedstock_config_path, user, project)
         )
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def travis_encrypt_binstar_token(repo, string_to_encrypt):
     # Copyright 2014 Matt Martz <matt@sivel.net>
     # All Rights Reserved.
@@ -460,6 +546,11 @@ def travis_encrypt_binstar_token(repo, string_to_encrypt):
     return base64.b64encode(cipher.encrypt(string_to_encrypt.encode())).decode("utf-8")
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def travis_configure(user, project):
     """Configure travis so that it skips building if there is no .travis.yml present."""
     headers = travis_headers()
@@ -490,6 +581,11 @@ def travis_configure(user, project):
             response.raise_for_status()
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def add_token_to_travis(user, project):
     """Add the BINSTAR_TOKEN to travis."""
 
@@ -545,20 +641,33 @@ def add_token_to_travis(user, project):
             r.raise_for_status()
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def travis_cleanup(org, project):
     if os.getenv("GH_TRAVIS_TOKEN"):
         gh = github.Github(os.getenv("GH_TRAVIS_TOKEN"))
         github.remove_from_project(gh, org, project)
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Cirrus is deprecated, see #2627",
+)
 def enable_cirrus_runners_app(org: str, project: str) -> None:
-    """DEPRECATED"""
     app = 108385308 if org == "conda-forge" else "cirrus-runners"
     github.configure_github_app(org, project, app)
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Cirrus is deprecated, see #2627",
+)
 def disable_cirrus_runners_app(org: str, project: str) -> None:
-    """DEPRECATED"""
     app = 108385308 if org == "conda-forge" else "cirrus-runners"
     github.configure_github_app(org, project, app, remove=True)
 
