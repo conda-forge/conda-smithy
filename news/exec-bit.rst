@@ -16,8 +16,7 @@
 
 **Fixed:**
 
-* Corrected the deprecated ``free_disk_space`` hint to distinguish its values
-  from the supported ``workflow_settings.free_disk_space`` values. (#2625)
+* Fixed spurious executable bits on non-exectuable files (#2623).
 
 **Security:**
 

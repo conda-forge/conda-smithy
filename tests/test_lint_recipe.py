@@ -18,7 +18,7 @@ from unittest import mock
 import pytest
 
 import conda_smithy.lint_recipe as linter
-from conda_smithy.linter import hints
+from conda_smithy.linter import hints, update_licenses_list
 from conda_smithy.linter.conda_recipe_v1_linter import lint_recipe_tests
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
@@ -4654,6 +4654,323 @@ def test_lint_recipe_hint_redundant_python_min(
         assert has_hint == expected_hint, hints
 
 
+@pytest.mark.parametrize(
+    "recipe_name,text,expected_hint",
+    [
+        # v1: manual `export SP_DIR=...` workaround -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - export SP_DIR=$(python -c "import site; print(site.getsitepackages()[0])")
+                      - abi3audit $SP_DIR/mypackage/mypackage.abi3.so
+                """),
+            True,
+        ),
+        # v1: only *uses* $SP_DIR (no definition) -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit $SP_DIR/mypackage/mypackage.abi3.so
+                """),
+            False,
+        ),
+        # v1: windows-style %SP_DIR% usage -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %SP_DIR%/mypackage/mypackage.pyd
+                """),
+            False,
+        ),
+        # v1: hardcoded %PREFIX%\Lib\site-packages (backslash) -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent(r"""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %PREFIX%\Lib\site-packages\mypackage\mypackage.pyd
+                """),
+            True,
+        ),
+        # v1: hardcoded %PREFIX%/Lib/site-packages (forward slash) -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %PREFIX%/Lib/site-packages/mypackage/mypackage.pyd
+                """),
+            True,
+        ),
+        # v1: no SP_DIR at all -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+        # v0 (meta.yaml): SP_DIR definition -> no hint (rattler-build only)
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                test:
+                  commands:
+                    - export SP_DIR=$(python -c "import site; print(site.getsitepackages()[0])")
+                """),
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_rattler_build_sp_dir(recipe_name, text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, recipe_name), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("rattler-build now defines" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
+@pytest.mark.parametrize(
+    "text,expected_hint",
+    [
+        # abi3 recipe still carrying the cross-python workaround -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  build:
+                    - if: build_platform != host_platform
+                      then:
+                        - python
+                        - cross-python_${{ target_platform }}
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # abi3 recipe without the workaround -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # ignores an unrelated package (not cross-python) -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - some-other-pkg
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # workaround wrapped in an if/else selector -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - if: build_platform != host_platform
+                        then: cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # `noarch: python` recipe carrying the workaround -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # neither `noarch: python` nor version-independent -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # workaround present in a per-output requirements block -> hint
+        (
+            textwrap.dedent("""
+                recipe:
+                  name: mypackage
+                  version: 1.0.0
+
+                outputs:
+                  - package:
+                      name: myoutput
+                    build:
+                      python:
+                        version_independent: true
+                    requirements:
+                      host:
+                        - python ${{ python_min }}.*
+                      run:
+                        - python
+                      ignore_run_exports:
+                        from_package:
+                          - cross-python_${{ target_platform }}
+                    tests:
+                      - python:
+                          imports:
+                            - myoutput
+                """),
+            True,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("run-export from `cross-python`" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
@@ -5701,6 +6018,25 @@ extra:
             "Specify `extra.feedstock_name: bar`."
         ]
     )
+
+
+def test_license_files_up_to_date():
+    """
+    If this test fails, run this from an activated conda-smithy environment and commit the result:
+
+    python -m conda_smithy.linter.update_licenses_list
+    """
+    original_licenses = update_licenses_list.LICENSES_TXT_PATH.read_text()
+    original_exceptions = update_licenses_list.LICENSE_EXCEPTIONS_TXT_PATH.read_text()
+
+    assert (
+        update_licenses_list.update_licenses(write=False)
+        == original_licenses.splitlines()
+    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
+    assert (
+        update_licenses_list.update_license_exceptions(write=False)
+        == original_exceptions.splitlines()
+    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
 
 
 if __name__ == "__main__":

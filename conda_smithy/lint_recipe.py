@@ -28,6 +28,7 @@ from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.hints import (
+    hint_abi3_cross_python_run_exports,
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
@@ -39,6 +40,7 @@ from conda_smithy.linter.hints import (
     hint_pip_usage,
     hint_python_version_independent_test_latest,
     hint_rattler_build_bld_bat,
+    hint_rattler_build_sp_dir,
     hint_redundant_python_min,
     hint_shellcheck_usage,
     hint_space_separated_specs,
@@ -812,6 +814,20 @@ def run_conda_forge_specific(
             hints,
         )
 
+    # 10d: abi3 recipes no longer need the manual cross-python
+    # `ignore_run_exports` workaround; rattler-build handles it natively
+    if (
+        "hint_abi3_cross_python_run_exports" not in lints_to_skip
+        and recipe_version == 1
+    ):
+        hint_abi3_cross_python_run_exports(
+            requirements_section,
+            outputs_section,
+            build_section,
+            recipe_version,
+            hints,
+        )
+
     if os.path.exists(recipe_fname):
         with open(recipe_fname, encoding="utf-8") as fh:
             recipe_text = fh.read()
@@ -838,6 +854,14 @@ def run_conda_forge_specific(
             recipe_text,
             lints,
         )
+
+        # 12b: defining SP_DIR is an obsolete rattler-build workaround
+        if "hint_rattler_build_sp_dir" not in lints_to_skip:
+            hint_rattler_build_sp_dir(
+                recipe_text,
+                hints,
+                recipe_version,
+            )
 
     # 13: no empty conda_build_config.yaml files
     cbc_pth = os.path.join(recipe_dir or "", "conda_build_config.yaml")

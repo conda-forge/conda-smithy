@@ -1025,7 +1025,7 @@ class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
 
 
 deprecated.constant(
-    "2026.7",
+    "2026.8",
     "2026.10",
     "UsePyPIOrg",
     LegacyPyPIURL,
@@ -1060,7 +1060,7 @@ class RedundantPythonMin(LinterMessage, _AnyRecipeMessage):
 
     kind = "hint"
     identifier = "R-052"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "The recipe sets `python_min` to ${value}, which is equal or lower "
         "than the default provided by conda-forge's global pinning. Please "
@@ -1263,7 +1263,7 @@ class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
 
     kind = "hint"
     identifier = "R1-004"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "`noarch: python` packages install on every Python version at or "
         "above `python_min`, but the Python test only runs against a single "
@@ -1289,7 +1289,7 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
 
     kind = "hint"
     identifier = "R1-005"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "This package is Python version-independent (e.g. abi3): it is built "
         "once but installs on every Python version at or above `python_min`, "
@@ -1301,6 +1301,69 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
         "      python_version:\n"
         "        - ${{ python_min }}.*\n"
         '        - "*"\n'
+        "```"
+    )
+
+
+@dataclass(kw_only=True)
+class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
+    """
+    rattler-build defines `$SP_DIR` (the environment's site-packages
+    directory, `%SP_DIR%` on Windows), so recipes no longer need to set it
+    themselves or hardcode the path. Older abi3 recipes exported it manually
+    as a workaround for it being undefined, or hardcoded a Windows path such
+    as `%PREFIX%\\Lib\\site-packages`.
+    """
+
+    kind = "hint"
+    identifier = "R1-006"
+    added_in = "2026.8"
+    message = (
+        "This recipe handles the site-packages directory manually, either by "
+        "defining `SP_DIR` itself or by hardcoding a path such as "
+        "`%PREFIX%\\Lib\\site-packages`. rattler-build now defines `$SP_DIR` "
+        "(`%SP_DIR%` on Windows), so the manual definition can be removed and "
+        "hardcoded paths replaced with `$SP_DIR` / `%SP_DIR%`."
+    )
+
+
+@dataclass(kw_only=True)
+class Abi3CrossPythonRunExports(LinterMessage, _RecipeYamlMessage):
+    """
+    abi3 (Python version-independent) recipes used to carry a manual
+    workaround for a rattler-build limitation: they ignored the `python`
+    run-export coming from the `cross-python_<target_platform>` build
+    dependency, which would otherwise pin the package to a single Python
+    version and defeat the purpose of abi3.
+
+    ```yaml
+    requirements:
+      ignore_run_exports:
+        from_package:
+          - cross-python_${{ target_platform }}
+    ```
+
+    Recent rattler-build filters this run-export automatically for abi3 /
+    `build.python.version_independent` recipes (see
+    prefix-dev/rattler-build#2252), so the manual `ignore_run_exports` entry
+    is now redundant and should be removed.
+    """
+
+    kind = "hint"
+    identifier = "R1-007"
+    added_in = "2026.8"
+    message = (
+        "This recipe manually ignores the `python` run-export from "
+        "`cross-python` via `ignore_run_exports`. This used to be required so "
+        "that abi3 (Python version-independent) packages were not pinned to a "
+        "single Python version. Recent rattler-build strips this run-export "
+        "automatically for abi3 recipes, so the workaround is no longer needed "
+        "and should be removed:\n"
+        "```yaml\n"
+        "requirements:\n"
+        "  ignore_run_exports:\n"
+        "    from_package:\n"
+        "      - cross-python_${{ target_platform }}\n"
         "```"
     )
 
