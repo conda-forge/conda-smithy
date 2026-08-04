@@ -1088,7 +1088,7 @@ class Abi3MissingAbi3Audit(LinterMessage, _AnyRecipeMessage):
 
     kind = "hint"
     identifier = "R-053"
-    added_in = "2026.7"
+    added_in = "2026.8"
     message = (
         "This recipe builds a Python version-independent (abi3) package but "
         "does not run `abi3audit` in its tests. abi3 extension modules are "
