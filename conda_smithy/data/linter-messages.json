@@ -863,6 +863,18 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
+      "name": "Abi3MissingAbi3Audit",
+      "identifier": "R-053",
+      "category": "R",
+      "kind": "hint",
+      "added_in": "2026.8",
+      "deprecated_in": "",
+      "documentation": "abi3 (Python version-independent) packages are built once against\n`python_min` but install on every later Python version. An extension\nmodule that accidentally links against non-abi3 CPython API therefore\nonly fails at runtime, on a Python version the feedstock never tested.\n\n[`abi3audit`](https://github.com/pypa/abi3audit) checks the built\nextension modules against the declared abi3 level, so the problem is\ncaught at build time instead.",
+      "message": "This recipe builds a Python version-independent (abi3) package but does not run `abi3audit` in its tests. abi3 extension modules are built once and installed on every later Python, so accidental use of non-abi3 CPython API is only caught at runtime. Consider auditing the built extension modules, as in the [abi3 example recipe](https://github.com/conda-forge/python-abi3-feedstock/blob/main/recipe/example-recipe.yaml):\n```yaml\ntests:\n  - requirements:\n      run:\n        - abi3audit\n    script:\n      - if: unix\n        then: abi3audit $SP_DIR/mypackage.abi3.so -s -v --assume-minimum-abi3 ${{ python_min }}\n        else: abi3audit %SP_DIR%/mypackage.pyd -s -v --assume-minimum-abi3 ${{ python_min }}\n```",
+      "examples": [],
+      "path": "recipe/(meta|recipe).yaml"
+    },
+    {
       "name": "FormattedSelectors",
       "identifier": "R0-001",
       "category": "R0",

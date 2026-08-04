@@ -4971,6 +4971,301 @@ def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
         assert has_hint == expected_hint, hints
 
 
+@pytest.mark.parametrize(
+    "recipe_name,text,expected_hint",
+    [
+        # abi3 recipe without any abi3audit usage -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # abi3 recipe running abi3audit in a test script -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - requirements:
+                      run:
+                        - abi3audit
+                    script:
+                      - if: unix
+                        then: abi3audit $SP_DIR/mypackage.abi3.so -s -v
+                        else: abi3audit %SP_DIR%/mypackage.pyd -s -v
+                """),
+            False,
+        ),
+        # abi3audit only declared as a test requirement -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - requirements:
+                      run:
+                        - abi3audit
+                    script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+        # example-recipe shape: conditional `is_abi3` build and host -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: ${{ is_abi3 }}
+
+                requirements:
+                  host:
+                    - if: is_abi3
+                      then: python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # version-independent but no `python-abi3` host dep -> not abi3, no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # not version-independent -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # `noarch: python` ships no extension module -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # abi3 output without abi3audit -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                recipe:
+                  name: mypackage
+                  version: 1.0.0
+
+                outputs:
+                  - package:
+                      name: myoutput
+                    build:
+                      python:
+                        version_independent: true
+                    requirements:
+                      host:
+                        - python-abi3
+                        - python ${{ python_min }}.*
+                      run:
+                        - python
+                    tests:
+                      - python:
+                          imports:
+                            - myoutput
+                """),
+            True,
+        ),
+        # v0 abi3 recipe without abi3audit -> hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python_version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python
+                  run:
+                    - python
+
+                test:
+                  imports:
+                    - mypackage
+                """),
+            True,
+        ),
+        # v0 abi3 recipe running abi3audit -> no hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python_version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python
+                  run:
+                    - python
+
+                test:
+                  requires:
+                    - abi3audit
+                  commands:
+                    - abi3audit $SP_DIR/mypackage.abi3.so -s -v
+                """),
+            False,
+        ),
+        # v0 recipe that is not version-independent -> no hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python
+                  run:
+                    - python
+
+                test:
+                  imports:
+                    - mypackage
+                """),
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_abi3_missing_abi3audit(recipe_name, text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, recipe_name), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("does not run `abi3audit`" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:

@@ -29,6 +29,7 @@ from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.hints import (
     hint_abi3_cross_python_run_exports,
+    hint_abi3_missing_abi3audit,
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
@@ -824,6 +825,22 @@ def run_conda_forge_specific(
             requirements_section,
             outputs_section,
             build_section,
+            recipe_version,
+            hints,
+        )
+
+    # 10e: abi3 recipes should verify their extension modules with abi3audit
+    if "hint_abi3_missing_abi3audit" not in lints_to_skip:
+        hint_abi3_missing_abi3audit(
+            get_section(
+                meta,
+                "tests" if recipe_version == 1 else "test",
+                lints,
+                recipe_version,
+            ),
+            outputs_section,
+            build_section,
+            requirements_section,
             recipe_version,
             hints,
         )
