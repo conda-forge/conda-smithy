@@ -8,6 +8,7 @@
 * Build and environment artifacts are now uploaded in ``.tar.zst`` format. (#2365)
 * The naming for artifacts from successful and failed builds is more consistent. (#2365)
 * Build artifacts and the work directory are now archived separately when ``store_build_artifacts`` is enabled. (#2365)
+* Partially created build artifacts are uploaded, with an explicit ``-broken`` suffix, for example when some files can't be read. (#2365)
 
 **Deprecated:**
 
