@@ -165,7 +165,7 @@ def drone_session(drone_endpoint=drone_default_endpoint):
 
 
 @deprecated(
-    "2026.7",
+    "2026.8",
     "2026.10",
     addendum="Drone is deprecated, see #2627",
 )
