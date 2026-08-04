@@ -5,7 +5,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import warnings
 from textwrap import dedent
 from typing import Optional, Union
 
@@ -22,7 +21,7 @@ from conda_smithy.configure_feedstock import (
     _load_forge_config,
     get_cached_cfp_file_path,
 )
-from conda_smithy.deprecations import DeprecatedError
+from conda_smithy.deprecations import deprecated
 from conda_smithy.utils import (
     CONDA_BUILD,
     RATTLER_BUILD,
@@ -381,7 +380,7 @@ class RegisterCI(Subcommand):
             )
         depr_legacy = "Provider '{provider}' is deprecated and will be removed in 2026.10, see #2627"
         if args.travis:
-            warnings.warn(depr_legacy.format(provider="Travis"), DeprecatedError)
+            deprecated.topic("2026.8", "2026.10", depr_legacy.format(provider="Travis"))
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.add_project_to_travis(owner, repo)
@@ -395,7 +394,9 @@ class RegisterCI(Subcommand):
         else:
             print("Travis registration disabled.")
         if args.circle:
-            warnings.warn(depr_legacy.format(provider="CircleCI"), DeprecatedError)
+            deprecated.topic(
+                "2026.8", "2026.10", depr_legacy.format(provider="CircleCI")
+            )
             ci_register.add_project_to_circle(owner, repo)
             if args.anaconda_token:
                 ci_register.add_token_to_circle(owner, repo)
@@ -424,7 +425,7 @@ class RegisterCI(Subcommand):
             print("Appveyor registration disabled.")
 
         if args.drone:
-            warnings.warn(depr_legacy.format(provider="Drone"), DeprecatedError)
+            deprecated.topic("2026.8", "2026.10", depr_legacy.format(provider="Drone"))
             from conda_smithy.ci_register import drone_default_endpoint
 
             drone_endpoints = args.drone_endpoints
@@ -470,7 +471,7 @@ class RegisterCI(Subcommand):
             print("Cirun registration disabled.")
 
         if args.cirrus_runners:
-            warnings.warn(depr_legacy.format(provider="Cirrus"), DeprecatedError)
+            deprecated.topic("2026.8", "2026.10", depr_legacy.format(provider="Cirrus"))
             print("Cirrus Runners support is deprecated.")
 
         if args.blacksmith:
