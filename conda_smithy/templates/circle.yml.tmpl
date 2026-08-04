@@ -46,7 +46,7 @@ jobs:
           # Run, test and (if we have a BINSTAR_TOKEN) upload the distributions.
 {%- if data.platform.startswith('linux') %}
           command: |
-            echo "WARNING: Drone CI integration is deprecated and will be removed in 2026.10. See conda-smithy#2627" >&2
+            echo "WARNING. Drone CI integration is deprecated and will be removed in 2026.10. See conda-smithy#2627" >&2
             export CI=circle
             export flow_run_id="circle_$CIRCLE_WORKFLOW_ID"
             export remote_url="$CIRCLE_REPOSITORY_URL"
@@ -60,7 +60,7 @@ jobs:
             ./.scripts/run_docker_build.sh
 {%- else %}
           command: |
-            echo "WARNING: Drone CI integration is deprecated and will be removed in 2026.10. See conda-smithy#2627" >&2
+            echo "WARNING. Drone CI integration is deprecated and will be removed in 2026.10. See conda-smithy#2627" >&2
             export CI=circle
             export flow_run_id="circle_$CIRCLE_WORKFLOW_ID"
             export remote_url="$CIRCLE_REPOSITORY_URL"
