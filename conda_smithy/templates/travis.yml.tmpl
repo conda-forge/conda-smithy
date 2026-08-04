@@ -49,6 +49,7 @@ jobs:
 {% endfor %}
 {%- endif %}
 script:
+  - echo "WARNING: Drone CI integration is deprecated and will be removed in 2026.10. See conda-smithy#2627" >&2
   - export CI=travis
   - export GIT_BRANCH="$TRAVIS_BRANCH"
   - export flow_run_id="travis_$TRAVIS_JOB_ID"

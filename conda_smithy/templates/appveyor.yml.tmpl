@@ -37,6 +37,7 @@ shallow_clone: false
 {%- endif %}
 
 install:
+    - cmd: echo "WARNING: Drone CI integration is deprecated and will be removed in 2026.10. See conda-smithy#2627" 1>&2
     - cmd: set "CI=appveyor"
     # If there is a newer build queued for the same PR, cancel this one.
     - cmd: |
