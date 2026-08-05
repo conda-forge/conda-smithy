@@ -74,12 +74,12 @@ powershell -NoProfile -ExecutionPolicy unrestricted -Command "(Get-Content pixi.
 :: Git on Windows needs to run post link scripts to properly set up SSL certificates
 pixi config set --global run-post-link-scripts insecure
 if !errorlevel! neq 0 exit /b !errorlevel!
-pixi install
+pixi install --environment build
 if !errorlevel! neq 0 exit /b !errorlevel!
-pixi list
+pixi list --environment build
 if !errorlevel! neq 0 exit /b !errorlevel!
 set "ACTIVATE_PIXI=%TMP%\pixi-activate-%RANDOM%.bat"
-pixi shell-hook > "%ACTIVATE_PIXI%"
+pixi shell-hook --environment build > "%ACTIVATE_PIXI%"
 if !errorlevel! neq 0 exit /b !errorlevel!
 call "%ACTIVATE_PIXI%"
 if !errorlevel! neq 0 exit /b !errorlevel!
