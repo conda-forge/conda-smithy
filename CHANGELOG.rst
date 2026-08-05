@@ -4,6 +4,121 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.8.5
+====================
+
+**Added:**
+
+* New hint: abi3 (Python version-independent) recipes that do not run ``abi3audit`` in their tests are now hinted to add it, so that accidental use of non-abi3 CPython API is caught at build time rather than at runtime on a later Python. Applies to both ``meta.yaml`` and ``recipe.yaml`` recipes. (#2640)
+* New hint: abi3 (Python version-independent) v1 recipes that still carry the manual ``ignore_run_exports: {from_package: [cross-python_${{ target_platform }}]}`` workaround are now hinted to remove it, since recent rattler-build strips the ``cross-python`` ``python`` run-export automatically for abi3 recipes (prefix-dev/rattler-build#2252). (#2630)
+* New hint ``R1-005``: Python version-independent v1 recipes (e.g. ``abi3``, via ``build.python.version_independent``) whose Python test only runs against a single Python version are now hinted to test against both ``${{ python_min }}.*`` and ``"*"`` (the latest supported Python), unless the ``run`` requirements cap the Python upper bound. (#2580)
+* A check for a recipe's ``extra.feedstock-name`` not matching the feedstock repository name. (#2607)
+* New hint ``R1-004``: ``noarch: python`` v1 recipes whose Python test only runs against a single Python version are now hinted to test against both ``${{ python_min }}.*`` and ``"*"`` (the latest supported Python), unless the ``run`` requirements cap the Python upper bound. (#2580)
+* New hint ``R1-006``: v1 (rattler-build) recipes that define ``SP_DIR`` themselves (e.g. ``export SP_DIR=$(python -c "import site; ...")``) are hinted to remove it. This was a workaround for ``$SP_DIR`` previously being undefined in rattler-build, which now provides it. (#2619)
+* Debug tasks for rattler-build in Pixi-enabled feedstocks. (#2598)
+* New hint ``R-052``: recipes that redefine ``python_min`` (via ``context`` in v1 recipes or ``{% set %}`` in v0 recipes) to the same value as (or a lower value than) conda-forge's global pinning default are hinted to remove the redundant override. The global default is fetched from the pinning feedstock with the same cached, fail-quiet pattern used for ``hints.toml``. (#2581)
+* Lints for incorrect values in ``workflow_settings``. (#2603)
+
+**Changed:**
+
+* Generated feedstock READMEs now group conda, mamba, and pixi install commands
+  and package search instructions into foldable sections. (#2592)
+* Github Actions is now the default platform for Windows builds. (#2601)
+* Github Actions is now the default platform for native Linux ARM builds. (#2601)
+* Widen ``py-rattler`` version constraints to ``>=0.22,<0.26.0a0``. (#2610, #2635)
+* Update ``provider`` schema documentation to reflect latest defaults. (#2612)
+* ``rattler-build`` and ``conda-build`` are now called explicit build platforms (via ``--build-platform`` and ``CONDA_SUBDIR``, respectively). (#2622)
+* On Windows ARM machines, ``pixi`` will always provision ``win-64`` tooling while the ``win-arm64`` platform is being bootstrapped. (#2622)
+* When ``yum_requirements`` is in use on AlmaLinux 10 and above, install the ``devel`` repository where some packages that used to be available by default are now located. (#2626)
+* Sync'ed linter licenses/exceptions lists with latest SPDX sources and add a test to keep them up-to-date. (#2628)
+* Use ``GITHUB_REF_NAME`` for simpler GHA upload branch checks. (#2632)
+* Bump ``actions/checkout`` action to 7.0.1. (#2637)
+* Update the PyPI URL lint to suggest switching to the canonical ``files.pythonhosted.org`` domain rather than ``pypi.org``. (#2604)
+* Non-build ``pixi.toml`` tasks now rely on ``pixi exec`` instead of a workspace environment. (#2598)
+* The tooling environment in Pixi-enabled feedstocks is ``build`` now. ``default`` is empty. (#2598, #2644)
+* Updated the testing CI configuration and dependencies to match that of the feedstock. (#2588)
+* Added a pin on ``rattler-build`` to the minor version to help avoid breakages. (#2588)
+
+**Deprecated:**
+
+* CI integrations for Appveyor, CircleCI, Cirrus Runners, Drone, Travis, and Woodpecker are now considered deprecated. All functions and functionality regarding these obsolete CI providers (see below) will be removed in 26.10. (#2627 via #2633)
+
+    * ``conda_smithy.anaconda_token_rotation.rotate_token_in_azure()``
+    * ``conda_smithy.anaconda_token_rotation.rotate_token_in_circle()``
+    * ``conda_smithy.anaconda_token_rotation.rotate_token_in_circle()``
+    * ``conda_smithy.anaconda_token_rotation.rotate_token_in_drone()``
+    * ``conda_smithy.ci_register.add_project_to_appveyor()``
+    * ``conda_smithy.ci_register.add_project_to_azure()``
+    * ``conda_smithy.ci_register.add_project_to_drone()``
+    * ``conda_smithy.ci_register.add_project_to_travis()``
+    * ``conda_smithy.ci_register.add_token_to_circle()``
+    * ``conda_smithy.ci_register.add_token_to_drone()``
+    * ``conda_smithy.ci_register.add_token_to_travis()``
+    * ``conda_smithy.ci_register.appveyor_configure()``
+    * ``conda_smithy.ci_register.appveyor_encrypt_binstar_token()``
+    * ``conda_smithy.ci_register.disable_cirrus_runners_app()``
+    * ``conda_smithy.ci_register.drone_sync()``
+    * ``conda_smithy.ci_register.enable_cirrus_runners_app()``
+    * ``conda_smithy.ci_register.regenerate_drone_webhooks()``
+    * ``conda_smithy.ci_register.travis_cleanup()``
+    * ``conda_smithy.ci_register.travis_configure()``
+    * ``conda_smithy.ci_register.travis_encrypt_binstar_token()``
+    * ``conda_smithy.ci_register.travis_get_repo_info()``
+    * ``conda_smithy.ci_register.travis_headers()``
+    * ``conda_smithy.ci_register.travis_repo_writable()``
+    * ``conda_smithy.ci_register.travis_token_update_conda_forge_config()``
+    * ``conda_smithy.ci_register.travis_wait_until_synced()``
+    * ``conda_smithy.configure_feedstock.render_appveyor()``
+    * ``conda_smithy.configure_feedstock.render_circle()``
+    * ``conda_smithy.configure_feedstock.render_drone()``
+    * ``conda_smithy.configure_feedstock.render_travis()``
+    * ``conda_smithy.configure_feedstock.render_woodpecker()``
+    * ``conda_smithy.feedstock_tokens.add_feedstock_token_to_circle()``
+    * ``conda_smithy.feedstock_tokens.add_feedstock_token_to_drone()``
+    * ``conda_smithy.feedstock_tokens.add_feedstock_token_to_travis()``
+    * Some entries in ``conda_smithy.schema.CIservices`` are now part of ``.DeprecatedCIservices``
+* ``conda_smithy.linter.messages.recipe.UsePyPIOrg`` is now deprecated and will be removed in 2026.10. Use ``LegacyPyPIURL`` instead. (#2604)
+* ``conda_smithy.linter.hints.hint_sources_should_not_mention_pypi_io_but_pypi_org()`` is now deprecated and will be removed in 2026.10. Use ``hint_legacy_pypi_url()`` instead. (#2604)
+* ``conda_smithy.configure_feedstock.get_common_scripts()`` is now deprecated and will be removed in 2026.10. Raise an issue if you need this function. (#2623)
+* ``conda_smithy.linter.utils.load_linter_toml_metdata()`` and ``load_linter_toml_metdata_internal()`` are now deprecated and will be removed in 2026.10. Use the correctly spelled ``load_linter_toml_metadata()`` instead. (#2581)
+
+**Removed:**
+
+* Raising exceptions while rerendering for incorrect values in ``workflow_settings``. (#2603)
+
+**Fixed:**
+
+* Fixed several small typing issues reported by Pyrefly. (#2593)
+* Fixed ``run_conda_forge_specific`` failing when linter metadata omits the
+  ``hints`` table. (#2611)
+* Avoid mis-identifying ambient folders as recipe directories. (#2595)
+* Added missing parenthesis in Azure's ``ARTIFACT_STAGING_DIR`` definition. (#2624)
+* Fixed spurious executable bits on non-exectuable files (#2623).
+* Use the feedstock name instead of ``meta.name`` to register feedstocks where the package name is dependent on a variant. (#2600)
+* Corrected the deprecated ``free_disk_space`` hint to distinguish its values
+  from the supported ``workflow_settings.free_disk_space`` values. (#2625)
+* Fixed the v1 recipe ``stdlib`` lint not firing when ``${{ compiler(...) }}`` used double quotes instead of single quotes. (#2572)
+* Fixed testing bugs where paths to files in the package were computed assuming a development
+  installation layout. (#2588)
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Michał Górny
+* Uwe L. Korn
+* pre-commit-ci[bot]
+* John Kirkham
+* Pavel Zwerschke
+* Chris Burr
+* dependabot[bot]
+* killua156
+* pb01ka
+* Ben Williams
+* Scott Wang
+
+
+
 v2026.6.14
 ====================
 
