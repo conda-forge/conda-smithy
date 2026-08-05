@@ -299,7 +299,7 @@ jobs:
         # Use different prefix for successful and failed build artifacts
         # so random failures don't prevent rebuilds from creating artifacts.
         if [ $JOB_STATUS == "failure" ]; then
-          export BLD_ARTIFACT_PREFIX="conda_artifacts"
+          export BLD_ARTIFACT_PREFIX="conda_pkgs_failed"
           export ENV_ARTIFACT_PREFIX="conda_envs"
         else
           export BLD_ARTIFACT_PREFIX="conda_pkgs"

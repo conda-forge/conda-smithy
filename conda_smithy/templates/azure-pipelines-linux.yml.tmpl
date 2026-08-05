@@ -73,13 +73,15 @@ jobs:
   - script: |
         export ARTIFACT_STAGING_DIR="$(Build.ArtifactStagingDirectory)"
         # Archive everything in CONDA_BLD_PATH except environments
-        export BLD_ARTIFACT_PREFIX=conda_artifacts
+        export BLD_ARTIFACT_PREFIX=conda_pkgs
         export CI=azure
         export CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
         export CONDA_BLD_PATH=$(build_workspace_dir)
         export FEEDSTOCK_NAME=$(basename ${BUILD_REPOSITORY_NAME})
         export MINIFORGE_HOME=$(tools_install_dir)
         if [[ "$AGENT_JOBSTATUS" == "Failed" ]]; then
+          # Use a distinct prefix on failure (to match GHA).
+          export BLD_ARTIFACT_PREFIX=conda_pkgs_failed
           # Archive the CONDA_BLD_PATH environments only when the job fails
           export ENV_ARTIFACT_PREFIX=conda_envs
         fi

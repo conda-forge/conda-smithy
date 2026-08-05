@@ -101,7 +101,7 @@ jobs:
 
     - script: |
         set ARTIFACT_STAGING_DIR=$(Build.ArtifactStagingDirectory)
-        set BLD_ARTIFACT_PREFIX=conda_artifacts
+        set BLD_ARTIFACT_PREFIX=conda_pkgs
         set CI=azure
         set CI_RUN_ID=$(build.BuildNumber).$(system.JobAttempt)
         set CONDA_BLD_PATH=$(build_workspace_dir)
@@ -109,6 +109,7 @@ jobs:
         set FEEDSTOCK_NAME=%FEEDSTOCK_NAME:*/=%
         set MINIFORGE_HOME=$(tools_install_dir)
         if "%AGENT_JOBSTATUS%" == "Failed" (
+            set BLD_ARTIFACT_PREFIX=conda_pkgs_failed
             set ENV_ARTIFACT_PREFIX=conda_envs
         )
         call ".scripts\create_conda_build_artifacts.bat"

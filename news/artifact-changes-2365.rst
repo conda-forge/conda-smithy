@@ -6,6 +6,7 @@
 
 * Artifacts on GitHub Actions are no longer packed into a second zip archive. (#2365)
 * Build and environment artifacts are now uploaded in ``.tar.zst`` format. (#2365)
+* The naming for artifacts from successful and failed builds is more consistent. (#2365)
 
 **Deprecated:**
 
