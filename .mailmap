@@ -21,8 +21,8 @@ Christopher J. Wright <cjwright4242gh@gmail.com> Christopher J. 'CJ' Wright <cjw
 Anthony Scopatz <scopatz@gmail.com>
 Phil Elson <pelson.pub@gmail.com> pelson <pelson.pub@gmail.com>
 Wolf Vollprecht <w.vollprecht@gmail.com>
-pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Uwe L. Korn <uwe.korn@quantco.com> Uwe L. Korn <xhochy@users.noreply.github.com>
+pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
 Filipe Fernandes <ocefpaf@gmail.com> Filipe <ocefpaf@gmail.com>
 Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
 Min RK <benjaminrk@gmail.com>
@@ -40,6 +40,7 @@ Leo Fang <leofang@bnl.gov> Leo Fang <leo80042@gmail.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leof@nvidia.com>
 Ryan Volz <rvolz@mit.edu> Ryan Volz <ryan.volz@gmail.com>
 Johnny Willemsen <jwillemsen@remedy.nl>
+Pavel Zwerschke <pavelzw@gmail.com>
 Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Nicholas Bollweg <nick.bollweg@gmail.com>
 Julian Rüth <julian.rueth@fsfe.org>
@@ -66,10 +67,12 @@ Patrick Sodré <psodre@gmail.com>
 Jan Lehnarsdt <jan@apache.org>
 C.A.M. Gerlach <widenetservices@gmail.com>
 refraction-ray <kcanamgal@foxmail.com>
-Pavel Zwerschke <pavelzw@gmail.com>
 Leopold Talirz <leopold.talirz@gmail.com>
 Peter Williams <peter@newton.cx>
 Tom Pollard <tom.pollard@codethink.co.uk>
+killua156 <71387616+killua156@users.noreply.github.com> Jean Paul R <jean@Jeans-MacBook-Pro.local>
+killua156 <71387616+killua156@users.noreply.github.com> Jean <jean@Jeans-MacBook-Pro.local>
+killua156 <71387616+killua156@users.noreply.github.com> Jean Paul <jean@Jeans-MacBook-Pro.local>
 Gonzalo Pena-Castellanos <goanpeca@gmail.com>
 John Blischak <jdblischak@gmail.com>
 Matthias Diener <mdiener@illinois.edu>
@@ -170,3 +173,6 @@ Filippo Luca Ferretti <102977828+flferretti@users.noreply.github.com>
 Christoph Deil <Deil.Christoph@gmail.com>
 Hofer-Julian <30049909+Hofer-Julian@users.noreply.github.com>
 Monson Shao <holymonson@gmail.com>
+pb01ka <gaganpb08singh@gmail.com>
+Ben Williams <benjaminhwilliams@users.noreply.github.com>
+Scott Wang <71915685+scott-5@users.noreply.github.com>

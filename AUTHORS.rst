@@ -11,8 +11,8 @@ Authors are sorted by number of commits.
 * Anthony Scopatz
 * Phil Elson
 * Wolf Vollprecht
-* pre-commit-ci[bot]
 * Uwe L. Korn
+* pre-commit-ci[bot]
 * Filipe Fernandes
 * Min RK
 * John Kirkham
@@ -27,6 +27,7 @@ Authors are sorted by number of commits.
 * Leo Fang
 * Ryan Volz
 * Johnny Willemsen
+* Pavel Zwerschke
 * Chris Burr
 * Nicholas Bollweg
 * Julian Rüth
@@ -51,10 +52,10 @@ Authors are sorted by number of commits.
 * Jan Lehnarsdt
 * C.A.M. Gerlach
 * refraction-ray
-* Pavel Zwerschke
 * Leopold Talirz
 * Peter Williams
 * Tom Pollard
+* killua156
 * Gonzalo Pena-Castellanos
 * John Blischak
 * Matthias Diener
@@ -152,3 +153,6 @@ Authors are sorted by number of commits.
 * Christoph Deil
 * Hofer-Julian
 * Monson Shao
+* pb01ka
+* Ben Williams
+* Scott Wang
