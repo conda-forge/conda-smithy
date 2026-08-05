@@ -5,6 +5,7 @@
 **Changed:**
 
 * Non-build ``pixi.toml`` tasks now rely on ``pixi exec`` instead of a workspace environment. (#2598)
+* The tooling environment in Pixi-enabled feedstocks is ``build`` now. ``default`` is empty. (#2598, #2644)
 
 **Deprecated:**
 
