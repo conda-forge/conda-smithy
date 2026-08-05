@@ -466,7 +466,7 @@
       "kind": "lint",
       "added_in": "<3.56",
       "deprecated_in": "",
-      "documentation": "The `build.noarch` field can only take `python` or `generic` as a value.",
+      "documentation": "The `build.noarch` field can only take `python` or `generic` as a value.\nRecipe v1 also accepts a jinja expression that renders to an empty value, none, \"null\" or \"~\" to leave `noarch` unset.\"",
       "message": "Invalid `noarch` value `${given}`. Should be one of `${valid}`.",
       "examples": [],
       "path": "recipe/(meta|recipe).yaml"

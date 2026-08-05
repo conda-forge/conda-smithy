@@ -315,7 +315,7 @@ def lintify_meta_yaml(
 
     # 17: Validate noarch
     noarch_value = build_section.get("noarch")
-    lint_noarch(noarch_value, lints)
+    lint_noarch(noarch_value, lints, recipe_version, meta)
 
     # Interlude: load recipe config
     recipe_config_keys = _get_recipe_config_keys(recipe_dir)
@@ -331,6 +331,7 @@ def lintify_meta_yaml(
                 build_section,
                 noarch_platforms,
                 lints,
+                meta,
             )
         else:
             lint_noarch_and_runtime_dependencies(

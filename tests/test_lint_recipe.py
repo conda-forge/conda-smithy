@@ -559,6 +559,86 @@ def test_lint_macdt(recipe_version, config_file):
         assert any(lint.startswith("The `MACOSX_DEPLOYMENT_TARGET`") for lint in lints)
 
 
+@pytest.mark.parametrize("noarch_value", [True, "true", "foo", "null", "none"])
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_noarch_value_invalid(recipe_version, noarch_value):
+    meta = {"build": {"noarch": noarch_value}}
+    expected = f"Invalid `noarch` value `{noarch_value}`. Should be one of"
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
+    assert any(lint.startswith(expected) for lint in lints)
+
+
+@pytest.mark.parametrize("noarch_value", ["python", "generic"])
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_noarch_value_valid(recipe_version, noarch_value):
+    meta = {"build": {"noarch": noarch_value}}
+    unexpected_lint = "Invalid `noarch` value"
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+def test_noarch_value_recipe_v0_rejects_conditional():
+    meta = {"build": {"noarch": '{{ "python" if use_noarch }}'}}
+    expected = 'Invalid `noarch` value `{{ "python" if use_noarch }}`. Should be one of'
+    lints, _ = linter.lintify_meta_yaml(meta)
+    assert any(lint.startswith(expected) for lint in lints)
+
+
+def test_noarch_value_recipe_v1_allows_conditional_no_context():
+    # unknown variables are rendered as False by render_recipe_with_context
+    meta = {"build": {"noarch": '${{ "python" if unknown_var }}'}}
+    unexpected_lint = "Invalid `noarch` value"
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("use_noarch", [True, False])
+@pytest.mark.parametrize("value", ["~", "null", "none", None])
+def test_noarch_value_recipe_v1_allows_rendered_conditional(use_noarch, value):
+    unexpected_lint = "Invalid `noarch` value"
+    meta = {
+        "context": {"use_noarch": use_noarch},
+        "build": {"noarch": f'${{{{ "python" if use_noarch else "{value}" }}}}'},
+    }
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("use_noarch", [True, False])
+@pytest.mark.parametrize("value", ["none", None])
+def test_noarch_value_recipe_v1_allows_rendered_conditional_value_not_quoted(
+    use_noarch, value
+):
+    unexpected_lint = "Invalid `noarch` value"
+    meta = {
+        "context": {"use_noarch": use_noarch},
+        "build": {"noarch": f'${{{{ "python" if use_noarch else {value} }}}}'},
+    }
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("use_noarch", [True, False])
+def test_noarch_value_recipe_v1_allows_rendered_conditional_no_else(use_noarch):
+    unexpected_lint = "Invalid `noarch` value"
+    meta = {
+        "context": {"use_noarch": use_noarch},
+        "build": {"noarch": '${{ "python" if use_noarch }}'},
+    }
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+def test_noarch_value_recipe_v1_rejects_invalid_rendered_conditional():
+    meta = {
+        "context": {"use_noarch": True},
+        "build": {"noarch": '${{ "banana" if use_noarch else none }}'},
+    }
+    expected = 'Invalid `noarch` value `${{ "banana" if use_noarch else none }}`. Should be one of'
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert any(lint.startswith(expected) for lint in lints)
+
+
 class TestLinter(unittest.TestCase):
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
@@ -644,12 +724,6 @@ class TestLinter(unittest.TestCase):
 
         expected_message = "The summary item is expected in the about section."
         self.assertIn(expected_message, lints)
-
-    def test_noarch_value(self):
-        meta = {"build": {"noarch": "true"}}
-        expected = "Invalid `noarch` value `true`. Should be one of"
-        lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_maintainers_section(self):
         expected_message = (
@@ -1310,6 +1384,22 @@ linter:
                             """,
                 is_good=True,
                 has_noarch=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: ${{ "python" if use_noarch }}
+                            requirements:
+                              host:
+                                - if: use_noarch
+                                  then: python ${{ python_min }}.*
+                                  else: python
+                              run:
+                                - if: use_noarch
+                                  then: python >=${{ python_min }}
+                                  else: python
+                            """,
+                is_good=True,
             )
             assert_noarch_selector("""
                             build:
