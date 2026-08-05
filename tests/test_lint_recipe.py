@@ -559,12 +559,22 @@ def test_lint_macdt(recipe_version, config_file):
         assert any(lint.startswith("The `MACOSX_DEPLOYMENT_TARGET`") for lint in lints)
 
 
+@pytest.mark.parametrize("noarch_value", [True, "true", "foo", "null", "none"])
 @pytest.mark.parametrize("recipe_version", [0, 1])
-def test_noarch_value(recipe_version):
-    meta = {"build": {"noarch": "true"}}
-    expected = "Invalid `noarch` value `true`. Should be one of"
+def test_noarch_value_invalid(recipe_version, noarch_value):
+    meta = {"build": {"noarch": noarch_value}}
+    expected = f"Invalid `noarch` value `{noarch_value}`. Should be one of"
     lints, _ = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
     assert any(lint.startswith(expected) for lint in lints)
+
+
+@pytest.mark.parametrize("noarch_value", ["python", "generic"])
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_noarch_value_valid(recipe_version, noarch_value):
+    meta = {"build": {"noarch": noarch_value}}
+    unexpected_lint = "Invalid `noarch` value"
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
 
 
 def test_noarch_value_recipe_v0_rejects_conditional():
@@ -575,14 +585,41 @@ def test_noarch_value_recipe_v0_rejects_conditional():
 
 
 def test_noarch_value_recipe_v1_allows_conditional_no_context():
-    meta = {"build": {"noarch": '${{ "python" if use_noarch }}'}}
+    # unknown variables are rendered as False by render_recipe_with_context
+    meta = {"build": {"noarch": '${{ "python" if unknown_var }}'}}
     unexpected_lint = "Invalid `noarch` value"
     lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
     assert not any(lint.startswith(unexpected_lint) for lint in lints)
 
 
 @pytest.mark.parametrize("use_noarch", [True, False])
-def test_noarch_value_recipe_v1_allows_rendered_conditional(use_noarch):
+@pytest.mark.parametrize("value", ["~", "null", "none", None])
+def test_noarch_value_recipe_v1_allows_rendered_conditional(use_noarch, value):
+    unexpected_lint = "Invalid `noarch` value"
+    meta = {
+        "context": {"use_noarch": use_noarch},
+        "build": {"noarch": f'${{{{ "python" if use_noarch else "{value}" }}}}'},
+    }
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("use_noarch", [True, False])
+@pytest.mark.parametrize("value", ["none", None])
+def test_noarch_value_recipe_v1_allows_rendered_conditional_value_not_quoted(
+    use_noarch, value
+):
+    unexpected_lint = "Invalid `noarch` value"
+    meta = {
+        "context": {"use_noarch": use_noarch},
+        "build": {"noarch": f'${{{{ "python" if use_noarch else {value} }}}}'},
+    }
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("use_noarch", [True, False])
+def test_noarch_value_recipe_v1_allows_rendered_conditional_no_else(use_noarch):
     unexpected_lint = "Invalid `noarch` value"
     meta = {
         "context": {"use_noarch": use_noarch},
@@ -595,19 +632,11 @@ def test_noarch_value_recipe_v1_allows_rendered_conditional(use_noarch):
 def test_noarch_value_recipe_v1_rejects_invalid_rendered_conditional():
     meta = {
         "context": {"use_noarch": True},
-        "build": {"noarch": '${{ "banana" if use_noarch else null }}'},
+        "build": {"noarch": '${{ "banana" if use_noarch else none }}'},
     }
-    expected = "Invalid `noarch` value"
+    expected = 'Invalid `noarch` value `${{ "banana" if use_noarch else none }}`. Should be one of'
     lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
     assert any(lint.startswith(expected) for lint in lints)
-
-
-@pytest.mark.parametrize("noarch_value", ("null", "None", "none", "~"))
-def test_noarch_value_recipe_v1_allows_null_value(noarch_value):
-    unexpected_lint = "Invalid `noarch` value"
-    meta = {"build": {"noarch": noarch_value}}
-    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
-    assert not any(lint.startswith(unexpected_lint) for lint in lints)
 
 
 class TestLinter(unittest.TestCase):

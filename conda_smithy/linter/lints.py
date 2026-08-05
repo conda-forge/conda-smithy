@@ -297,8 +297,8 @@ def lint_subheaders(major_sections, meta, lints):
 def lint_noarch(
     noarch_value: Optional[str],
     lints,
-    recipe_version: msg.r.RECIPE_VERSIONS = 0,
-    meta: Optional[dict[str, Any]] = None,
+    recipe_version: msg.r.RECIPE_VERSIONS,
+    meta: dict[str, Any],
 ):
     if noarch_value is not None:
         if not msg.r.NoarchValue.is_valid(
@@ -322,8 +322,9 @@ def lint_recipe_v1_noarch_and_runtime_dependencies(
     lints: list[str],
     meta: Optional[dict[str, Any]] = None,
 ) -> None:
-    noarch_value = msg.r.NoarchValue.concrete_noarch_value(noarch_value, 1, meta)
-    if noarch_value:
+    # Only run this test if noarch_value is a literal
+    # Skip if it's a jinja conditional as it's expected to be not noarch depending on the context
+    if noarch_value in msg.r.NoarchValue.valid:
         conda_recipe_v1_linter.lint_usage_of_selectors_for_noarch(
             noarch_value,
             raw_requirements_section,

@@ -369,13 +369,18 @@ class SourceHash(LinterMessage, _AnyRecipeMessage):
 class NoarchValue(LinterMessage, _AnyRecipeMessage):
     """
     The `build.noarch` field can only take `python` or `generic` as a value.
-    Recipe v1 also accepts `null`, `none`, `None` or `~` to leave `noarch` unset.
+    Recipe v1 also accepts a jinja expression that renders to an empty value, none, "null" or "~" to leave `noarch` unset."
     """
 
     kind = "lint"
     identifier = "R-020"
     valid: ClassVar[list[str]] = ["python", "generic"]
-    valid_v1: ClassVar[list[str]] = [*valid, "null", "none", "None", "~"]
+    # Note that null and none literals are accepted by rattler-build, but not by the linter
+    # A jinja expression is required outside python and generic
+    valid_v1: ClassVar[list[str]] = [
+        *valid,
+        "a jinja expression that renders to an empty value, none, 'null' or '~'",
+    ]
     message = "Invalid `noarch` value `${given}`. Should be one of `${valid}`."
     given: str
     recipe_version: RECIPE_VERSIONS
@@ -395,7 +400,7 @@ class NoarchValue(LinterMessage, _AnyRecipeMessage):
     ) -> object | None:
         """
         Render the value when a jinja expression is given in v1 recipe
-        Return None if the expression can't be rendered - check ignored
+        Return the given input otherwise
         """
         from conda_smithy.linter import conda_recipe_v1_linter
 
@@ -404,17 +409,21 @@ class NoarchValue(LinterMessage, _AnyRecipeMessage):
             and isinstance(given, str)
             and conda_recipe_v1_linter.JINJA_VAR_PAT.search(given)
         ):
-            if meta is None:
-                # No context, can't render the jinja expression - skip
-                return None
-            given = render_recipe_with_context(meta).get("build", {}).get("noarch")
-            if given is None or (
-                isinstance(given, str)
-                and conda_recipe_v1_linter.JINJA_VAR_PAT.search(given)
-            ):
-                # expression rendered to unset/null
-                # or expression could not be resolved from known context
-                return None
+            # Note that render_recipe_with_context will treat undefined variables as False
+            # due to _MissingUndefined used in jinja_env
+            rendered_value = (
+                render_recipe_with_context(meta).get("build", {}).get("noarch")
+            )
+            # An expression that renders to an empty or null-like value (`none`, `null`,
+            # `~`, or the empty string) is treated the same as omitting the `noarch`
+            # key entirely by rattler-build.
+            # The linter allows:
+            # - empty string (no else) -> rendered as None
+            # - none or None -> rendered as "None"
+            # - "none" -> rendered as "none"
+            # - "null" -> rendered as None
+            #  - "~" -> rendered as None
+            return None if rendered_value in ("none", "None") else rendered_value
         return given
 
     @classmethod
@@ -422,22 +431,10 @@ class NoarchValue(LinterMessage, _AnyRecipeMessage):
         cls,
         given: object,
         recipe_version: RECIPE_VERSIONS,
-        meta: dict[str, Any] | None = None,
+        meta: dict[str, Any],
     ) -> bool:
         given = cls.rendered_value(given, recipe_version, meta)
-        return given is None or given in cls.valid_values(recipe_version)
-
-    @classmethod
-    def concrete_noarch_value(
-        cls,
-        given: object,
-        recipe_version: RECIPE_VERSIONS,
-        meta: dict[str, Any] | None = None,
-    ) -> str | None:
-        given = cls.rendered_value(given, recipe_version, meta)
-        if isinstance(given, str) and given in cls.valid:
-            return given
-        return None
+        return given is None or given in cls.valid
 
     def _render_attributes(self):
         return {
