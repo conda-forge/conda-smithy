@@ -87,6 +87,7 @@ from conda_smithy.linter.lints import (
     lint_subheaders,
     lint_usage_of_legacy_patterns,
 )
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,
@@ -162,6 +163,21 @@ def lintify_meta_yaml(
     conda_forge: bool = False,
     recipe_version: int = 0,
 ) -> tuple[list[str], list[str]]:
+    lints, hints = lint_meta_yaml(
+        meta,
+        recipe_dir=recipe_dir,
+        conda_forge=conda_forge,
+        recipe_version=recipe_version,
+    )
+    return [lint.as_string() for lint in lints], [hint.as_string() for hint in hints]
+
+
+def lint_meta_yaml(
+    meta: Any,
+    recipe_dir: Optional[str] = None,
+    conda_forge: bool = False,
+    recipe_version: int = 0,
+) -> tuple[list[LinterMessage], list[LinterMessage]]:
     lints = []
     hints = []
     major_sections = list(meta.keys())
@@ -177,13 +193,13 @@ def lintify_meta_yaml(
 
     # irrespective of the expected recipe_version, lint if both recipe types are present
     if os.path.exists(recipe_fname_v0) and os.path.exists(recipe_fname_v1):
-        lints.append(msg.r.DuplicateRecipes().as_string())
+        lints.append(msg.r.DuplicateRecipes())
         return lints, hints
 
     if recipe_version == 1:
         schema_version = meta.get("schema_version", 1)
         if schema_version != 1:
-            lints.append(f"Unsupported recipe.yaml schema version {schema_version}")
+            lints.append(msg.r.UnsupportedSchemaVersion(schema_version=schema_version))
             return lints, hints
 
     sources_section = get_section(meta, "source", lints, recipe_version)
@@ -215,7 +231,7 @@ def lintify_meta_yaml(
 
     for section in major_sections:
         if section not in expected_keys:
-            lints.append(msg.r.UnexpectedSection(section=section).as_string())
+            lints.append(msg.r.UnexpectedSection(section=section))
             unexpected_sections.append(section)
 
     for section in unexpected_sections:
@@ -402,7 +418,7 @@ def lintify_meta_yaml(
 
     # 30: two configuration files present
     if sum(v is not None for v in recipe_config_keys.values()) > 1:
-        lints.append(msg.rv.MoreThanOneConfigFile().as_string())
+        lints.append(msg.rv.MoreThanOneConfigFile())
 
     # 31: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
@@ -632,6 +648,16 @@ def _team_exists(org_team: str) -> Optional[bool]:
 def run_conda_forge_specific(
     meta, recipe_dir, lints, hints, recipe_version: int = 0, feedstock_config=None
 ):
+    l, h = run_conda_forge_specific_lints(meta, recipe_dir, recipe_version, feedstock_config)
+    lints.extend(lint.as_string() for lint in l)
+    hints.extend(hint.as_string() for hint in h)
+
+
+def run_conda_forge_specific_lints(
+    meta, recipe_dir, recipe_version: int = 0, feedstock_config=None
+) -> tuple[list[LinterMessage], list[LinterMessage]]:
+    lints = []
+    hints = []
     if recipe_version == 1:
         recipe_fname = os.path.join(recipe_dir or "", "recipe.yaml")
     else:
@@ -676,7 +702,7 @@ def run_conda_forge_specific(
             lints.append(
                 msg.cf.MaintainerMissing(
                     maintainer=maintainer, path=recipe_fname
-                ).as_string()
+                )
             )
         elif exists is None:
             # the existence check could not be completed (e.g. GitHub rate
@@ -685,7 +711,7 @@ def run_conda_forge_specific(
             lints.append(
                 msg.cf.InconclusiveMaintainerCheck(
                     maintainer=maintainer, path=recipe_fname
-                ).as_string()
+                )
             )
 
     # 3: if the recipe dir is inside the example dir
@@ -735,7 +761,7 @@ def run_conda_forge_specific(
     if not is_staged_recipes and recipe_dir is not None:
         ci_support_files = glob(os.path.join(recipe_dir, "..", ".ci_support", "*.yaml"))
         if not ci_support_files:
-            lints.append(msg.cf.NoVariantConfigs().as_string())
+            lints.append(msg.cf.NoVariantConfigs())
     else:
         ci_support_files = []
 
@@ -776,7 +802,7 @@ def run_conda_forge_specific(
             with open(cfyml_pth, encoding="utf-8") as fh:
                 get_yaml(allow_duplicate_keys=False).load(fh)
         except DuplicateKeyError:
-            lints.append(msg.fc.NoDuplicateKeys().as_string())
+            lints.append(msg.fc.NoDuplicateKeys())
 
     # 10: check for proper noarch python syntax
     if "hint_python_min" not in lints_to_skip:
@@ -886,7 +912,7 @@ def run_conda_forge_specific(
         with open(cbc_pth, encoding="utf-8") as fh:
             data = fh.read()
         if not data or not data.strip():
-            lints.append(msg.cf.NoEmptyVariantsFile(path=cbc_pth).as_string())
+            lints.append(msg.cf.NoEmptyVariantsFile(path=cbc_pth))
 
     # 14: incorrect configuration on osx for c_stdlib_version, MACOSX_SDK_VERSION etc.
     # get recipe config files (we don't care about the content, only if it's non-None)
@@ -905,7 +931,7 @@ def run_conda_forge_specific(
         len(gha_workflows) > 1 or gha_workflows[0].name != "conda-build.yml"
     ):
         lints.append(
-            msg.cf.NoCustomGHAWorkflows(path=f"{gha_workflows}/*.yaml").as_string()
+            msg.cf.NoCustomGHAWorkflows(path=f"{gha_workflows}/*.yaml")
         )
 
     # 16: Check for requirements overriding dependency pins
@@ -922,6 +948,8 @@ def run_conda_forge_specific(
 
     # 19: Check for missing feedstock-name (if necessary).
     lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
+
+    return lints, hints
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

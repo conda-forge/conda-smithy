@@ -1407,4 +1407,17 @@ class Abi3CrossPythonRunExports(LinterMessage, _RecipeYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class UnsupportedSchemaVersion(LinterMessage, _AnyRecipeMessage):
+    """
+    Recipe v1 (`recipe.yaml`) has a `schema_version` field that must be an integer.
+    The recipe must use a supported schema version.
+    """
+
+    kind = "lint"
+    identifier = "R1-008"
+    message = "Unsupported recipe.yaml schema version ${schema_version}"
+    schema_version: int
+
+
 # endregion
