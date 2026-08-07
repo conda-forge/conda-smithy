@@ -26,67 +26,10 @@ from ruamel.yaml.constructor import DuplicateKeyError
 
 from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
+from conda_smithy.linter import hints as linter_hints
+from conda_smithy.linter import lints as linter_lints
 from conda_smithy.linter import messages as msg
-from conda_smithy.linter.hints import (
-    hint_abi3_cross_python_run_exports,
-    hint_abi3_missing_abi3audit,
-    hint_check_spdx,
-    hint_dependency_pins,
-    hint_deprecated_environment_variables,
-    hint_legacy_pypi_url,
-    hint_noarch_python_test_latest,
-    hint_noarch_python_use_python_min,
-    hint_os_version,
-    hint_pip_no_build_backend,
-    hint_pip_usage,
-    hint_python_version_independent_test_latest,
-    hint_rattler_build_bld_bat,
-    hint_rattler_build_sp_dir,
-    hint_redundant_python_min,
-    hint_shellcheck_usage,
-    hint_space_separated_specs,
-    hint_suggest_noarch,
-)
-from conda_smithy.linter.lints import (
-    lint_about_contents,
-    lint_build_section_should_be_before_run,
-    lint_build_section_should_have_a_number,
-    lint_check_usage_of_whls,
-    lint_feedstock_name,
-    lint_feedstock_name_not_end_with_feedstock,
-    lint_floats_quoted,
-    lint_go_licenses_are_bundled,
-    lint_invalid_workflow_settings,
-    lint_jinja_var_references,
-    lint_jinja_variables_definitions,
-    lint_legacy_usage_of_compilers,
-    lint_license_cannot_be_unknown,
-    lint_license_family_should_be_valid,
-    lint_license_should_not_have_license,
-    lint_no_comment_selectors,
-    lint_noarch,
-    lint_noarch_and_runtime_dependencies,
-    lint_non_noarch_builds,
-    lint_osx_pins,
-    lint_package_version,
-    lint_pin_subpackages,
-    lint_recipe_have_tests,
-    lint_recipe_is_abi3_bool,
-    lint_recipe_is_parsable,
-    lint_recipe_maintainers,
-    lint_recipe_name,
-    lint_recipe_v1_noarch_and_runtime_dependencies,
-    lint_require_lower_bound_on_python_version,
-    lint_rust_licenses_are_bundled,
-    lint_section_order,
-    lint_selectors_should_be_in_tidy_form,
-    lint_should_be_empty_line,
-    lint_single_space_in_pinned_requirements,
-    lint_sources_should_have_hash,
-    lint_stdlib,
-    lint_subheaders,
-    lint_usage_of_legacy_patterns,
-)
+from conda_smithy.linter.lints import lint_stdlib
 from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
@@ -151,6 +94,7 @@ def _get_recipe_config_keys(recipe_dir: Optional[str] = None) -> dict:
     return recipe_config_keys
 
 
+# TODO: deprecate
 def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
     feedstock_config_keys = _get_feedstock_config(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
@@ -169,7 +113,18 @@ def lintify_meta_yaml(
         conda_forge=conda_forge,
         recipe_version=recipe_version,
     )
-    return [lint.as_string() for lint in lints], [hint.as_string() for hint in hints]
+    # a few nested calls (get_section, append_if_absent) still append raw
+    # strings instead of LinterMessage, so this list is a mix of the two
+    return (
+        [
+            lint.as_string() if isinstance(lint, LinterMessage) else lint
+            for lint in lints
+        ],
+        [
+            hint.as_string() if isinstance(hint, LinterMessage) else hint
+            for hint in hints
+        ],
+    )
 
 
 def lint_meta_yaml(
@@ -238,54 +193,60 @@ def lint_meta_yaml(
         major_sections.remove(section)
 
     # 1: Top level keys in recipe file should have a specific order.
-    lint_section_order(major_sections, lints, recipe_version)
+    lints.extend(linter_lints._lint_section_order(major_sections, recipe_version))
 
     # 2: The about section should have a home, license and summary.
-    lint_about_contents(about_section, lints, recipe_version)
+    lints.extend(linter_lints._lint_about_contents(about_section, recipe_version))
 
     # 3a: The recipe should have some maintainers.
     # 3b: Maintainers should be a list
-    lint_recipe_maintainers(extra_section, lints)
+    lints.extend(linter_lints._lint_recipe_maintainers(extra_section))
 
     # 3c: feedstock-name should not end with "-feedstock"
-    lint_feedstock_name_not_end_with_feedstock(extra_section, lints)
+    lints.extend(linter_lints._lint_feedstock_name_not_end_with_feedstock(extra_section))
 
     # 4: The recipe should have some tests.
-    lint_recipe_have_tests(
+    tests_lints, tests_hints = linter_lints._lint_recipe_have_tests(
         recipe_dir,
         test_section,
         outputs_section,
-        lints,
-        hints,
         recipe_version,
     )
+    lints.extend(tests_lints)
+    hints.extend(tests_hints)
 
     # 5: License cannot be 'unknown.'
-    lint_license_cannot_be_unknown(about_section, lints)
+    lints.extend(linter_lints._lint_license_cannot_be_unknown(about_section))
 
     # 6: Selectors should be in a tidy form.
     if recipe_version == 0:
         # v1 does not have selectors in comments form
-        lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints)
+        selector_lints, selector_hints = linter_lints._lint_selectors_should_be_in_tidy_form(
+            recipe_fname
+        )
+        lints.extend(selector_lints)
+        hints.extend(selector_hints)
 
     # 6a: Comment-style selectors must not be used in v1 recipes.
     if recipe_version == 1:
-        lint_no_comment_selectors(recipe_fname, lints, hints)
+        lints.extend(linter_lints._lint_no_comment_selectors(recipe_fname))
 
     # 7: The build section should have a build number.
-    lint_build_section_should_have_a_number(build_section, lints)
+    lints.extend(linter_lints._lint_build_section_should_have_a_number(build_section))
 
     # 8: The build section should be before the run section in requirements.
-    lint_build_section_should_be_before_run(requirements_section, lints)
+    lints.extend(
+        linter_lints._lint_build_section_should_be_before_run(requirements_section)
+    )
 
     # 9: Files downloaded should have a hash.
-    lint_sources_should_have_hash(sources_section, lints)
+    lints.extend(linter_lints._lint_sources_should_have_hash(sources_section))
 
     # 10: License should not include the word 'license'.
-    lint_license_should_not_have_license(about_section, lints)
+    lints.extend(linter_lints._lint_license_should_not_have_license(about_section))
 
     # 11: There should be one empty line at the end of the file.
-    lint_should_be_empty_line(recipe_fname, lints)
+    lints.extend(linter_lints._lint_should_be_empty_line(recipe_fname))
 
     # 12: License family must be valid (conda-build checks for that)
     # we skip it for v1 builds as it will validate it
@@ -298,40 +259,40 @@ def lint_meta_yaml(
 
     # 12a: License family must be valid (conda-build checks for that)
     license = about_section.get("license", "").lower()
-    lint_license_family_should_be_valid(
-        about_section, license, NEEDED_FAMILIES, lints, recipe_version
+    lints.extend(
+        linter_lints._lint_license_family_should_be_valid(
+            about_section, license, NEEDED_FAMILIES, recipe_version
+        )
     )
 
     # 13: Check that the recipe name is valid
     if recipe_version == 1:
-        recipe_name = conda_recipe_v1_linter.lint_recipe_name(meta, lints)
+        name_lints, recipe_name = conda_recipe_v1_linter._lint_recipe_name(meta)
     else:
-        recipe_name = lint_recipe_name(
-            package_section,
-            lints,
-        )
+        name_lints, recipe_name = linter_lints._lint_recipe_name(package_section)
+    lints.extend(name_lints)
 
     # 14: Run conda-forge specific lints
     if conda_forge:
-        run_conda_forge_specific(
+        cf_lints, cf_hints = run_conda_forge_specific_lints(
             meta,
             recipe_dir,
-            lints,
-            hints,
             recipe_version=recipe_version,
             feedstock_config=feedstock_config_keys,
         )
+        lints.extend(cf_lints)
+        hints.extend(cf_hints)
 
     # 15: Check if we are using legacy patterns
-    lint_usage_of_legacy_patterns(requirements_section, lints)
+    lints.extend(linter_lints._lint_usage_of_legacy_patterns(requirements_section))
 
     # 16: Subheaders should be in the allowed subheadings
     if recipe_version == 0:
-        lint_subheaders(major_sections, meta, lints)
+        lints.extend(linter_lints._lint_subheaders(major_sections, meta))
 
     # 17: Validate noarch
     noarch_value = build_section.get("noarch")
-    lint_noarch(noarch_value, lints)
+    lints.extend(linter_lints._lint_noarch(noarch_value))
 
     # Interlude: load recipe config
     recipe_config_keys = _get_recipe_config_keys(recipe_dir)
@@ -341,79 +302,97 @@ def lint_meta_yaml(
     if "lint_noarch_selectors" not in lints_to_skip:
         if recipe_version == 1:
             raw_requirements_section = meta.get("requirements", {})
-            lint_recipe_v1_noarch_and_runtime_dependencies(
-                noarch_value,
-                raw_requirements_section,
-                build_section,
-                noarch_platforms,
-                lints,
+            lints.extend(
+                linter_lints._lint_recipe_v1_noarch_and_runtime_dependencies(
+                    noarch_value,
+                    raw_requirements_section,
+                    build_section,
+                    noarch_platforms,
+                )
             )
         else:
-            lint_noarch_and_runtime_dependencies(
-                noarch_value,
-                recipe_fname,
-                feedstock_config_keys,
-                recipe_config_keys["conda_build_config.yaml"],
-                lints,
+            lints.extend(
+                linter_lints._lint_noarch_and_runtime_dependencies(
+                    noarch_value,
+                    recipe_fname,
+                    feedstock_config_keys,
+                    recipe_config_keys["conda_build_config.yaml"],
+                )
             )
 
     # 19: check version
     if recipe_version == 1:
-        conda_recipe_v1_linter.lint_package_version(meta, lints)
+        lints.extend(conda_recipe_v1_linter._lint_package_version(meta))
     else:
-        lint_package_version(package_section, lints)
+        lints.extend(linter_lints._lint_package_version(package_section))
 
     # 20: Jinja2 variable definitions should be nice.
-    lint_jinja_variables_definitions(recipe_fname, lints)
+    lints.extend(linter_lints._lint_jinja_variables_definitions(recipe_fname))
 
     # 21: Legacy usage of compilers
-    lint_legacy_usage_of_compilers(build_requirements, lints)
+    lints.extend(linter_lints._lint_legacy_usage_of_compilers(build_requirements))
 
     # 22: Single space in pinned requirements
-    lint_single_space_in_pinned_requirements(
-        requirements_section, lints, recipe_version
+    lints.extend(
+        linter_lints._lint_single_space_in_pinned_requirements(
+            requirements_section, recipe_version
+        )
     )
 
     # 23: non noarch builds shouldn't use version constraints on python and r-base
-    lint_non_noarch_builds(
-        requirements_section,
-        outputs_section,
-        build_section,
-        noarch_value,
-        lints,
-        recipe_version,
+    lints.extend(
+        linter_lints._lint_non_noarch_builds(
+            requirements_section,
+            outputs_section,
+            build_section,
+            noarch_value,
+            recipe_version,
+        )
     )
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
-    lint_jinja_var_references(recipe_fname, hints, recipe_version=recipe_version)
+    hints.extend(
+        linter_lints._lint_jinja_var_references(recipe_fname, recipe_version=recipe_version)
+    )
 
     # 25: require a lower bound on python version
-    lint_require_lower_bound_on_python_version(
-        run_reqs, outputs_section, noarch_value, lints
+    lints.extend(
+        linter_lints._lint_require_lower_bound_on_python_version(
+            run_reqs, outputs_section, noarch_value
+        )
     )
 
     # 26: pin_subpackage is for subpackages and pin_compatible is for
     # non-subpackages of the recipe. Contact @carterbox for troubleshooting
     # this lint.
-    lint_pin_subpackages(
-        meta,
-        outputs_section,
-        package_section,
-        lints,
-        recipe_version=recipe_version,
+    lints.extend(
+        linter_lints._lint_pin_subpackages(
+            meta,
+            outputs_section,
+            package_section,
+            recipe_version=recipe_version,
+        )
     )
 
     # 27: Check usage of whl files as a source
-    lint_check_usage_of_whls(recipe_fname, noarch_value, lints, hints)
+    whl_lints, whl_hints = linter_lints._lint_check_usage_of_whls(
+        recipe_fname, noarch_value
+    )
+    lints.extend(whl_lints)
+    hints.extend(whl_hints)
 
     # 28: Check that Rust licenses are bundled.
-    lint_rust_licenses_are_bundled(
-        recipe_name, build_requirements, lints, recipe_version=recipe_version
+    lints.extend(
+        linter_lints._lint_rust_licenses_are_bundled(
+            recipe_name, build_requirements, recipe_version=recipe_version
+        )
     )
 
     # 29: Check that go licenses are bundled.
-    lint_go_licenses_are_bundled(
-        recipe_name, build_requirements, lints, recipe_version=recipe_version
+    lints.extend(
+        linter_lints._lint_go_licenses_are_bundled(
+            recipe_name, build_requirements, recipe_version=recipe_version
+        )
     )
 
     # 30: two configuration files present
@@ -423,6 +402,7 @@ def lint_meta_yaml(
     # 31: stdlib-related lints
     if "lint_stdlib" not in lints_to_skip:
         for config_fn in recipe_config_keys.keys():
+            # lint_stdlib still appends raw strings via append_if_absent
             lint_stdlib(
                 meta,
                 requirements_section,
@@ -434,50 +414,56 @@ def lint_meta_yaml(
             )
 
     # 32: floats should be quoted
-    lint_floats_quoted(meta, lints, recipe_version=recipe_version)
+    lints.extend(linter_lints._lint_floats_quoted(meta, recipe_version=recipe_version))
 
     # hints
     # 1: suggest pip
-    hint_pip_usage(build_section, hints)
+    hints.extend(linter_hints._hint_pip_usage(build_section))
 
     # 2: suggest python noarch (skip on feedstocks)
     raw_requirements_section = meta.get("requirements", {})
-    hint_suggest_noarch(
-        noarch_value,
-        build_requirements,
-        raw_requirements_section,
-        is_staged_recipes,
-        conda_forge,
-        recipe_fname,
-        hints,
-        recipe_version=recipe_version,
+    hints.extend(
+        linter_hints._hint_suggest_noarch(
+            noarch_value,
+            build_requirements,
+            raw_requirements_section,
+            is_staged_recipes,
+            conda_forge,
+            recipe_fname,
+            recipe_version=recipe_version,
+        )
     )
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
-    hint_shellcheck_usage(recipe_dir, hints, feedstock_config=feedstock_config_keys)
+    hints.extend(
+        linter_hints._hint_shellcheck_usage(
+            recipe_dir, feedstock_config=feedstock_config_keys
+        )
+    )
 
     # 4: Check for SPDX
-    hint_check_spdx(about_section, hints)
+    hints.extend(linter_hints._hint_check_spdx(about_section))
 
     # 5: hint pypi.io -> files.pythonhosted.org
-    hint_legacy_pypi_url(sources_section, hints)
+    hints.extend(linter_hints._hint_legacy_pypi_url(sources_section))
 
     # 6: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
     if recipe_version == 0:
-        hint_space_separated_specs(
-            requirements_section,
-            test_section,
-            outputs_section,
-            hints,
+        hints.extend(
+            linter_hints._hint_space_separated_specs(
+                requirements_section,
+                test_section,
+                outputs_section,
+            )
         )
 
     # 7. check for obsolete os_version
     if "hint_os_version" not in lints_to_skip:
-        hint_os_version(feedstock_config_keys, hints)
+        hints.extend(linter_hints._hint_os_version(feedstock_config_keys))
 
     # 8. check for bld.bat with rattler-build
-    hint_rattler_build_bld_bat(recipe_dir, hints, recipe_version)
+    hints.extend(linter_hints._hint_rattler_build_bld_bat(recipe_dir, recipe_version))
 
     return lints, hints
 
@@ -645,12 +631,19 @@ def _team_exists(org_team: str) -> Optional[bool]:
         return True
 
 
+# TODO: deprecate
 def run_conda_forge_specific(
     meta, recipe_dir, lints, hints, recipe_version: int = 0, feedstock_config=None
 ):
     l, h = run_conda_forge_specific_lints(meta, recipe_dir, recipe_version, feedstock_config)
-    lints.extend(lint.as_string() for lint in l)
-    hints.extend(hint.as_string() for hint in h)
+    # a few nested calls (get_section, append_if_absent) still append raw
+    # strings instead of LinterMessage, so these lists are a mix of the two
+    lints.extend(
+        lint.as_string() if isinstance(lint, LinterMessage) else lint for lint in l
+    )
+    hints.extend(
+        hint.as_string() if isinstance(hint, LinterMessage) else hint for hint in h
+    )
 
 
 def run_conda_forge_specific_lints(
@@ -772,7 +765,9 @@ def run_conda_forge_specific_lints(
         )
         if recipe_version == 1:
             host_or_build_reqs = flatten_v1_if_else(host_or_build_reqs)
-        hint_pip_no_build_backend(host_or_build_reqs, recipe_name, hints)
+        hints.extend(
+            linter_hints._hint_pip_no_build_backend(host_or_build_reqs, recipe_name)
+        )
         for out in outputs_section:
             if recipe_version == 1:
                 output_requirements = rattler_loader.load_all_requirements(out)
@@ -788,7 +783,9 @@ def run_conda_forge_specific_lints(
                     host_reqs = []
 
             name = out.get("name", "").strip()
-            hint_pip_no_build_backend(host_reqs or build_reqs, name, hints)
+            hints.extend(
+                linter_hints._hint_pip_no_build_backend(host_reqs or build_reqs, name)
+            )
 
     # 9: No duplicates in conda-forge.yml
     if (
@@ -806,25 +803,27 @@ def run_conda_forge_specific_lints(
 
     # 10: check for proper noarch python syntax
     if "hint_python_min" not in lints_to_skip:
-        hint_noarch_python_use_python_min(
-            requirements_section.get("host") or [],
-            requirements_section.get("run") or [],
-            test_reqs,
-            outputs_section,
-            noarch_value,
-            recipe_version,
-            hints,
+        hints.extend(
+            linter_hints._hint_noarch_python_use_python_min(
+                requirements_section.get("host") or [],
+                requirements_section.get("run") or [],
+                test_reqs,
+                outputs_section,
+                noarch_value,
+                recipe_version,
+            )
         )
 
     # 10b: noarch python recipes should test the minimum AND latest python
     if "hint_noarch_python_test_latest" not in lints_to_skip and recipe_version == 1:
-        hint_noarch_python_test_latest(
-            get_section(meta, "tests", lints, recipe_version),
-            requirements_section.get("run") or [],
-            outputs_section,
-            noarch_value,
-            recipe_version,
-            hints,
+        hints.extend(
+            linter_hints._hint_noarch_python_test_latest(
+                get_section(meta, "tests", lints, recipe_version),
+                requirements_section.get("run") or [],
+                outputs_section,
+                noarch_value,
+                recipe_version,
+            )
         )
 
     # 10c: python version-independent (abi3) recipes should test latest too
@@ -832,13 +831,14 @@ def run_conda_forge_specific_lints(
         "hint_python_version_independent_test_latest" not in lints_to_skip
         and recipe_version == 1
     ):
-        hint_python_version_independent_test_latest(
-            get_section(meta, "tests", lints, recipe_version),
-            requirements_section.get("run") or [],
-            outputs_section,
-            build_section,
-            recipe_version,
-            hints,
+        hints.extend(
+            linter_hints._hint_python_version_independent_test_latest(
+                get_section(meta, "tests", lints, recipe_version),
+                requirements_section.get("run") or [],
+                outputs_section,
+                build_section,
+                recipe_version,
+            )
         )
 
     # 10d: abi3 recipes no longer need the manual cross-python
@@ -847,28 +847,30 @@ def run_conda_forge_specific_lints(
         "hint_abi3_cross_python_run_exports" not in lints_to_skip
         and recipe_version == 1
     ):
-        hint_abi3_cross_python_run_exports(
-            requirements_section,
-            outputs_section,
-            build_section,
-            recipe_version,
-            hints,
+        hints.extend(
+            linter_hints._hint_abi3_cross_python_run_exports(
+                requirements_section,
+                outputs_section,
+                build_section,
+                recipe_version,
+            )
         )
 
     # 10e: abi3 recipes should verify their extension modules with abi3audit
     if "hint_abi3_missing_abi3audit" not in lints_to_skip:
-        hint_abi3_missing_abi3audit(
-            get_section(
-                meta,
-                "tests" if recipe_version == 1 else "test",
-                lints,
+        hints.extend(
+            linter_hints._hint_abi3_missing_abi3audit(
+                get_section(
+                    meta,
+                    "tests" if recipe_version == 1 else "test",
+                    lints,
+                    recipe_version,
+                ),
+                outputs_section,
+                build_section,
+                requirements_section,
                 recipe_version,
-            ),
-            outputs_section,
-            build_section,
-            requirements_section,
-            recipe_version,
-            hints,
+            )
         )
 
     if os.path.exists(recipe_fname):
@@ -876,34 +878,26 @@ def run_conda_forge_specific_lints(
             recipe_text = fh.read()
 
         # 11: ensure we can parse the recipe
-        lint_recipe_is_parsable(
+        parsable_lints, parsable_hints = linter_lints._lint_recipe_is_parsable(
             recipe_text,
-            lints,
-            hints,
             recipe_version=recipe_version,
         )
+        lints.extend(parsable_lints)
+        hints.extend(parsable_hints)
 
         # 11b: redefining python_min to the global pinning default is redundant
         if "hint_redundant_python_min" not in lints_to_skip:
-            hint_redundant_python_min(
-                meta,
-                recipe_text,
-                recipe_version,
-                hints,
+            hints.extend(
+                linter_hints._hint_redundant_python_min(meta, recipe_text, recipe_version)
             )
 
         # 12: ensure is_abi3 is boolean
-        lint_recipe_is_abi3_bool(
-            recipe_text,
-            lints,
-        )
+        lints.extend(linter_lints._lint_recipe_is_abi3_bool(recipe_text))
 
         # 12b: defining SP_DIR is an obsolete rattler-build workaround
         if "hint_rattler_build_sp_dir" not in lints_to_skip:
-            hint_rattler_build_sp_dir(
-                recipe_text,
-                hints,
-                recipe_version,
+            hints.extend(
+                linter_hints._hint_rattler_build_sp_dir(recipe_text, recipe_version)
             )
 
     # 13: no empty conda_build_config.yaml files
@@ -919,7 +913,9 @@ def run_conda_forge_specific_lints(
     recipe_config_keys = _get_recipe_config_keys(recipe_dir)
     for config_fn, content in recipe_config_keys.items():
         if content is not None:
-            lint_osx_pins(recipe_dir, config_fn, lints, recipe_version)
+            lints.extend(
+                linter_lints._lint_osx_pins(recipe_dir, config_fn, recipe_version)
+            )
 
     # 15: Do not allow custom Github Actions workflows
     gha_workflows_dir = Path(recipe_dir or "", "..", ".github", "workflows")
@@ -935,19 +931,25 @@ def run_conda_forge_specific_lints(
         )
 
     # 16: Check for requirements overriding dependency pins
-    hint_dependency_pins(
-        requirements_section, outputs_section, ci_support_files, hints, recipe_version
+    hints.extend(
+        linter_hints._hint_dependency_pins(
+            requirements_section, outputs_section, ci_support_files, recipe_version
+        )
     )
 
     # 17: Check for deprecated conda-forge.yml variables (that cannot be caught
     # via the schema)
-    hint_deprecated_environment_variables(feedstock_config, hints)
+    hints.extend(linter_hints._hint_deprecated_environment_variables(feedstock_config))
 
     # 18: Check for invalid values in workflow_settings in conda-forge.yml
-    lint_invalid_workflow_settings(feedstock_config, lints)
+    lints.extend(linter_lints._lint_invalid_workflow_settings(feedstock_config))
 
     # 19: Check for missing feedstock-name (if necessary).
-    lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
+    lints.extend(
+        linter_lints._lint_feedstock_name(
+            meta, feedstock_config, recipe_version, recipe_dir
+        )
+    )
 
     return lints, hints
 
