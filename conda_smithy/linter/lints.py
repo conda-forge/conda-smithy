@@ -14,6 +14,7 @@ from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.feedstock_io import get_repo
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
@@ -25,14 +26,18 @@ from conda_smithy.linter.utils import (
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
-    _lint_package_version as _utils_lint_package_version,
-    _lint_recipe_name as _utils_lint_recipe_name,
     flatten_v1_if_else,
     get_section,
     get_version_independent,
     is_selector_line,
     jinja_lines,
     selector_lines,
+)
+from conda_smithy.linter.utils import (
+    _lint_package_version as _utils_lint_package_version,
+)
+from conda_smithy.linter.utils import (
+    _lint_recipe_name as _utils_lint_recipe_name,
 )
 from conda_smithy.utils import (
     ensure_standard_strings,
@@ -64,7 +69,11 @@ def _lint_section_order(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_section_order instead",
+)
 def lint_section_order(
     major_sections: list[str],
     lints: list[str],
@@ -90,7 +99,11 @@ def _lint_about_contents(about_section, recipe_version: int = 0) -> list[LinterM
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_about_contents instead",
+)
 def lint_about_contents(about_section, lints, recipe_version: int = 0):
     about_lints = _lint_about_contents(about_section, recipe_version)
     lints.extend([lint.as_string() for lint in about_lints])
@@ -106,7 +119,11 @@ def _lint_feedstock_name_not_end_with_feedstock(extra_section) -> list[LinterMes
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_feedstock_name_not_end_with_feedstock instead",
+)
 def lint_feedstock_name_not_end_with_feedstock(extra_section, lints):
     feedstock_lints = _lint_feedstock_name_not_end_with_feedstock(extra_section)
     lints.extend([lint.as_string() for lint in feedstock_lints])
@@ -126,7 +143,11 @@ def _lint_recipe_maintainers(extra_section) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_recipe_maintainers instead",
+)
 def lint_recipe_maintainers(extra_section, lints):
     maintainers_lints = _lint_recipe_maintainers(extra_section)
     lints.extend([lint.as_string() for lint in maintainers_lints])
@@ -143,7 +164,7 @@ def _lint_recipe_have_tests(
 
     if recipe_version == 1:
         return conda_recipe_v1_linter._lint_recipe_tests(
-            recipe_dir, test_section, outputs_section
+            recipe_dir, test_section, outputs_section,
         )
 
     if not any(key in TEST_KEYS for key in test_section):
@@ -175,7 +196,11 @@ def _lint_recipe_have_tests(
     return lints, hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_recipe_have_tests instead",
+)
 def lint_recipe_have_tests(
     recipe_dir: str,
     test_section: list[dict[str, Any]],
@@ -206,7 +231,11 @@ def _lint_license_cannot_be_unknown(about_section) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_license_cannot_be_unknown instead",
+)
 def lint_license_cannot_be_unknown(about_section, lints):
     license_lints = _lint_license_cannot_be_unknown(about_section)
     lints.extend([lint.as_string() for lint in license_lints])
@@ -251,7 +280,11 @@ def _lint_selectors_should_be_in_tidy_form(
     return lints, hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_selectors_should_be_in_tidy_form instead",
+)
 def lint_selectors_should_be_in_tidy_form(recipe_fname, lints, hints):
     selector_lints, selector_hints = _lint_selectors_should_be_in_tidy_form(
         recipe_fname
@@ -274,7 +307,11 @@ def _lint_no_comment_selectors(recipe_fname) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_no_comment_selectors instead",
+)
 def lint_no_comment_selectors(recipe_fname, lints, hints):
     comment_selector_lints = _lint_no_comment_selectors(recipe_fname)
     lints.extend([lint.as_string() for lint in comment_selector_lints])
@@ -289,7 +326,11 @@ def _lint_build_section_should_have_a_number(build_section) -> list[LinterMessag
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_build_section_should_have_a_number instead",
+)
 def lint_build_section_should_have_a_number(build_section, lints):
     number_lints = _lint_build_section_should_have_a_number(build_section)
     lints.extend([lint.as_string() for lint in number_lints])
@@ -310,7 +351,11 @@ def _lint_build_section_should_be_before_run(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_build_section_should_be_before_run instead",
+)
 def lint_build_section_should_be_before_run(requirements_section, lints):
     order_lints = _lint_build_section_should_be_before_run(requirements_section)
     lints.extend([lint.as_string() for lint in order_lints])
@@ -330,7 +375,11 @@ def _lint_sources_should_have_hash(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_sources_should_have_hash instead",
+)
 def lint_sources_should_have_hash(
     sources_section: list[dict[str, Any]], lints: list[str]
 ):
@@ -353,7 +402,11 @@ def _lint_license_should_not_have_license(about_section) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_license_should_not_have_license instead",
+)
 def lint_license_should_not_have_license(about_section, lints):
     license_lints = _lint_license_should_not_have_license(about_section)
     lints.extend([lint.as_string() for lint in license_lints])
@@ -376,7 +429,11 @@ def _lint_should_be_empty_line(meta_fname) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_should_be_empty_line instead",
+)
 def lint_should_be_empty_line(meta_fname, lints):
     empty_line_lints = _lint_should_be_empty_line(meta_fname)
     lints.extend([lint.as_string() for lint in empty_line_lints])
@@ -402,7 +459,11 @@ def _lint_license_family_should_be_valid(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_license_family_should_be_valid instead",
+)
 def lint_license_family_should_be_valid(
     about_section: dict[str, Any],
     license: str,
@@ -429,7 +490,11 @@ def _lint_recipe_name(
     return lints, recipe_name
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_recipe_name instead",
+)
 def lint_recipe_name(
     package_section: dict[str, Any],
     lints: list[str],
@@ -449,7 +514,11 @@ def _lint_usage_of_legacy_patterns(requirements_section) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_usage_of_legacy_patterns instead",
+)
 def lint_usage_of_legacy_patterns(requirements_section, lints):
     legacy_lints = _lint_usage_of_legacy_patterns(requirements_section)
     lints.extend([lint.as_string() for lint in legacy_lints])
@@ -486,7 +555,11 @@ def _lint_subheaders(major_sections, meta) -> list[LinterMessage | str]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_subheaders instead",
+)
 def lint_subheaders(major_sections, meta, lints):
     subheader_lints = _lint_subheaders(major_sections, meta)
     lints.extend(
@@ -507,7 +580,11 @@ def _lint_noarch(noarch_value: Optional[str]) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_noarch instead",
+)
 def lint_noarch(noarch_value: Optional[str], lints):
     noarch_lints = _lint_noarch(noarch_value)
     lints.extend([lint.as_string() for lint in noarch_lints])
@@ -530,7 +607,11 @@ def _lint_recipe_v1_noarch_and_runtime_dependencies(
     )
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_recipe_v1_noarch_and_runtime_dependencies instead",
+)
 def lint_recipe_v1_noarch_and_runtime_dependencies(
     noarch_value: Optional[Literal["python", "generic"]],
     raw_requirements_section: dict[str, Any],
@@ -595,7 +676,11 @@ def _lint_noarch_and_runtime_dependencies(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_noarch_and_runtime_dependencies instead",
+)
 def lint_noarch_and_runtime_dependencies(
     noarch_value, meta_fname, forge_yaml, conda_build_config_keys, lints
 ):
@@ -618,7 +703,11 @@ def _lint_package_version(package_section) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_package_version instead",
+)
 def lint_package_version(package_section, lints):
     version_lints = _lint_package_version(package_section)
     lints.extend([lint.as_string() for lint in version_lints])
@@ -643,7 +732,11 @@ def _lint_jinja_variables_definitions(meta_fname) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_jinja_variables_definitions instead",
+)
 def lint_jinja_variables_definitions(meta_fname, lints):
     jinja_lints = _lint_jinja_variables_definitions(meta_fname)
     lints.extend([lint.as_string() for lint in jinja_lints])
@@ -658,7 +751,11 @@ def _lint_legacy_usage_of_compilers(build_reqs) -> list[LinterMessage]:
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_legacy_usage_of_compilers instead",
+)
 def lint_legacy_usage_of_compilers(build_reqs, lints):
     compiler_lints = _lint_legacy_usage_of_compilers(build_reqs)
     lints.extend([lint.as_string() for lint in compiler_lints])
@@ -753,7 +850,11 @@ def _lint_single_space_in_pinned_requirements(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_single_space_in_pinned_requirements instead",
+)
 def lint_single_space_in_pinned_requirements(
     requirements_section,
     lints,
@@ -803,7 +904,11 @@ def _lint_non_noarch_builds(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_non_noarch_builds instead",
+)
 def lint_non_noarch_builds(
     requirements_section,
     outputs_section,
@@ -849,7 +954,11 @@ def _lint_jinja_var_references(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_jinja_var_references instead",
+)
 def lint_jinja_var_references(meta_fname, hints, recipe_version: int = 0):
     jinja_var_hints = _lint_jinja_var_references(meta_fname, recipe_version)
     hints.extend([hint.as_string() for hint in jinja_var_hints])
@@ -870,7 +979,11 @@ def _lint_require_lower_bound_on_python_version(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_require_lower_bound_on_python_version instead",
+)
 def lint_require_lower_bound_on_python_version(
     run_reqs, outputs_section, noarch_value, lints
 ):
@@ -964,7 +1077,11 @@ def _lint_pin_subpackages(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_pin_subpackages instead",
+)
 def lint_pin_subpackages(
     meta,
     outputs_section,
@@ -1010,7 +1127,11 @@ def _lint_check_usage_of_whls(
     return lints, hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_check_usage_of_whls instead",
+)
 def lint_check_usage_of_whls(meta_fname, noarch_value, lints, hints):
     whl_lints, whl_hints = _lint_check_usage_of_whls(meta_fname, noarch_value)
     lints.extend([lint.as_string() for lint in whl_lints])
@@ -1042,7 +1163,11 @@ def _lint_rust_licenses_are_bundled(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_rust_licenses_are_bundled instead",
+)
 def lint_rust_licenses_are_bundled(
     recipe_name: str | None,
     build_reqs: Optional[list[str]],
@@ -1077,7 +1202,11 @@ def _lint_go_licenses_are_bundled(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_go_licenses_are_bundled instead",
+)
 def lint_go_licenses_are_bundled(
     recipe_name: str,
     build_reqs: Optional[list[str]],
@@ -1204,7 +1333,11 @@ def _lint_osx_pins(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_osx_pins instead",
+)
 def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
     osx_lints = _lint_osx_pins(recipe_dir, recipe_config_filename, recipe_version)
     lints.extend([lint.as_string() for lint in osx_lints])
@@ -1387,7 +1520,11 @@ def _lint_recipe_is_parsable(
     return lints, hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_recipe_is_parsable instead",
+)
 def lint_recipe_is_parsable(
     recipe_text: str,
     lints: list[str],
@@ -1415,7 +1552,11 @@ def _lint_recipe_is_abi3_bool(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_recipe_is_abi3_bool instead",
+)
 def lint_recipe_is_abi3_bool(
     recipe_text: str,
     lints: list[str],
@@ -1450,7 +1591,11 @@ def _lint_floats_quoted(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_floats_quoted instead",
+)
 def lint_floats_quoted(
     meta: dict,
     lints: list[str],
@@ -1579,7 +1724,11 @@ def _lint_invalid_workflow_settings(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_invalid_workflow_settings instead",
+)
 def lint_invalid_workflow_settings(
     forge_config: dict,
     lints: list[str],
@@ -1650,7 +1799,11 @@ def _lint_feedstock_name(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_feedstock_name instead",
+)
 def lint_feedstock_name(
     meta,
     feedstock_config,

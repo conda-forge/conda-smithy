@@ -9,13 +9,15 @@ from rattler_build_conda_compat.jinja.jinja import (
 )
 from rattler_build_conda_compat.outputs import is_staging_output
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     _lint_package_version as _utils_lint_package_version,
+)
+from conda_smithy.linter.utils import (
     _lint_recipe_name as _utils_lint_recipe_name,
 )
-from conda_smithy.linter.messages.base import LinterMessage
-
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
@@ -47,7 +49,7 @@ JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 def _lint_recipe_tests(
     recipe_dir: Optional[str],
     test_section: list[dict[str, Any]],
-    outputs_section: list[dict[str, Any]]
+    outputs_section: list[dict[str, Any]],
 ) -> tuple[list[LinterMessage], list[LinterMessage]]:
     lints = []
     hints = []
@@ -79,7 +81,11 @@ def _lint_recipe_tests(
     return lints, hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_recipe_tests instead",
+)
 def lint_recipe_tests(
     recipe_dir: Optional[str],
     test_section: list[dict[str, Any]],
@@ -87,7 +93,9 @@ def lint_recipe_tests(
     lints: list[str],
     hints: list[str],
 ):
-    tests_lints, tests_hints = _lint_recipe_tests(recipe_dir, test_section, outputs_section)
+    tests_lints, tests_hints = _lint_recipe_tests(
+        recipe_dir, test_section, outputs_section
+    )
     lints.extend([lint.as_string() for lint in tests_lints])
     hints.extend([hint.as_string() for hint in tests_hints])
 
@@ -126,7 +134,11 @@ def _hint_noarch_usage(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_noarch_usage instead",
+)
 def hint_noarch_usage(
     build_section: dict[str, Any],
     requirement_section: dict[str, Any],
@@ -174,7 +186,11 @@ def _lint_recipe_name(
     return lints, name
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_recipe_name instead",
+)
 def lint_recipe_name(
     recipe_content: RecipeWithContext,
     lints: list[str],
@@ -199,7 +215,11 @@ def _lint_package_version(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_package_version instead",
+)
 def lint_package_version(
     recipe_content: RecipeWithContext,
     lints: list[str],
@@ -256,7 +276,11 @@ def _lint_usage_of_selectors_for_noarch(
     return lints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _lint_usage_of_selectors_for_noarch instead",
+)
 def lint_usage_of_selectors_for_noarch(
     noarch_value: str,
     requirements_section: dict[str, Any],

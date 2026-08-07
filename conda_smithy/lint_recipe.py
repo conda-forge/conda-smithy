@@ -25,6 +25,7 @@ from rattler_build_conda_compat import loader as rattler_loader
 from ruamel.yaml.constructor import DuplicateKeyError
 
 from conda_smithy.configure_feedstock import _read_forge_config
+from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import hints as linter_hints
 from conda_smithy.linter import lints as linter_lints
@@ -94,13 +95,17 @@ def _get_recipe_config_keys(recipe_dir: Optional[str] = None) -> dict:
     return recipe_config_keys
 
 
-# TODO: deprecate
 def lintify_forge_yaml(recipe_dir: Optional[str] = None) -> (list, list):
     feedstock_config_keys = _get_feedstock_config(recipe_dir)
     # This is where we validate against the jsonschema and execute our custom validators.
     return validate_json_schema(feedstock_config_keys)
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use lint_meta_yaml instead",
+)
 def lintify_meta_yaml(
     meta: Any,
     recipe_dir: Optional[str] = None,
@@ -203,7 +208,9 @@ def lint_meta_yaml(
     lints.extend(linter_lints._lint_recipe_maintainers(extra_section))
 
     # 3c: feedstock-name should not end with "-feedstock"
-    lints.extend(linter_lints._lint_feedstock_name_not_end_with_feedstock(extra_section))
+    lints.extend(
+        linter_lints._lint_feedstock_name_not_end_with_feedstock(extra_section)
+    )
 
     # 4: The recipe should have some tests.
     tests_lints, tests_hints = linter_lints._lint_recipe_have_tests(
@@ -221,8 +228,8 @@ def lint_meta_yaml(
     # 6: Selectors should be in a tidy form.
     if recipe_version == 0:
         # v1 does not have selectors in comments form
-        selector_lints, selector_hints = linter_lints._lint_selectors_should_be_in_tidy_form(
-            recipe_fname
+        selector_lints, selector_hints = (
+            linter_lints._lint_selectors_should_be_in_tidy_form(recipe_fname)
         )
         lints.extend(selector_lints)
         hints.extend(selector_hints)
@@ -352,7 +359,9 @@ def lint_meta_yaml(
 
     # 24: jinja2 variable references should be {{<one space>var<one space>}}
     hints.extend(
-        linter_lints._lint_jinja_var_references(recipe_fname, recipe_version=recipe_version)
+        linter_lints._lint_jinja_var_references(
+            recipe_fname, recipe_version=recipe_version
+        )
     )
 
     # 25: require a lower bound on python version
@@ -631,11 +640,17 @@ def _team_exists(org_team: str) -> Optional[bool]:
         return True
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use run_conda_forge_specific_lints instead",
+)
 def run_conda_forge_specific(
     meta, recipe_dir, lints, hints, recipe_version: int = 0, feedstock_config=None
 ):
-    l, h = run_conda_forge_specific_lints(meta, recipe_dir, recipe_version, feedstock_config)
+    l, h = run_conda_forge_specific_lints(
+        meta, recipe_dir, recipe_version, feedstock_config
+    )
     # a few nested calls (get_section, append_if_absent) still append raw
     # strings instead of LinterMessage, so these lists are a mix of the two
     lints.extend(
@@ -693,9 +708,7 @@ def run_conda_forge_specific_lints(
             exists = _maintainer_exists(maintainer)
         if exists is False:
             lints.append(
-                msg.cf.MaintainerMissing(
-                    maintainer=maintainer, path=recipe_fname
-                )
+                msg.cf.MaintainerMissing(maintainer=maintainer, path=recipe_fname)
             )
         elif exists is None:
             # the existence check could not be completed (e.g. GitHub rate
@@ -888,7 +901,9 @@ def run_conda_forge_specific_lints(
         # 11b: redefining python_min to the global pinning default is redundant
         if "hint_redundant_python_min" not in lints_to_skip:
             hints.extend(
-                linter_hints._hint_redundant_python_min(meta, recipe_text, recipe_version)
+                linter_hints._hint_redundant_python_min(
+                    meta, recipe_text, recipe_version
+                )
             )
 
         # 12: ensure is_abi3 is boolean
@@ -926,9 +941,7 @@ def run_conda_forge_specific_lints(
     if gha_workflows and (
         len(gha_workflows) > 1 or gha_workflows[0].name != "conda-build.yml"
     ):
-        lints.append(
-            msg.cf.NoCustomGHAWorkflows(path=f"{gha_workflows}/*.yaml")
-        )
+        lints.append(msg.cf.NoCustomGHAWorkflows(path=f"{gha_workflows}/*.yaml"))
 
     # 16: Check for requirements overriding dependency pins
     hints.extend(

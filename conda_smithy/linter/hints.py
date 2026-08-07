@@ -9,9 +9,9 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
-from conda.deprecations import deprecated
 from conda.models.version import VersionOrder
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.messages.base import LinterMessage
@@ -41,7 +41,11 @@ def _hint_pip_usage(build_section) -> list[LinterMessage]:
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_pip_usage instead",
+)
 def hint_pip_usage(build_section, hints):
     hints.extend([hint.as_string() for hint in _hint_pip_usage(build_section)])
 
@@ -66,11 +70,13 @@ def _hint_legacy_pypi_url(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_legacy_pypi_url instead",
+)
 def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]):
-    hints.extend(
-        [hint.as_string() for hint in _hint_legacy_pypi_url(sources_section)]
-    )
+    hints.extend([hint.as_string() for hint in _hint_legacy_pypi_url(sources_section)])
 
 
 @deprecated("2026.8", "2026.10", addendum="Use hint_legacy_pypi_url() instead")
@@ -129,7 +135,11 @@ def _hint_suggest_noarch(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_suggest_noarch instead",
+)
 def hint_suggest_noarch(
     noarch_value,
     build_reqs,
@@ -212,7 +222,11 @@ def _hint_shellcheck_usage(recipe_dir, feedstock_config=None) -> list[LinterMess
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_shellcheck_usage instead",
+)
 def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
     shellcheck_hints = _hint_shellcheck_usage(recipe_dir, feedstock_config)
     hints.extend([hint.as_string() for hint in shellcheck_hints])
@@ -266,7 +280,11 @@ def _hint_check_spdx(about_section) -> list[LinterMessage]:
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_check_spdx instead",
+)
 def hint_check_spdx(about_section, hints):
     hints.extend([hint.as_string() for hint in _hint_check_spdx(about_section)])
 
@@ -310,7 +328,11 @@ def _hint_pip_no_build_backend(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_pip_no_build_backend instead",
+)
 def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
     backend_hints = _hint_pip_no_build_backend(host_or_build_section, package_name)
     hints.extend([hint.as_string() for hint in backend_hints])
@@ -452,7 +474,11 @@ def _hint_noarch_python_use_python_min(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_noarch_python_use_python_min instead",
+)
 def hint_noarch_python_use_python_min(
     host_reqs,
     run_reqs,
@@ -495,7 +521,11 @@ def _hint_redundant_python_min(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_redundant_python_min instead",
+)
 def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
     redundant_hints = _hint_redundant_python_min(meta, recipe_text, recipe_version)
     hints.extend([hint.as_string() for hint in redundant_hints])
@@ -565,7 +595,11 @@ def _hint_noarch_python_test_latest(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_noarch_python_test_latest instead",
+)
 def hint_noarch_python_test_latest(
     tests_section,
     run_reqs,
@@ -621,7 +655,11 @@ def _hint_python_version_independent_test_latest(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_python_version_independent_test_latest instead",
+)
 def hint_python_version_independent_test_latest(
     tests_section,
     run_reqs,
@@ -686,7 +724,11 @@ def _hint_abi3_cross_python_run_exports(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_abi3_cross_python_run_exports instead",
+)
 def hint_abi3_cross_python_run_exports(
     requirements_section,
     outputs_section,
@@ -795,7 +837,11 @@ def _hint_abi3_missing_abi3audit(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_abi3_missing_abi3audit instead",
+)
 def hint_abi3_missing_abi3audit(
     test_section,
     outputs_section,
@@ -849,14 +895,16 @@ def _hint_space_separated_specs(
                 ] = bad_specs
 
     for output, requirements in report.items():
-        hints.append(
-            msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements)
-        )
+        hints.append(msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements))
 
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_space_separated_specs instead",
+)
 def hint_space_separated_specs(
     requirements_section,
     test_section,
@@ -925,7 +973,11 @@ def _hint_os_version(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_os_version instead",
+)
 def hint_os_version(
     forge_yaml: dict[str, Any],
     hints: list[str],
@@ -960,7 +1012,11 @@ def _hint_rattler_build_bld_bat(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_rattler_build_bld_bat instead",
+)
 def hint_rattler_build_bld_bat(
     recipe_dir: str | None,
     hints: list[str],
@@ -1008,7 +1064,11 @@ def _hint_rattler_build_sp_dir(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_rattler_build_sp_dir instead",
+)
 def hint_rattler_build_sp_dir(
     recipe_text: str,
     hints: list[str],
@@ -1105,7 +1165,11 @@ def _hint_dependency_pins(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_dependency_pins instead",
+)
 def hint_dependency_pins(
     requirements_section,
     outputs_section,
@@ -1146,7 +1210,11 @@ def _hint_deprecated_environment_variables(
     return hints
 
 
-# TODO: deprecate
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Use _hint_deprecated_environment_variables instead",
+)
 def hint_deprecated_environment_variables(
     forge_config,
     hints,
