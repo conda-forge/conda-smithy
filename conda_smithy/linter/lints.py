@@ -164,7 +164,9 @@ def _lint_recipe_have_tests(
 
     if recipe_version == 1:
         return conda_recipe_v1_linter._lint_recipe_tests(
-            recipe_dir, test_section, outputs_section,
+            recipe_dir,
+            test_section,
+            outputs_section,
         )
 
     if not any(key in TEST_KEYS for key in test_section):

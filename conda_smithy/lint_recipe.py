@@ -648,16 +648,18 @@ def _team_exists(org_team: str) -> Optional[bool]:
 def run_conda_forge_specific(
     meta, recipe_dir, lints, hints, recipe_version: int = 0, feedstock_config=None
 ):
-    l, h = run_conda_forge_specific_lints(
+    cf_lints, cf_hints = run_conda_forge_specific_lints(
         meta, recipe_dir, recipe_version, feedstock_config
     )
     # a few nested calls (get_section, append_if_absent) still append raw
     # strings instead of LinterMessage, so these lists are a mix of the two
     lints.extend(
-        lint.as_string() if isinstance(lint, LinterMessage) else lint for lint in l
+        lint.as_string() if isinstance(lint, LinterMessage) else lint
+        for lint in cf_lints
     )
     hints.extend(
-        hint.as_string() if isinstance(hint, LinterMessage) else hint for hint in h
+        hint.as_string() if isinstance(hint, LinterMessage) else hint
+        for hint in cf_hints
     )
 
 
