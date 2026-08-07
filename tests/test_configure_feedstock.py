@@ -766,8 +766,9 @@ def test_secrets(py_recipe, jinja_env):
         )
 
 
+@pytest.mark.parametrize("store_artifacts", ["false", "true"])
 @pytest.mark.parametrize("provider", ["azure", "github_actions", "drone", "travis"])
-def test_exec_bits_and_content(py_recipe, jinja_env, provider):
+def test_exec_bits_and_content(py_recipe, jinja_env, provider, store_artifacts):
     recipe_dir = py_recipe.recipe
     forge_yml = Path(recipe_dir, "conda-forge.yml")
     with open(forge_yml, "a") as f:
@@ -777,6 +778,8 @@ def test_exec_bits_and_content(py_recipe, jinja_env, provider):
               linux_aarch64: {provider}
               osx_64: {provider if provider not in ["drone", "travis"] else "default"}
               win_64: {provider if provider not in ["drone", "travis"] else "default"}
+            workflow_settings:
+              store_build_artifacts: {store_artifacts}
         """))
 
     # initialize a git repo (we want to check exec bits as commited by rerender)
@@ -799,11 +802,11 @@ def test_exec_bits_and_content(py_recipe, jinja_env, provider):
     subprocess.call(show_content, cwd=recipe_dir, stdout=sys.stderr)
     repo = get_repo(recipe_dir)
 
-    def is_executable(file):
-        if file not in repo.index:
+    def is_executable(fname):
+        if fname not in repo.index:
             # platform-specific files may be missing in render; fall back to canonical info
-            return str(file).replace("\\", "/") in ALL_EXECUTABLE_FILES
-        entry = repo.index[file]
+            return fname in ALL_EXECUTABLE_FILES
+        entry = repo.index[fname]
         return entry.mode == pygit2.GIT_FILEMODE_BLOB_EXECUTABLE
 
     def iter_files(root_dir):
@@ -820,7 +823,7 @@ def test_exec_bits_and_content(py_recipe, jinja_env, provider):
         fname = str(file).replace("\\", "/")
         # we expect all executable files to have the exec bit,
         # and all non-executable files to not have it
-        assert is_executable(file) == (fname in ALL_EXECUTABLE_FILES)
+        assert is_executable(fname) == (fname in ALL_EXECUTABLE_FILES)
 
         # check that we know the provenance of all files that got generated
         allowlist = [
