@@ -551,6 +551,23 @@ class WorkflowSettings(BaseModel):
         default=[],
         description=cleandoc("""
         Store the outputs of the build process as uploaded CI artifacts.
+
+        Up to three artifacts in .tar.zstd format (additionally put in a .zip
+        on Azure) are created:
+
+        - Build artifacts, containing the built packages (if any). This is
+          always created, though it may contain no packages if none built.
+        - Work directory artifacts, containing the work directory (if any).
+          This is created if the build failed during one of the steps where
+          work directory was available.
+        - Environment artifacts, containing build, host and test environments.
+          This is created if the build failed during one of the steps where
+          environments were available, with the appropriate environments.
+
+        The exact contents and paths in the archive will depend on the
+        `conda_build_tool` used. If tar fails while creating the archive, it may
+        not be complete -- in that case it will be uploaded with "-broken"
+        suffix.
         """),
     )
 
