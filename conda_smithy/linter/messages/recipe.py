@@ -1417,6 +1417,7 @@ class UnsupportedSchemaVersion(LinterMessage, _AnyRecipeMessage):
     kind = "lint"
     identifier = "R1-008"
     message = "Unsupported recipe.yaml schema version ${schema_version}"
+    added_in = "2026.8"
     schema_version: int
 
 
