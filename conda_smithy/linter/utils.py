@@ -21,6 +21,7 @@ from requests.exceptions import Timeout
 
 from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.utils import get_yaml
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
@@ -196,16 +197,16 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _lint_recipe_name(recipe_name: str) -> Optional[str]:
+def _lint_recipe_name(recipe_name: str) -> Optional[LinterMessage]:
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return msg.r.InvalidPackageName().as_string()
+        return msg.r.InvalidPackageName()
 
     return None
 
 
-def _lint_package_version(version: Optional[str]) -> Optional[str]:
+def _lint_package_version(version: Optional[str]) -> Optional[LinterMessage]:
     if version is None:
-        return msg.r.MissingVersion().as_string()
+        return msg.r.MissingVersion()
 
     ver = str(version)
 
@@ -216,7 +217,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
-        return msg.r.InvalidVersion(version=ver, error=str(e)).as_string()
+        return msg.r.InvalidVersion(version=ver, error=str(e))
 
 
 PINNING_FEEDSTOCK_RAW = (
