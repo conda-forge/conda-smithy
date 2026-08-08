@@ -1804,10 +1804,11 @@ def _render_template_files(forge_config, jinja_env, template_files, forge_dir):
 
 def _add_exec_bit(exe_files, forge_dir):
     for exe_file in exe_files:
-        target_fname = os.path.join(forge_dir, exe_file)
+        target_fname = os.path.join(forge_dir, *exe_file.split("/"))
         # Fix permission of executable files
-        logger.debug("adding exec bit to %", target_fname)
-        set_exe_file(target_fname, True)
+        if os.path.exists(target_fname):
+            logger.debug("adding exec bit to %", target_fname)
+            set_exe_file(target_fname, True)
 
 
 @deprecated(
@@ -1895,16 +1896,18 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
-def _add_template_files_from_workflow_settings(data, platform, template_files):
+def _get_workflow_support_files(data, platform):
+    support_files = []
     script_suffix = ".bat" if platform == "win" else ".sh"
     if data["store_build_artifacts"]:
-        template_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
+        support_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
     if data["pagefile_size"] != 0 and platform in ("linux", "win"):
-        template_files.append(f".scripts/create_pagefile{script_suffix}")
+        support_files.append(f".scripts/create_pagefile{script_suffix}")
         if platform == "win":
-            template_files.append(".scripts/SetPageFileSize.ps1")
+            support_files.append(".scripts/SetPageFileSize.ps1")
     if data["free_disk_space"] != "skip":
-        template_files.append(".scripts/free_disk_space.sh")
+        support_files.append(".scripts/free_disk_space.sh")
+    return support_files
 
 
 def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform):
@@ -1920,7 +1923,8 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             ".scripts/run_win_build.bat",
         ],
     }
-    template_files = platform_templates.get(platform, [])
+    # files are templates, as well as executable
+    exe_template_files = platform_templates.get(platform, [])
 
     # Handle GH-hosted and self-hosted runners runs-on config
     # Do it before the deepcopy below so these changes can be used by the
@@ -1992,9 +1996,8 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "D:" if on_hosted_runner or on_namespace else "C:",
         )
         data.update(workflow_settings)
-        _add_template_files_from_workflow_settings(
-            data=data, platform=platform, template_files=template_files
-        )
+        # support scripts are all executable, and may also be templates (for artifact creation)
+        exe_template_files += _get_workflow_support_files(data=data, platform=platform)
         if platform == "linux":
             data["docker_run_args"] = forge_config["docker"]["run_args"]
             if with_gpu:
@@ -2013,11 +2016,10 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     _render_template_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
-        template_files=template_files,
+        template_files=exe_template_files,
         forge_dir=forge_dir,
     )
-    # all template_files are also executable
-    _add_exec_bit(exe_files=template_files, forge_dir=forge_dir)
+    _add_exec_bit(exe_files=exe_template_files, forge_dir=forge_dir)
 
 
 def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=False):
@@ -2117,7 +2119,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 "UPLOAD_PACKAGES": str(data["upload"]),
             }
         )
-        # fmt: off
         if platform == "linux":
             if docker_image := data.get("config", {}).get("docker_image"):
                 config_rendered["DOCKER_IMAGE"] = docker_image[-1]
@@ -2131,6 +2132,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             else:
                 raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
 
+        # fmt: off
         workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
         fill_workflow_settings_defaults(workflow_settings, "azure", data["platform"], "D:" if data["platform"] == "win-64" else "C:")
         data.update(workflow_settings)
@@ -2139,7 +2141,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             config_rendered["docker_run_args"] = forge_config["docker"]["run_args"]
 
         config_rendered.update(workflow_settings)
-        _add_template_files_from_workflow_settings(data=config_rendered, platform=platform, template_files=template_files)
+        # support scripts are all executable, and may also be templates (for artifact creation)
+        exe_templates_files = _get_workflow_support_files(data=config_rendered, platform=platform)
         if config_rendered["store_build_artifacts"]:
             config_rendered["CONFIG_SHORT"] = data["config_name_short"]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
@@ -2149,10 +2152,10 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     _render_template_files(
         forge_config=forge_config,
         jinja_env=jinja_env,
-        template_files=template_files,
+        template_files=template_files + exe_templates_files,
         forge_dir=forge_dir,
     )
-    _add_exec_bit(exe_files=exe_files, forge_dir=forge_dir)
+    _add_exec_bit(exe_files=exe_files + exe_templates_files, forge_dir=forge_dir)
 
 
 def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
