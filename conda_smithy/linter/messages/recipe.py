@@ -1231,7 +1231,7 @@ class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
     message = (
         "`noarch: python` packages install on every Python version at or "
         "above `python_min`, but the Python test only runs against a single "
-        "version. Consider testing against both the minimum and the latest "
+        "version. Consider testing against both the minimum and a latest "
         "supported Python:\n"
         "```yaml\n"
         "tests:\n"
@@ -1258,7 +1258,7 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
         "This package is Python version-independent (e.g. abi3): it is built "
         "once but installs on every Python version at or above `python_min`, "
         "yet the Python test only runs against a single version. Consider "
-        "testing against both the minimum and the latest supported Python:\n"
+        "testing against both the minimum and a latest supported Python:\n"
         "```yaml\n"
         "tests:\n"
         "  - python:\n"
