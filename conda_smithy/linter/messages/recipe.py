@@ -1302,6 +1302,68 @@ class LegacyToolchain(LinterMessage, _MetaYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class InvalidLicenseFamily(LinterMessage, _MetaYamlMessage):
+    """
+    conda-build checks for valid license families in v0 recipes.
+    """
+
+    kind = "lint"
+    identifier = "R0-007"
+    message = (
+        "about/license_family '${license_family}' not allowed. "
+        "Allowed families are ${allowed_license_families}."
+    )
+    allowed_license_families: list[str]
+    license_family: str
+
+    def _render_attributes(self):
+        return {
+            "allowed_license_families": ", ".join(self.allowed_license_families),
+            "license_family": self.license_family,
+        }
+
+
+@dataclass(kw_only=True)
+class TypeMustBeADictionary(LinterMessage, _MetaYamlMessage):
+    """
+    The given section must be a dictionary.
+    """
+
+    kind = "lint"
+    identifier = "R0-008"
+    message = (
+        'The "${name}" section was expected to be a dictionary, but '
+        "got a ${section_type}."
+    )
+    name: str
+    section_type: str
+
+
+@dataclass(kw_only=True)
+class TypeMustBeAListOrDictionary(LinterMessage, _MetaYamlMessage):
+    """
+    The given section must be a list or dictionary.
+    """
+
+    kind = "lint"
+    identifier = "R0-009"
+    message = (
+        'The "${name}" section was expected to be a ${allowed_types}, but '
+        "got a ${section_type}."
+    )
+    name: str
+    section_type: str
+    allow_single: bool
+
+    def _render_attributes(self):
+        return {
+            "name": self.name,
+            "allowed_types": "dictionary or a list" if self.allow_single else "list",
+            "section_type": self.section_type,
+        }
+
+
 # endregion
 # region Recipe v1
 
@@ -1468,6 +1530,20 @@ class Abi3CrossPythonRunExports(LinterMessage, _RecipeYamlMessage):
         "      - cross-python_${{ target_platform }}\n"
         "```"
     )
+
+
+@dataclass(kw_only=True)
+class UnsupportedSchemaVersion(LinterMessage, _AnyRecipeMessage):
+    """
+    Recipe v1 (`recipe.yaml`) has a `schema_version` field that must be an integer.
+    The recipe must use a supported schema version.
+    """
+
+    kind = "lint"
+    identifier = "R1-008"
+    message = "Unsupported recipe.yaml schema version ${schema_version}"
+    added_in = "2026.8"
+    schema_version: int
 
 
 # endregion

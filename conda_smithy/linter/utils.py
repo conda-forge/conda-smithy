@@ -21,6 +21,7 @@ from requests.exceptions import Timeout
 
 from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.utils import get_yaml
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
@@ -95,8 +96,7 @@ def get_meta_section(parent, name, lints):
     section = parent.get(name, {})
     if not isinstance(section, Mapping):
         lints.append(
-            f'The "{name}" section was expected to be a dictionary, but '
-            f"got a {type(section).__name__}."
+            msg.r.TypeMustBeADictionary(name=name, section_type=type(section).__name__)
         )
         section = {}
     return section
@@ -121,13 +121,12 @@ def get_list_section(parent, name, lints, allow_single=False):
     elif isinstance(section, Sequence) and not isinstance(section, str):
         return section
     else:
-        msg = 'The "{}" section was expected to be a {}list, but got a {}.{}.'.format(
-            name,
-            "dictionary or a " if allow_single else "",
-            type(section).__module__,
-            type(section).__name__,
+        section_type = f"{type(section).__module__}.{type(section).__name__}"
+        lints.append(
+            msg.r.TypeMustBeAListOrDictionary(
+                name=name, section_type=section_type, allow_single=allow_single
+            )
         )
-        lints.append(msg)
         return [{}]
 
 
@@ -196,16 +195,16 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _lint_recipe_name(recipe_name: str) -> Optional[str]:
+def _lint_recipe_name(recipe_name: str) -> Optional[LinterMessage]:
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return msg.r.InvalidPackageName().as_string()
+        return msg.r.InvalidPackageName()
 
     return None
 
 
-def _lint_package_version(version: Optional[str]) -> Optional[str]:
+def _lint_package_version(version: Optional[str]) -> Optional[LinterMessage]:
     if version is None:
-        return msg.r.MissingVersion().as_string()
+        return msg.r.MissingVersion()
 
     ver = str(version)
 
@@ -216,7 +215,7 @@ def _lint_package_version(version: Optional[str]) -> Optional[str]:
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
-        return msg.r.InvalidVersion(version=ver, error=str(e)).as_string()
+        return msg.r.InvalidVersion(version=ver, error=str(e))
 
 
 PINNING_FEEDSTOCK_RAW = (

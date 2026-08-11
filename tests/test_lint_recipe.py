@@ -90,6 +90,7 @@ def test_stdlib_lint(comp_lang):
             assert not any(lint.startswith(expected_message) for lint in lints)
         else:
             assert any(lint.startswith(expected_message) for lint in lints)
+        assert len(lints) == len(set(lints)), f"Duplicate lint messages: {lints}"
 
 
 def test_m2w64_stdlib_legal():
@@ -164,6 +165,7 @@ def test_sysroot_lint():
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
         assert any(lint.startswith(expected_message) for lint in lints)
+        assert len(lints) == len(set(lints)), f"Duplicate lint messages: {lints}"
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
@@ -183,6 +185,7 @@ def test_osx_lint(where):
 
         lints, _ = linter.main(recipe_dir, return_hints=True)
         assert any(lint.startswith(expected_message) for lint in lints)
+        assert len(lints) == len(set(lints)), f"Duplicate lint messages: {lints}"
 
 
 def test_stdlib_lints_multi_output():
@@ -225,6 +228,7 @@ def test_stdlib_lints_multi_output():
         assert any(lint.startswith(exp_stdlib) for lint in lints)
         assert any(lint.startswith(exp_sysroot) for lint in lints)
         assert any(lint.startswith(exp_osx) for lint in lints)
+        assert len(lints) == len(set(lints)), f"Duplicate lint messages: {lints}"
 
 
 @pytest.mark.parametrize("where", ["run", "run_constrained"])
@@ -245,6 +249,7 @@ def test_osx_noarch_hint(where):
 
         _, hints = linter.main(recipe_dir, return_hints=True)
         assert not any(h.startswith(avoid_message) for h in hints)
+        assert len(hints) == len(set(hints)), f"Duplicate lint messages: {hints}"
 
 
 def test_recipe_v1_osx_noarch_hint():
@@ -268,6 +273,7 @@ def test_recipe_v1_osx_noarch_hint():
 
         _, hints = linter.main(recipe_dir, return_hints=True, feedstock_dir=recipe_dir)
         assert not any(h.startswith(avoid_message) for h in hints)
+        assert len(hints) == len(set(hints)), f"Duplicate lint messages: {hints}"
 
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
