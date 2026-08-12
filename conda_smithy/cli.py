@@ -21,6 +21,7 @@ from conda_smithy.configure_feedstock import (
     _load_forge_config,
     get_cached_cfp_file_path,
 )
+from conda_smithy.deprecations import deprecated
 from conda_smithy.utils import (
     CONDA_BUILD,
     RATTLER_BUILD,
@@ -378,6 +379,9 @@ class RegisterCI(Subcommand):
                 "conda-forge.yml to disable package uploads."
             )
         if args.travis:
+            deprecated.topic(
+                "2026.8", "2026.10", addendum="Travis CI is deprecated. See #2627."
+            )
             # Assume that the user has enabled travis-ci.com service
             # user-wide or org-wide for all repos
             # ci_register.add_project_to_travis(owner, repo)
@@ -391,6 +395,9 @@ class RegisterCI(Subcommand):
         else:
             print("Travis registration disabled.")
         if args.circle:
+            deprecated.topic(
+                "2026.8", "2026.10", addendum="Circle CI is deprecated. See #2627."
+            )
             ci_register.add_project_to_circle(owner, repo)
             if args.anaconda_token:
                 ci_register.add_token_to_circle(owner, repo)
@@ -409,6 +416,9 @@ class RegisterCI(Subcommand):
         else:
             print("Azure registration disabled.")
         if args.appveyor:
+            deprecated.topic(
+                "2026.8", "2026.10", addendum="Appveyor CI is deprecated. See #2627."
+            )
             ci_register.add_project_to_appveyor(owner, repo)
             if args.anaconda_token:
                 ci_register.appveyor_encrypt_binstar_token(
@@ -419,6 +429,9 @@ class RegisterCI(Subcommand):
             print("Appveyor registration disabled.")
 
         if args.drone:
+            deprecated.topic(
+                "2026.8", "2026.10", addendum="Drone CI is deprecated. See #2627."
+            )
             from conda_smithy.ci_register import drone_default_endpoint
 
             drone_endpoints = args.drone_endpoints
@@ -464,7 +477,11 @@ class RegisterCI(Subcommand):
             print("Cirun registration disabled.")
 
         if args.cirrus_runners:
-            print("Cirrus Runners support is deprecated.")
+            deprecated.topic(
+                "2026.8",
+                "2026.10",
+                addendum="Cirrus Runners CI is deprecated. See #2627.",
+            )
 
         if args.blacksmith:
             if args.remove:
@@ -1124,6 +1141,9 @@ class UpdateAnacondaToken(Subcommand):
             f"{args.feedstock_directory}!"
         )
         if args.appveyor:
+            deprecated.topic(
+                "2026.8", "2026.10", addendum="Travis CI is deprecated. See #2627."
+            )
             print(
                 "Appveyor tokens are stored in the repo so you must commit the "
                 "local changes and push them before the new token will be used!"

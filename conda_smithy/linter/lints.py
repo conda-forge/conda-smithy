@@ -7,12 +7,14 @@ import re
 import tempfile
 from collections.abc import Sequence
 from typing import Any, Literal, Optional
+from urllib.parse import urlsplit
 
 from conda.models.version import VersionOrder
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
+from conda_smithy.feedstock_io import get_repo
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.utils import (
@@ -292,10 +294,24 @@ def lint_subheaders(major_sections, meta, lints):
                         )
 
 
-def lint_noarch(noarch_value: Optional[str], lints):
+def lint_noarch(
+    noarch_value: Optional[str],
+    lints,
+    recipe_version: msg.r.RECIPE_VERSIONS,
+    meta: dict[str, Any],
+):
     if noarch_value is not None:
-        if noarch_value not in msg.r.NoarchValue.valid:
-            lints.append(msg.r.NoarchValue(given=noarch_value).as_string())
+        if not msg.r.NoarchValue.is_valid(
+            noarch_value,
+            recipe_version,
+            meta,
+        ):
+            lints.append(
+                msg.r.NoarchValue(
+                    given=noarch_value,
+                    recipe_version=recipe_version,
+                ).as_string()
+            )
 
 
 def lint_recipe_v1_noarch_and_runtime_dependencies(
@@ -304,8 +320,11 @@ def lint_recipe_v1_noarch_and_runtime_dependencies(
     build_section: dict[str, Any],
     noarch_platforms: bool,
     lints: list[str],
+    meta: Optional[dict[str, Any]] = None,
 ) -> None:
-    if noarch_value:
+    # Only run this test if noarch_value is a literal
+    # Skip if it's a jinja conditional as it's expected to be not noarch depending on the context
+    if noarch_value in msg.r.NoarchValue.valid:
         conda_recipe_v1_linter.lint_usage_of_selectors_for_noarch(
             noarch_value,
             raw_requirements_section,
@@ -327,11 +346,10 @@ def lint_noarch_and_runtime_dependencies(
         return
     noarch_platforms = len(forge_yaml.get("noarch_platforms", [])) > 1
     with open(meta_fname, encoding="utf-8") as fh:
-        in_runreqs = False
+        runreqs_spacing = None
         for line_number, line in enumerate(fh, 1):
             line_s = line.strip()
             if line_s == "host:" or line_s == "run:":
-                in_runreqs = True
                 runreqs_spacing = line[: -len(line.lstrip())]
                 continue
             if line_s.startswith("skip:") and is_selector_line(line):
@@ -344,9 +362,9 @@ def lint_noarch_and_runtime_dependencies(
                     ).as_string()
                 )
                 break
-            if in_runreqs:
+            if runreqs_spacing is not None:
                 if runreqs_spacing == line[: -len(line.lstrip())]:
-                    in_runreqs = False
+                    runreqs_spacing = None
                     continue
                 if is_selector_line(
                     line,
@@ -1139,3 +1157,63 @@ def lint_invalid_workflow_settings(
                         restrictions=restrictions,
                     ).as_string()
                 )
+
+
+def lint_feedstock_name(
+    meta,
+    feedstock_config,
+    recipe_version: int,
+    recipe_dir: str,
+    lints: list[str],
+) -> None:
+    """Lint that feedstock-name is specified when it doesn't match the recipe name"""
+
+    # v1 recipes use "recipe" or "package", v0 just "package"
+    recipe_section = (
+        meta["recipe"]
+        if recipe_version == 1 and "recipe" in meta
+        else meta.get("package", {})
+    )
+    recipe_name = recipe_section.get("name")
+    feedstock_name = meta.get("extra", {}).get("feedstock-name") or recipe_name
+    user_or_org = feedstock_config.get("github", {}).get("user_or_org", "conda-forge")
+
+    # If we have no feedstock_name (which falls back to recipe name) or no
+    # recipe dir, something is wrong. Return early not to raise exceptions.
+    if feedstock_name is None or recipe_dir is None:
+        return
+
+    repo = get_repo(recipe_dir)
+    # If we have no repo, we have nothing to check against.
+    if repo is None:
+        return
+
+    # Try upstream first, origin second, and skip check if neither is available.
+    available_remotes = list(repo.remotes.names())
+    if "upstream" in available_remotes:
+        remote = repo.remotes["upstream"]
+    elif "origin" in available_remotes:
+        remote = repo.remotes["origin"]
+    else:
+        return
+    if remote.url is None:
+        return
+
+    parsed_url = urlsplit(remote.url)
+    if not parsed_url.netloc:
+        # Maybe it's ssh-style netloc:path.
+        parsed_url = urlsplit(f"git+ssh://{remote.url.replace(':', '/')}")
+    feedstock_name_re = re.compile(rf"/{user_or_org}/([^/]+)-feedstock(?:\.git)?/?")
+    if (
+        parsed_url.hostname != "github.com"
+        or (match := feedstock_name_re.fullmatch(parsed_url.path)) is None
+    ):
+        return
+    expected_name = match.group(1)
+
+    if feedstock_name != expected_name:
+        lints.append(
+            msg.cf.MismatchedFeedstockName(
+                current=feedstock_name, expected=expected_name
+            ).as_string()
+        )

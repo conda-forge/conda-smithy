@@ -28,9 +28,12 @@ from conda_smithy.configure_feedstock import _read_forge_config
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.hints import (
+    hint_abi3_cross_python_run_exports,
+    hint_abi3_missing_abi3audit,
     hint_check_spdx,
     hint_dependency_pins,
     hint_deprecated_environment_variables,
+    hint_legacy_pypi_url,
     hint_noarch_python_test_latest,
     hint_noarch_python_use_python_min,
     hint_os_version,
@@ -38,8 +41,9 @@ from conda_smithy.linter.hints import (
     hint_pip_usage,
     hint_python_version_independent_test_latest,
     hint_rattler_build_bld_bat,
+    hint_rattler_build_sp_dir,
+    hint_redundant_python_min,
     hint_shellcheck_usage,
-    hint_sources_should_not_mention_pypi_io_but_pypi_org,
     hint_space_separated_specs,
     hint_suggest_noarch,
 )
@@ -48,6 +52,7 @@ from conda_smithy.linter.lints import (
     lint_build_section_should_be_before_run,
     lint_build_section_should_have_a_number,
     lint_check_usage_of_whls,
+    lint_feedstock_name,
     lint_feedstock_name_not_end_with_feedstock,
     lint_floats_quoted,
     lint_go_licenses_are_bundled,
@@ -90,7 +95,7 @@ from conda_smithy.linter.utils import (
     flatten_v1_if_else,
     get_all_test_requirements,
     get_section,
-    load_linter_toml_metdata,
+    load_linter_toml_metadata,
 )
 from conda_smithy.utils import get_yaml, render_meta_yaml
 from conda_smithy.validate_schema import validate_json_schema
@@ -310,7 +315,7 @@ def lintify_meta_yaml(
 
     # 17: Validate noarch
     noarch_value = build_section.get("noarch")
-    lint_noarch(noarch_value, lints)
+    lint_noarch(noarch_value, lints, recipe_version, meta)
 
     # Interlude: load recipe config
     recipe_config_keys = _get_recipe_config_keys(recipe_dir)
@@ -326,6 +331,7 @@ def lintify_meta_yaml(
                 build_section,
                 noarch_platforms,
                 lints,
+                meta,
             )
         else:
             lint_noarch_and_runtime_dependencies(
@@ -438,8 +444,8 @@ def lintify_meta_yaml(
     # 4: Check for SPDX
     hint_check_spdx(about_section, hints)
 
-    # 5: hint pypi.io -> pypi.org
-    hint_sources_should_not_mention_pypi_io_but_pypi_org(sources_section, hints)
+    # 5: hint pypi.io -> files.pythonhosted.org
+    hint_legacy_pypi_url(sources_section, hints)
 
     # 6: warn of `name =version=build` specs, suggest `name version build`
     # see https://github.com/conda/conda-build/issues/5571#issuecomment-2604505922
@@ -710,7 +716,7 @@ def run_conda_forge_specific(
             else:
                 run_reqs += _req
 
-    specific_hints = (load_linter_toml_metdata() or {}).get("hints", {})
+    specific_hints = (load_linter_toml_metadata() or {}).get("hints", {})
     all_reqs = build_reqs + host_reqs + run_reqs
     if recipe_version == 1:
         all_reqs = flatten_v1_if_else(all_reqs)
@@ -810,6 +816,36 @@ def run_conda_forge_specific(
             hints,
         )
 
+    # 10d: abi3 recipes no longer need the manual cross-python
+    # `ignore_run_exports` workaround; rattler-build handles it natively
+    if (
+        "hint_abi3_cross_python_run_exports" not in lints_to_skip
+        and recipe_version == 1
+    ):
+        hint_abi3_cross_python_run_exports(
+            requirements_section,
+            outputs_section,
+            build_section,
+            recipe_version,
+            hints,
+        )
+
+    # 10e: abi3 recipes should verify their extension modules with abi3audit
+    if "hint_abi3_missing_abi3audit" not in lints_to_skip:
+        hint_abi3_missing_abi3audit(
+            get_section(
+                meta,
+                "tests" if recipe_version == 1 else "test",
+                lints,
+                recipe_version,
+            ),
+            outputs_section,
+            build_section,
+            requirements_section,
+            recipe_version,
+            hints,
+        )
+
     if os.path.exists(recipe_fname):
         with open(recipe_fname, encoding="utf-8") as fh:
             recipe_text = fh.read()
@@ -822,11 +858,28 @@ def run_conda_forge_specific(
             recipe_version=recipe_version,
         )
 
+        # 11b: redefining python_min to the global pinning default is redundant
+        if "hint_redundant_python_min" not in lints_to_skip:
+            hint_redundant_python_min(
+                meta,
+                recipe_text,
+                recipe_version,
+                hints,
+            )
+
         # 12: ensure is_abi3 is boolean
         lint_recipe_is_abi3_bool(
             recipe_text,
             lints,
         )
+
+        # 12b: defining SP_DIR is an obsolete rattler-build workaround
+        if "hint_rattler_build_sp_dir" not in lints_to_skip:
+            hint_rattler_build_sp_dir(
+                recipe_text,
+                hints,
+                recipe_version,
+            )
 
     # 13: no empty conda_build_config.yaml files
     cbc_pth = os.path.join(recipe_dir or "", "conda_build_config.yaml")
@@ -867,6 +920,9 @@ def run_conda_forge_specific(
 
     # 18: Check for invalid values in workflow_settings in conda-forge.yml
     lint_invalid_workflow_settings(feedstock_config, lints)
+
+    # 19: Check for missing feedstock-name (if necessary).
+    lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

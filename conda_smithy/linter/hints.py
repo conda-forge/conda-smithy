@@ -9,6 +9,9 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
+from conda.deprecations import deprecated
+from conda.models.version import VersionOrder
+
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.utils import (
@@ -16,6 +19,7 @@ from conda_smithy.linter.utils import (
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
+    get_global_pinning_python_min,
     get_version_independent,
     is_selector_line,
 )
@@ -32,12 +36,10 @@ def hint_pip_usage(build_section, hints):
                 hints.append(msg.r.UsePip().as_string())
 
 
-def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: list[dict[str, Any]], hints: list[str]
-):
+def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]):
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
-    but cannonical url is PyPI.org.
+    but cannonical url is files.pythonhosted.org.
 
     See https://github.com/conda-forge/staged-recipes/pull/27946
     """
@@ -45,7 +47,14 @@ def hint_sources_should_not_mention_pypi_io_but_pypi_org(
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.UsePyPIOrg().as_string())
+            hints.append(msg.r.LegacyPyPIURL().as_string())
+
+
+@deprecated("2026.8", "2026.10", addendum="Use hint_legacy_pypi_url() instead")
+def hint_sources_should_not_mention_pypi_io_but_pypi_org(
+    sources_section: list[dict[str, Any]], hints: list[str]
+):
+    hint_legacy_pypi_url(sources_section, hints)
 
 
 def hint_suggest_noarch(
@@ -71,20 +80,19 @@ def hint_suggest_noarch(
             )
         else:
             with open(recipe_fname, encoding="utf-8") as fh:
-                in_runreqs = False
+                runreqs_spacing = None
                 no_arch_possible = True
                 for line in fh:
                     line_s = line.strip()
                     if line_s == "host:" or line_s == "run:":
-                        in_runreqs = True
                         runreqs_spacing = line[: -len(line.lstrip())]
                         continue
                     if line_s.startswith("skip:") and is_selector_line(line):
                         no_arch_possible = False
                         break
-                    if in_runreqs:
+                    if runreqs_spacing is not None:
                         if runreqs_spacing == line[: -len(line.lstrip())]:
-                            in_runreqs = False
+                            runreqs_spacing = None
                             continue
                         if is_selector_line(line):
                             no_arch_possible = False
@@ -362,6 +370,27 @@ def hint_noarch_python_use_python_min(
         hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
 
 
+def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
+    if recipe_version == 1:
+        context = meta.get("context")
+        declared = context.get("python_min") if isinstance(context, Mapping) else None
+    else:
+        match = re.search(
+            r"""{%\s*set\s+python_min\s*=\s*["']([^"']+)["']""",
+            recipe_text or "",
+        )
+        declared = match.group(1) if match else None
+
+    if declared is None:
+        return
+
+    global_python_min = get_global_pinning_python_min()
+    if global_python_min is not None and VersionOrder(str(declared)) <= VersionOrder(
+        global_python_min
+    ):
+        hints.append(msg.r.RedundantPythonMin(value=str(declared)).as_string())
+
+
 def _python_tests_cover_latest(tests_section, run_reqs):
     """Whether ``tests.*.python`` include a "latest" Python.
 
@@ -453,6 +482,145 @@ def hint_python_version_independent_test_latest(
             build or {}, "python", recipe_version
         ) and not _python_tests_cover_latest(tests, run):
             hints.append(msg.r.PythonVersionIndependentTestLatest().as_string())
+            return
+
+
+CROSS_PYTHON_RE = re.compile(r"^cross-python(?:_|\s|$)")
+
+
+def hint_abi3_cross_python_run_exports(
+    requirements_section,
+    outputs_section,
+    build_section,
+    recipe_version,
+    hints,
+):
+    if recipe_version != 1:
+        return
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            scopes.append((output.get("requirements") or {}, output.get("build") or {}))
+    else:
+        scopes.append((requirements_section or {}, build_section or {}))
+
+    for requirements, build in scopes:
+        if not isinstance(requirements, Mapping):
+            continue
+        # the cross-python run-export only pins Python for recipes that are
+        # not tied to a single Python version, i.e. `noarch: python` or
+        # `build.python.version_independent` (abi3) recipes
+        if not isinstance(build, Mapping):
+            continue
+        if build.get("noarch") != "python" and not get_version_independent(
+            build, "python", recipe_version
+        ):
+            continue
+        ignore_run_exports = requirements.get("ignore_run_exports")
+        if not ignore_run_exports:
+            continue
+        # v1 ignore_run_exports is a dict, but rattler-build-conda-compat may
+        # return it wrapped in a length-1 list instead of the dict itself
+        if isinstance(ignore_run_exports, list):
+            ignore_run_exports = ignore_run_exports[0] if ignore_run_exports else {}
+        if not isinstance(ignore_run_exports, Mapping):
+            continue
+        from_package = flatten_v1_if_else(ignore_run_exports.get("from_package") or [])
+        if any(CROSS_PYTHON_RE.match(str(entry).strip()) for entry in from_package):
+            hints.append(msg.r.Abi3CrossPythonRunExports().as_string())
+            return
+
+
+def _mentions_abi3audit(test_section, recipe_version) -> bool:
+    """True if any test declares `abi3audit` as a requirement or runs it."""
+    if recipe_version == 1:
+        # v1: a list of test elements, each with `requirements.run` and `script`
+        tests = test_section or []
+    else:
+        # v0: a single mapping with `requires` and `commands`
+        tests = [test_section] if isinstance(test_section, Mapping) else []
+
+    for test in tests:
+        if not isinstance(test, Mapping):
+            continue
+        if recipe_version == 1:
+            requirements = test.get("requirements") or {}
+            reqs = (
+                requirements.get("run") or []
+                if isinstance(requirements, Mapping)
+                else []
+            )
+            commands = test.get("script")
+        else:
+            reqs = test.get("requires") or []
+            commands = test.get("commands")
+
+        for req in flatten_v1_if_else(reqs):
+            if isinstance(req, str) and req.strip().split()[:1] == ["abi3audit"]:
+                return True
+        if isinstance(commands, str):
+            commands = [commands]
+        for line in flatten_v1_if_else(commands or []):
+            if isinstance(line, str) and "abi3audit" in line:
+                return True
+    return False
+
+
+def _requires_python_abi3(requirements_section) -> bool:
+    """True if `python-abi3` is a host requirement."""
+    if not isinstance(requirements_section, Mapping):
+        return False
+    for req in flatten_v1_if_else(requirements_section.get("host") or []):
+        if isinstance(req, str) and req.strip().split()[:1] == ["python-abi3"]:
+            return True
+    return False
+
+
+def hint_abi3_missing_abi3audit(
+    test_section,
+    outputs_section,
+    build_section,
+    requirements_section,
+    recipe_version,
+    hints,
+):
+    """Hint that abi3 recipes should verify their extension modules with abi3audit.
+
+    abi3 packages are built once against `python_min` but installed on every
+    later Python, so an extension module that accidentally uses non-abi3 CPython
+    API only breaks at runtime. `abi3audit` catches that at build time.
+    """
+    tests_key = "tests" if recipe_version == 1 else "test"
+
+    scopes = []
+    if outputs_section:
+        for output in outputs_section:
+            scopes.append(
+                (
+                    output.get(tests_key),
+                    output.get("build") or {},
+                    output.get("requirements") or {},
+                )
+            )
+    else:
+        scopes.append((test_section, build_section or {}, requirements_section or {}))
+
+    for tests, build, requirements in scopes:
+        if not isinstance(build, Mapping):
+            continue
+        # `noarch: python` packages ship no compiled extension, so there is
+        # nothing for abi3audit to check
+        if build.get("noarch") == "python":
+            continue
+        if not get_version_independent(build, "python", recipe_version):
+            continue
+        # a version-independent recipe is only an abi3 recipe if it builds
+        # against `python-abi3`
+        if not _requires_python_abi3(requirements):
+            continue
+        if not _mentions_abi3audit(tests, recipe_version):
+            hints.append(msg.r.Abi3MissingAbi3Audit().as_string())
             return
 
 
@@ -571,6 +739,41 @@ def hint_rattler_build_bld_bat(
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
         hints.append(msg.r.RattlerBldBat().as_string())
+
+
+# Matches a manual definition of SP_DIR in a script line, e.g.
+# `- export SP_DIR=$(python -c "...")`. It must be an assignment (`SP_DIR=`),
+# so plain uses like `$SP_DIR/foo` or `%SP_DIR%` are not matched.
+SP_DIR_DEFINITION_RE = re.compile(
+    r"(?m)^\s*(?:-\s+)?(?:then:\s+)?(?:export\s+)?SP_DIR\s*="
+)
+
+# Matches a hardcoded Windows site-packages path, e.g.
+# `%PREFIX%\Lib\site-packages` or `%PREFIX%/Lib/site-packages`, which should
+# use `%SP_DIR%` instead. Either path separator is accepted.
+PREFIX_SITE_PACKAGES_RE = re.compile(
+    r"%PREFIX%[\\/]+Lib[\\/]+site-packages", re.IGNORECASE
+)
+
+
+def hint_rattler_build_sp_dir(
+    recipe_text: str,
+    hints: list[str],
+    recipe_version: int = 0,
+):
+    """Hint that handling site-packages manually is an obsolete rattler-build workaround.
+
+    rattler-build now defines `$SP_DIR` (the environment's site-packages
+    directory, `%SP_DIR%` on Windows). Older abi3 recipes exported it themselves
+    as a workaround for it previously being undefined, or hardcoded a path such
+    as `%PREFIX%\\Lib\\site-packages`; both can now use `$SP_DIR` / `%SP_DIR%`.
+    """
+    if recipe_version != 1:
+        return
+
+    text = recipe_text or ""
+    if SP_DIR_DEFINITION_RE.search(text) or PREFIX_SITE_PACKAGES_RE.search(text):
+        hints.append(msg.r.RattlerSPDir().as_string())
 
 
 def _check_pin_overridden(

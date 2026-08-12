@@ -9,7 +9,10 @@ def get_repo(path, search_parent_directories=True):
     repo = None
     try:
         import pygit2
+    except ImportError:
+        return None
 
+    try:
         if search_parent_directories:
             path = pygit2.discover_repository(path)
         if path is not None:
@@ -19,8 +22,6 @@ def get_repo(path, search_parent_directories=True):
                 no_search = pygit2.GIT_REPOSITORY_OPEN_NO_SEARCH
 
             repo = pygit2.Repository(path, no_search)
-    except ImportError:
-        pass
     except pygit2.GitError:
         pass
 
@@ -28,10 +29,9 @@ def get_repo(path, search_parent_directories=True):
 
 
 def get_repo_root(path):
-    try:
-        return get_repo(path).workdir.rstrip(os.path.sep)
-    except AttributeError:
+    if (repo := get_repo(path)) is None:
         return None
+    return repo.workdir.rstrip(os.path.sep)
 
 
 def set_exe_file(filename, set_exe=True):

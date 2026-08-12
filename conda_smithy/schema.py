@@ -19,6 +19,7 @@ from .configure_feedstock import (  # noqa: TID252
     DEFAULT_PLATFORMS,
     DEFAULT_PROVIDERS,
 )
+from .deprecations import deprecated  # noqa: TID252
 from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
@@ -54,16 +55,24 @@ image_tags = Literal["alma10", "rocky10", "alma9", "alma8", "ubi8", "cos7"]
 
 class CIservices(StrEnum):
     azure = "azure"
-    circle = "circle"
-    travis = "travis"
-    appveyor = "appveyor"
     github_actions = "github_actions"
-    drone = "drone"
-    woodpecker = "woodpecker"
     default = "default"
     emulated = "emulated"
     native = "native"
     disable = "None"
+
+
+@deprecated("2026.8", "2026.10", addendum="These services are deprecated. See #2627.")
+class DeprecatedCIservices(StrEnum):
+    """
+    These are deprecated as of 2026.8 and will be removed in 2026.10. See #2627.
+    """
+
+    circle = "circle"
+    travis = "travis"
+    appveyor = "appveyor"
+    drone = "drone"
+    woodpecker = "woodpecker"
 
 
 class Lints(StrEnum):
@@ -141,10 +150,13 @@ class AzureConfig(BaseModel):
         deprecated=True,
         description=cleandoc("""
             Deprecated. Use `workflow_settings.free_disk_space` instead.
-            Free up disk space before build.
-            The following components can be cleaned up: `apt`, `cache`, `docker`.
-            When set to `true`, only `apt` and `cache` are cleaned up.
-            Set it to the full list to clean up all components.
+            This setting accepts a boolean or a list containing `apt`, `cache`,
+            and `docker`. When set to `true`, only `apt` and `cache` are cleaned
+            up. Set it to the full list to clean up all components.
+
+            The replacement setting uses the values `skip`, `quick`, and `max`
+            instead; the values accepted by this deprecated setting are not valid
+            for the replacement setting.
             """),
     )
 
@@ -285,10 +297,13 @@ class GithubActionsConfig(BaseModel):
         deprecated=True,
         description=cleandoc("""
             Deprecated. Use `workflow_settings.free_disk_space` instead.
-            Free up disk space building.
-            The following components can be cleaned up: `apt`, `cache`, `docker`.
-            When set to `true`, only `apt` and `cache` are cleaned up.
-            Set it to the full list to clean up all components.
+            This setting accepts a boolean or a list containing `apt`, `cache`,
+            and `docker`. When set to `true`, only `apt` and `cache` are cleaned
+            up. Set it to the full list to clean up all components.
+
+            The replacement setting uses the values `skip`, `quick`, and `max`
+            instead; the values accepted by this deprecated setting are not valid
+            for the replacement setting.
             """),
     )
 
@@ -455,7 +470,13 @@ OSVersion = create_model(
     },
 )
 
-ProviderType = Union[list[CIservices], CIservices, bool, Nullable]
+ProviderType = Union[
+    list[Union[CIservices, DeprecatedCIservices]],
+    CIservices,
+    DeprecatedCIservices,
+    bool,
+    Nullable,
+]
 
 Provider = create_model(
     "provider",
@@ -498,7 +519,14 @@ def conditional_value(typ: type, default: Any = None) -> BaseModel:
             ),
         ),
         provider=(
-            Optional[Union[list[CIservices], CIservices, Nullable]],
+            Optional[
+                Union[
+                    list[Union[CIservices, DeprecatedCIservices]],
+                    CIservices,
+                    DeprecatedCIservices,
+                    Nullable,
+                ]
+            ],
             Field(
                 default=None,
                 description=cleandoc("""
@@ -523,6 +551,23 @@ class WorkflowSettings(BaseModel):
         default=[],
         description=cleandoc("""
         Store the outputs of the build process as uploaded CI artifacts.
+
+        Up to three artifacts in .tar.zstd format (additionally put in a .zip
+        on Azure) are created:
+
+        - Build artifacts, containing the built packages (if any). This is
+          always created, though it may contain no packages if none built.
+        - Work directory artifacts, containing the work directory (if any).
+          This is created if the build failed during one of the steps where
+          work directory was available.
+        - Environment artifacts, containing build, host and test environments.
+          This is created if the build failed during one of the steps where
+          environments were available, with the appropriate environments.
+
+        The exact contents and paths in the archive will depend on the
+        `conda_build_tool` used. If tar fails while creating the archive, it may
+        not be complete -- in that case it will be uploaded with "-broken"
+        suffix.
         """),
     )
 
@@ -1197,13 +1242,14 @@ class ConfigModel(BaseModel):
             # toggle for storing the conda build_artifacts directory (including the
             # built packages) as an Azure pipeline artifact that can be downloaded
             store_build_artifacts: False
-            # toggle for freeing up some extra space on the default Azure Pipelines
-            # linux image before running the Docker container for building
-            free_disk_space: False
             # limit the amount of CI jobs running concurrently at a given time
             # each OS will get its proportional share of the configured value
             max_parallel: 25
         ```
+
+        Freeing up disk space before a build is no longer configured here. Use the
+        top-level `workflow_settings.free_disk_space` option instead, which accepts
+        `skip` (default), `quick` or `max`.
 
         Below is an example configuration for setting up a self-hosted Azure agent for Linux:
 

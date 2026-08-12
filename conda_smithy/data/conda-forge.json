@@ -42,7 +42,7 @@
           ],
           "default": false,
           "deprecated": true,
-          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space before build.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nThis setting accepts a boolean or a list containing `apt`, `cache`,\nand `docker`. When set to `true`, only `apt` and `cache` are cleaned\nup. Set it to the full list to clean up all components.\n\nThe replacement setting uses the values `skip`, `quick`, and `max`\ninstead; the values accepted by this deprecated setting are not valid\nfor the replacement setting.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
@@ -255,12 +255,7 @@
     "CIservices": {
       "enum": [
         "azure",
-        "circle",
-        "travis",
-        "appveyor",
         "github_actions",
-        "drone",
-        "woodpecker",
         "default",
         "emulated",
         "native",
@@ -456,12 +451,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "$ref": "#/$defs/Nullable"
@@ -534,12 +539,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "$ref": "#/$defs/Nullable"
@@ -612,12 +627,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "$ref": "#/$defs/Nullable"
@@ -647,6 +672,18 @@
         "native_and_emulated"
       ],
       "title": "DefaultTestPlatforms",
+      "type": "string"
+    },
+    "DeprecatedCIservices": {
+      "description": "These are deprecated as of 2026.8 and will be removed in 2026.10. See #2627.",
+      "enum": [
+        "circle",
+        "travis",
+        "appveyor",
+        "drone",
+        "woodpecker"
+      ],
+      "title": "DeprecatedCIservices",
       "type": "string"
     },
     "GithubActionsConfig": {
@@ -703,7 +740,7 @@
           ],
           "default": false,
           "deprecated": true,
-          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nFree up disk space building.\nThe following components can be cleaned up: `apt`, `cache`, `docker`.\nWhen set to `true`, only `apt` and `cache` are cleaned up.\nSet it to the full list to clean up all components.",
+          "description": "Deprecated. Use `workflow_settings.free_disk_space` instead.\nThis setting accepts a boolean or a list containing `apt`, `cache`,\nand `docker`. When set to `true`, only `apt` and `cache` are cleaned\nup. Set it to the full list to clean up all components.\n\nThe replacement setting uses the values `skip`, `quick`, and `max`\ninstead; the values accepted by this deprecated setting are not valid\nfor the replacement setting.",
           "title": "Free Disk Space"
         },
         "max_parallel": {
@@ -949,12 +986,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "$ref": "#/$defs/Nullable"
@@ -1056,7 +1103,7 @@
             }
           ],
           "default": [],
-          "description": "Store the outputs of the build process as uploaded CI artifacts.",
+          "description": "Store the outputs of the build process as uploaded CI artifacts.\n\nUp to three artifacts in .tar.zstd format (additionally put in a .zip\non Azure) are created:\n\n- Build artifacts, containing the built packages (if any). This is\n  always created, though it may contain no packages if none built.\n- Work directory artifacts, containing the work directory (if any).\n  This is created if the build failed during one of the steps where\n  work directory was available.\n- Environment artifacts, containing build, host and test environments.\n  This is created if the build failed during one of the steps where\n  environments were available, with the appropriate environments.\n\nThe exact contents and paths in the archive will depend on the\n`conda_build_tool` used. If tar fails while creating the archive, it may\nnot be complete -- in that case it will be uploaded with \"-broken\"\nsuffix.",
           "title": "Store Build Artifacts"
         },
         "tools_install_dir": {
@@ -1574,12 +1621,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1598,12 +1655,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1622,12 +1689,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1646,12 +1723,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1670,12 +1757,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1694,12 +1791,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1718,12 +1825,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1742,12 +1859,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1766,12 +1893,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1790,12 +1927,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1814,12 +1961,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1838,12 +1995,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1862,12 +2029,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1886,12 +2063,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1910,12 +2097,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1934,12 +2131,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1958,12 +2165,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1982,12 +2199,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2006,12 +2233,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2030,12 +2267,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2054,12 +2301,22 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/CIservices"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CIservices"
+                  },
+                  {
+                    "$ref": "#/$defs/DeprecatedCIservices"
+                  }
+                ]
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
+            },
+            {
+              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2637,7 +2894,7 @@
           "type": "null"
         }
       ],
-      "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # toggle for freeing up some extra space on the default Azure Pipelines\n    # linux image before running the Docker container for building\n    free_disk_space: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        pool:\n            name: your_local_pool_name\n            demands:\n                - some_key -equals some_value\n        workspace:\n            clean: all\n        strategy:\n            maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux and Windows:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n    settings_win:\n        variables:\n            SET_PAGEFILE: 'True'\n```\n\nIf you need more space on Windows, you can use `C:` at the cost of IO performance:\n\n```yaml\nazure:\n    settings_win:\n        variables:\n            CONDA_BLD_PATH: \"C:\\bld\"\n            MINIFORGE_HOME: \"C:\\Miniforge\"\n```"
+      "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nFreeing up disk space before a build is no longer configured here. Use the\ntop-level `workflow_settings.free_disk_space` option instead, which accepts\n`skip` (default), `quick` or `max`.\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        pool:\n            name: your_local_pool_name\n            demands:\n                - some_key -equals some_value\n        workspace:\n            clean: all\n        strategy:\n            maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux and Windows:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n    settings_win:\n        variables:\n            SET_PAGEFILE: 'True'\n```\n\nIf you need more space on Windows, you can use `C:` at the cost of IO performance:\n\n```yaml\nazure:\n    settings_win:\n        variables:\n            CONDA_BLD_PATH: \"C:\\bld\"\n            MINIFORGE_HOME: \"C:\\Miniforge\"\n```"
     },
     "drone": {
       "anyOf": [

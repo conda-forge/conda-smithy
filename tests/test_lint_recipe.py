@@ -9,14 +9,16 @@ import tempfile
 import textwrap
 import unittest
 from collections import OrderedDict
+from collections.abc import Iterator
 from contextlib import contextmanager
 from itertools import count
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
 import conda_smithy.lint_recipe as linter
-from conda_smithy.linter import hints
+from conda_smithy.linter import hints, update_licenses_list
 from conda_smithy.linter.conda_recipe_v1_linter import lint_recipe_tests
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
@@ -29,7 +31,7 @@ _thisdir = os.path.abspath(os.path.dirname(__file__))
 
 
 @contextmanager
-def get_recipe_in_dir(recipe_name: str) -> Path:
+def get_recipe_in_dir(recipe_name: str) -> Iterator[Path]:
     base_dir = Path(__file__).parent
     recipe_path = base_dir / "recipes" / recipe_name
     assert recipe_path.exists(), f"Recipe {recipe_name} does not exist"
@@ -557,6 +559,86 @@ def test_lint_macdt(recipe_version, config_file):
         assert any(lint.startswith("The `MACOSX_DEPLOYMENT_TARGET`") for lint in lints)
 
 
+@pytest.mark.parametrize("noarch_value", [True, "true", "foo", "null", "none"])
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_noarch_value_invalid(recipe_version, noarch_value):
+    meta = {"build": {"noarch": noarch_value}}
+    expected = f"Invalid `noarch` value `{noarch_value}`. Should be one of"
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
+    assert any(lint.startswith(expected) for lint in lints)
+
+
+@pytest.mark.parametrize("noarch_value", ["python", "generic"])
+@pytest.mark.parametrize("recipe_version", [0, 1])
+def test_noarch_value_valid(recipe_version, noarch_value):
+    meta = {"build": {"noarch": noarch_value}}
+    unexpected_lint = "Invalid `noarch` value"
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+def test_noarch_value_recipe_v0_rejects_conditional():
+    meta = {"build": {"noarch": '{{ "python" if use_noarch }}'}}
+    expected = 'Invalid `noarch` value `{{ "python" if use_noarch }}`. Should be one of'
+    lints, _ = linter.lintify_meta_yaml(meta)
+    assert any(lint.startswith(expected) for lint in lints)
+
+
+def test_noarch_value_recipe_v1_allows_conditional_no_context():
+    # unknown variables are rendered as False by render_recipe_with_context
+    meta = {"build": {"noarch": '${{ "python" if unknown_var }}'}}
+    unexpected_lint = "Invalid `noarch` value"
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("use_noarch", [True, False])
+@pytest.mark.parametrize("value", ["~", "null", "none", None])
+def test_noarch_value_recipe_v1_allows_rendered_conditional(use_noarch, value):
+    unexpected_lint = "Invalid `noarch` value"
+    meta = {
+        "context": {"use_noarch": use_noarch},
+        "build": {"noarch": f'${{{{ "python" if use_noarch else "{value}" }}}}'},
+    }
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("use_noarch", [True, False])
+@pytest.mark.parametrize("value", ["none", None])
+def test_noarch_value_recipe_v1_allows_rendered_conditional_value_not_quoted(
+    use_noarch, value
+):
+    unexpected_lint = "Invalid `noarch` value"
+    meta = {
+        "context": {"use_noarch": use_noarch},
+        "build": {"noarch": f'${{{{ "python" if use_noarch else {value} }}}}'},
+    }
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+@pytest.mark.parametrize("use_noarch", [True, False])
+def test_noarch_value_recipe_v1_allows_rendered_conditional_no_else(use_noarch):
+    unexpected_lint = "Invalid `noarch` value"
+    meta = {
+        "context": {"use_noarch": use_noarch},
+        "build": {"noarch": '${{ "python" if use_noarch }}'},
+    }
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+
+
+def test_noarch_value_recipe_v1_rejects_invalid_rendered_conditional():
+    meta = {
+        "context": {"use_noarch": True},
+        "build": {"noarch": '${{ "banana" if use_noarch else none }}'},
+    }
+    expected = 'Invalid `noarch` value `${{ "banana" if use_noarch else none }}`. Should be one of'
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+    assert any(lint.startswith(expected) for lint in lints)
+
+
 class TestLinter(unittest.TestCase):
     def test_bad_top_level(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["sources", {}]])
@@ -642,12 +724,6 @@ class TestLinter(unittest.TestCase):
 
         expected_message = "The summary item is expected in the about section."
         self.assertIn(expected_message, lints)
-
-    def test_noarch_value(self):
-        meta = {"build": {"noarch": "true"}}
-        expected = "Invalid `noarch` value `true`. Should be one of"
-        lints, hints = linter.lintify_meta_yaml(meta)
-        self.assertTrue(any(lint.startswith(expected) for lint in lints))
 
     def test_maintainers_section(self):
         expected_message = (
@@ -1308,6 +1384,22 @@ linter:
                             """,
                 is_good=True,
                 has_noarch=True,
+            )
+            assert_noarch_selector(
+                """
+                            build:
+                              noarch: ${{ "python" if use_noarch }}
+                            requirements:
+                              host:
+                                - if: use_noarch
+                                  then: python ${{ python_min }}.*
+                                  else: python
+                              run:
+                                - if: use_noarch
+                                  then: python >=${{ python_min }}
+                                  else: python
+                            """,
+                is_good=True,
             )
             assert_noarch_selector("""
                             build:
@@ -2569,7 +2661,7 @@ def test_cfyml_wrong_os_version():
               script: {{ PYTHON }} -m pip install {{ name }}-{{ version }}-cp{{ CONDA_PY }}-cp{{ CONDA_PY }}-win_amd64.whl -vv  # [win]
               number: 3
             """,
-            "PyPI default URL is now pypi.org",
+            "PyPI default URL is now files.pythonhosted.org",
             id="pypi.io",
         )
     ],
@@ -4538,6 +4630,732 @@ def test_lint_recipe_v1_python_version_independent_test_latest(text, expected_hi
         assert has_hint == expected_hint, hints
 
 
+@pytest.mark.parametrize(
+    "recipe_name,text,global_python_min,expected_hint",
+    [
+        # v1: redefining python_min to the global default -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.10"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            True,
+        ),
+        # v1: overriding to a higher floor -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.12"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            False,
+        ),
+        # v1: redefining to a lower floor than the default -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.9"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            True,
+        ),
+        # v1: no python_min in context -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            False,
+        ),
+        # v1: pinning not fetchable -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: "3.10"
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            None,
+            False,
+        ),
+        # v0: jinja set matching the global default -> hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                {% set python_min = "3.10" %}
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            True,
+        ),
+        # v0: jinja set with a higher floor -> no hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                {% set python_min = "3.12" %}
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.10",
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_hint_redundant_python_min(
+    recipe_name, text, global_python_min, expected_hint, monkeypatch
+):
+    monkeypatch.setattr(
+        "conda_smithy.linter.hints.get_global_pinning_python_min",
+        lambda: global_python_min,
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, recipe_name), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("remove the redefinition" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
+@pytest.mark.parametrize(
+    "recipe_name,text,expected_hint",
+    [
+        # v1: manual `export SP_DIR=...` workaround -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - export SP_DIR=$(python -c "import site; print(site.getsitepackages()[0])")
+                      - abi3audit $SP_DIR/mypackage/mypackage.abi3.so
+                """),
+            True,
+        ),
+        # v1: only *uses* $SP_DIR (no definition) -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit $SP_DIR/mypackage/mypackage.abi3.so
+                """),
+            False,
+        ),
+        # v1: windows-style %SP_DIR% usage -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %SP_DIR%/mypackage/mypackage.pyd
+                """),
+            False,
+        ),
+        # v1: hardcoded %PREFIX%\Lib\site-packages (backslash) -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent(r"""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %PREFIX%\Lib\site-packages\mypackage\mypackage.pyd
+                """),
+            True,
+        ),
+        # v1: hardcoded %PREFIX%/Lib/site-packages (forward slash) -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - abi3audit %PREFIX%/Lib/site-packages/mypackage/mypackage.pyd
+                """),
+            True,
+        ),
+        # v1: no SP_DIR at all -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                tests:
+                  - script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+        # v0 (meta.yaml): SP_DIR definition -> no hint (rattler-build only)
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                test:
+                  commands:
+                    - export SP_DIR=$(python -c "import site; print(site.getsitepackages()[0])")
+                """),
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_rattler_build_sp_dir(recipe_name, text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, recipe_name), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("rattler-build now defines" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
+@pytest.mark.parametrize(
+    "text,expected_hint",
+    [
+        # abi3 recipe still carrying the cross-python workaround -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  build:
+                    - if: build_platform != host_platform
+                      then:
+                        - python
+                        - cross-python_${{ target_platform }}
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # abi3 recipe without the workaround -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # ignores an unrelated package (not cross-python) -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - some-other-pkg
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # workaround wrapped in an if/else selector -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - if: build_platform != host_platform
+                        then: cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # `noarch: python` recipe carrying the workaround -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # neither `noarch: python` nor version-independent -> no hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+                  ignore_run_exports:
+                    from_package:
+                      - cross-python_${{ target_platform }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # workaround present in a per-output requirements block -> hint
+        (
+            textwrap.dedent("""
+                recipe:
+                  name: mypackage
+                  version: 1.0.0
+
+                outputs:
+                  - package:
+                      name: myoutput
+                    build:
+                      python:
+                        version_independent: true
+                    requirements:
+                      host:
+                        - python ${{ python_min }}.*
+                      run:
+                        - python
+                      ignore_run_exports:
+                        from_package:
+                          - cross-python_${{ target_platform }}
+                    tests:
+                      - python:
+                          imports:
+                            - myoutput
+                """),
+            True,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_v1_abi3_cross_python_run_exports(text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("run-export from `cross-python`" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
+@pytest.mark.parametrize(
+    "recipe_name,text,expected_hint",
+    [
+        # abi3 recipe without any abi3audit usage -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # abi3 recipe running abi3audit in a test script -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - requirements:
+                      run:
+                        - abi3audit
+                    script:
+                      - if: unix
+                        then: abi3audit $SP_DIR/mypackage.abi3.so -s -v
+                        else: abi3audit %SP_DIR%/mypackage.pyd -s -v
+                """),
+            False,
+        ),
+        # abi3audit only declared as a test requirement -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - requirements:
+                      run:
+                        - abi3audit
+                    script:
+                      - mypackage --help
+                """),
+            False,
+        ),
+        # example-recipe shape: conditional `is_abi3` build and host -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: ${{ is_abi3 }}
+
+                requirements:
+                  host:
+                    - if: is_abi3
+                      then: python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            True,
+        ),
+        # version-independent but no `python-abi3` host dep -> not abi3, no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # not version-independent -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python ${{ python_min }}.*
+                  run:
+                    - python
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # `noarch: python` ships no extension module -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                """),
+            False,
+        ),
+        # abi3 output without abi3audit -> hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                recipe:
+                  name: mypackage
+                  version: 1.0.0
+
+                outputs:
+                  - package:
+                      name: myoutput
+                    build:
+                      python:
+                        version_independent: true
+                    requirements:
+                      host:
+                        - python-abi3
+                        - python ${{ python_min }}.*
+                      run:
+                        - python
+                    tests:
+                      - python:
+                          imports:
+                            - myoutput
+                """),
+            True,
+        ),
+        # v0 abi3 recipe without abi3audit -> hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python_version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python
+                  run:
+                    - python
+
+                test:
+                  imports:
+                    - mypackage
+                """),
+            True,
+        ),
+        # v0 abi3 recipe running abi3audit -> no hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                build:
+                  python_version_independent: true
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python
+                  run:
+                    - python
+
+                test:
+                  requires:
+                    - abi3audit
+                  commands:
+                    - abi3audit $SP_DIR/mypackage.abi3.so -s -v
+                """),
+            False,
+        ),
+        # v0 recipe that is not version-independent -> no hint
+        (
+            "meta.yaml",
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+                  version: 1.0.0
+
+                requirements:
+                  host:
+                    - python-abi3
+                    - python
+                  run:
+                    - python
+
+                test:
+                  imports:
+                    - mypackage
+                """),
+            False,
+        ),
+    ],
+    ids=(f"recipe-{i}" for i in count(1)),
+)
+def test_lint_recipe_abi3_missing_abi3audit(recipe_name, text, expected_hint):
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, recipe_name), "w") as f:
+            f.write(text)
+        _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        has_hint = any("does not run `abi3audit`" in h for h in hints)
+        assert has_hint == expected_hint, hints
+
+
 def test_lint_recipe_v1_comment_selectors():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
@@ -5298,7 +6116,7 @@ def test_run_conda_forge_specific_routes_unverified_to_lints(monkeypatch):
     # None from the existence check fails the lint (asking for a retry),
     # rather than reporting the maintainer as missing
     monkeypatch.setattr(linter, "_maintainer_exists", lambda m: None)
-    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
     meta = {"extra": {"recipe-maintainers": ["chrisburr"]}}
     lints, hints = [], []
     linter.run_conda_forge_specific(meta, None, lints, hints)
@@ -5311,7 +6129,7 @@ def test_run_conda_forge_specific_routes_unverified_to_lints(monkeypatch):
 
 def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
     monkeypatch.setattr(linter, "_maintainer_exists", lambda m: False)
-    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
     meta = {"extra": {"recipe-maintainers": ["nope"]}}
     lints, hints = [], []
     linter.run_conda_forge_specific(meta, None, lints, hints)
@@ -5320,7 +6138,7 @@ def test_run_conda_forge_specific_routes_missing_to_lints(monkeypatch):
 
 
 def test_run_conda_forge_specific_missing_linter_hints_table(monkeypatch):
-    monkeypatch.setattr(linter, "load_linter_toml_metdata", lambda: {})
+    monkeypatch.setattr(linter, "load_linter_toml_metadata", lambda: {})
     meta = {
         "package": {"name": "foo"},
         "requirements": {"run": ["python"]},
@@ -5432,6 +6250,178 @@ def test_invalid_workflow_settings(tmp_path):
     }
 
     assert {x for x in lints if "workflow_settings" in x} == expected
+
+
+@pytest.mark.parametrize(
+    "remotes,feedstock_name,expected",
+    [
+        # GOOD-ish: no remotes to check against
+        ({}, None, None),
+        ({}, "bar", None),
+        # GOOD: recipe name matches repo name
+        ({"origin": "https://github.com/conda-forge/foo-feedstock"}, None, None),
+        # GOOD: feedstock-name matches repo name
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, "bar", None),
+        # BAD: no feedstock-name
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        # BAD: feedstock-name doesn't match the repository
+        ({"origin": "https://github.com/conda-forge/bar-feedstock"}, "baz", "bar"),
+        # BAD: URL variations
+        ({"origin": "https://github.com/conda-forge/bar-feedstock/"}, None, "bar"),
+        ({"origin": "https://github.com/conda-forge/bar-feedstock.git"}, None, "bar"),
+        ({"origin": "https://github.com/conda-forge/bar-feedstock.git/"}, None, "bar"),
+        ({"origin": "git+ssh://git@github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        ({"origin": "git@github.com:conda-forge/bar-feedstock"}, None, "bar"),
+        # BAD: using "upstream" remote
+        ({"upstream": "https://github.com/conda-forge/bar-feedstock"}, None, "bar"),
+        # GOOD-ish: unknown remote
+        ({"foo": "https://github.com/conda-forge/bar-feedstock"}, None, None),
+        # GOOD-ish: remote isn't a conda-forge feedstock URL
+        ({"origin": "https://github.com/mgorny/bar-feedstock"}, None, None),
+        # GOOD: "upstream" takes precedence over "origin"
+        (
+            {
+                "origin": "https://github.com/conda-forge/bar-feedstock",
+                "upstream": "https://github.com/conda-forge/foo-feedstock",
+            },
+            None,
+            None,
+        ),
+    ],
+)
+@mock.patch("conda_smithy.linter.lints.get_repo")
+def test_lint_feedstock_name(
+    repo_mock,
+    tmp_path: Path,
+    remotes: dict[str, str],
+    feedstock_name: str | None,
+    expected: str | None,
+) -> None:
+    recipe = """\
+package:
+  name: foo
+  version: "1.2.3"
+
+build:
+  number: 1
+
+test:
+  commands:
+    - true
+
+about:
+  home: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+    if feedstock_name is not None:
+        recipe += f"""\
+  feedstock-name: {feedstock_name}
+"""
+
+    remotes_mock = repo_mock.return_value.remotes
+    remotes_mock.names.return_value = list(remotes)
+    for remote_name, remote_url in remotes.items():
+        remotes_mock[remote_name].url = remote_url
+
+    tmp_path.joinpath("meta.yaml").write_text(recipe)
+    lints = linter.main(tmp_path, conda_forge=True)
+
+    assert lints == (
+        [
+            f"Mismatched feedstock name in the recipe: {feedstock_name or 'foo'}. "
+            f"Specify `extra.feedstock_name: {expected}`."
+        ]
+        if expected is not None
+        else []
+    )
+
+
+@pytest.mark.parametrize("has_outputs", [False, True])
+@mock.patch("conda_smithy.linter.lints.get_repo")
+def test_lint_feedstock_name_v1(
+    repo_mock,
+    tmp_path: Path,
+    has_outputs: bool,
+) -> None:
+    recipe = f"""\
+schema_version: 1
+
+{'recipe' if has_outputs else 'package'}:
+  name: foo
+  version: "1.2.3"
+
+build:
+  number: 1
+"""
+
+    if not has_outputs:
+        recipe += """
+tests:
+  - script:
+      - true
+"""
+    else:
+        recipe += """
+outputs:
+  - package:
+      name: foo
+    tests:
+      - script:
+          - true
+"""
+
+    recipe += """
+about:
+  homepage: https://example.com
+  license: GPL-3.0-or-later
+  license_file:
+    - COPYING
+  summary: test
+
+extra:
+  recipe-maintainers:
+    - mgorny
+"""
+
+    remotes_mock = repo_mock.return_value.remotes
+    remotes_mock.names.return_value = ["origin"]
+    remotes_mock["origin"].url = "https://github.com/conda-forge/bar-feedstock"
+
+    tmp_path.joinpath("recipe.yaml").write_text(recipe)
+    lints = linter.main(tmp_path, conda_forge=True)
+
+    assert lints == (
+        [
+            "Mismatched feedstock name in the recipe: foo. "
+            "Specify `extra.feedstock_name: bar`."
+        ]
+    )
+
+
+def test_license_files_up_to_date():
+    """
+    If this test fails, run this from an activated conda-smithy environment and commit the result:
+
+    python -m conda_smithy.linter.update_licenses_list
+    """
+    original_licenses = update_licenses_list.LICENSES_TXT_PATH.read_text()
+    original_exceptions = update_licenses_list.LICENSE_EXCEPTIONS_TXT_PATH.read_text()
+
+    assert (
+        update_licenses_list.update_licenses(write=False)
+        == original_licenses.splitlines()
+    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
+    assert (
+        update_licenses_list.update_license_exceptions(write=False)
+        == original_exceptions.splitlines()
+    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
 
 
 if __name__ == "__main__":

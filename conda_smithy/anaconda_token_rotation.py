@@ -16,6 +16,7 @@ from contextlib import redirect_stderr, redirect_stdout
 import requests
 from github import Github
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.utils import update_conda_forge_config
 
 
@@ -61,9 +62,6 @@ def rotate_anaconda_token(
     from conda_smithy.github import gh_token
 
     anaconda_token = _get_anaconda_token()
-
-    if github_actions:
-        gh = Github(gh_token())
 
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
@@ -144,8 +142,7 @@ def rotate_anaconda_token(
                             raise e
                         else:
                             err_msg = (
-                                f"Failed to rotate token for {user}/{project}"
-                                " on azure!"
+                                f"Failed to rotate token for {user}/{project} on azure!"
                             )
                             failed = True
                             raise RuntimeError(err_msg)
@@ -167,6 +164,7 @@ def rotate_anaconda_token(
                             raise RuntimeError(err_msg)
 
                 if github_actions:
+                    gh = Github(gh_token())
                     try:
                         rotate_token_in_github_actions(
                             user, project, anaconda_token, token_name, gh
@@ -198,6 +196,11 @@ def rotate_anaconda_token(
             )
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="CircleCI is deprecated, see #2627",
+)
 def rotate_token_in_circle(user, project, binstar_token, token_name):
     from conda_smithy.ci_register import circle_token
 
@@ -238,6 +241,11 @@ def rotate_token_in_circle(user, project, binstar_token, token_name):
         raise ValueError(response)
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Drone is deprecated, see #2627",
+)
 def rotate_token_in_drone(user, project, binstar_token, token_name, drone_endpoint):
     from conda_smithy.ci_register import drone_session
 
@@ -269,6 +277,11 @@ def rotate_token_in_drone(user, project, binstar_token, token_name, drone_endpoi
             response.raise_for_status()
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def rotate_token_in_travis(
     user, project, feedstock_config_path, binstar_token, token_name
 ):
@@ -395,6 +408,11 @@ def rotate_token_in_azure(user, project, binstar_token, token_name):
     )
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Appveyor is deprecated, see #2627",
+)
 def rotate_token_in_appveyor(feedstock_config_path, binstar_token, token_name):
     from conda_smithy.ci_register import appveyor_token
 

@@ -38,6 +38,7 @@ import requests
 import scrypt
 from conda_build.utils import create_file_with_permissions
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.utils import file_permissions
 
 
@@ -583,6 +584,11 @@ def register_feedstock_token_with_providers(
         )
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="CircleCI is deprecated, see #2627",
+)
 def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
     from conda_smithy.ci_register import circle_token
 
@@ -626,6 +632,11 @@ def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
             raise ValueError(response)
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Drone is deprecated, see #2627",
+)
 def add_feedstock_token_to_drone(
     user, project, feedstock_token, clobber, drone_endpoint
 ):
@@ -659,6 +670,11 @@ def add_feedstock_token_to_drone(
             response.raise_for_status()
 
 
+@deprecated(
+    "2026.8",
+    "2026.10",
+    addendum="Travis is deprecated, see #2627",
+)
 def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
     """Add the FEEDSTOCK_TOKEN to travis."""
     from conda_smithy.ci_register import (
