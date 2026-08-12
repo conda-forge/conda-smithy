@@ -4347,6 +4347,34 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
                 """),
             True,
         ),
+        # custom latest variable -> no hint
+        (
+            textwrap.dedent("""
+                context:
+                  python_check_max: "3.14"
+
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - ${{ python_min }}.*
+                        - ${{ python_check_max }}.*
+                """),
+            False,
+        ),
         # python_min AND latest -> no hint
         (
             textwrap.dedent("""
@@ -4469,7 +4497,7 @@ def test_lint_recipe_v1_noarch_python_test_latest(text, expected_hint):
             f.write(text)
         _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         has_hint = any(
-            "testing against both the minimum and the latest" in h for h in hints
+            "testing against both the minimum and a latest" in h for h in hints
         )
         assert has_hint == expected_hint, hints
 
@@ -4500,6 +4528,35 @@ def test_lint_recipe_v1_noarch_python_test_latest(text, expected_hint):
                       python_version: ${{ python_min }}.*
                 """),
             True,
+        ),
+        # custom latest variable -> no hint
+        (
+            textwrap.dedent("""
+                context:
+                  python_check_max: "3.14"
+
+                package:
+                  name: mypackage
+
+                build:
+                  python:
+                    version_independent: true
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - ${{ python_min }}.*
+                        - ${{ python_check_max }}.*
+                """),
+            False,
         ),
         # version-independent, tests python_min AND latest -> no hint
         (
@@ -4626,7 +4683,7 @@ def test_lint_recipe_v1_python_version_independent_test_latest(text, expected_hi
         with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
             f.write(text)
         _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
-        has_hint = any("version-independent (e.g. abi3)" in h for h in hints)
+        has_hint = any("version-independent (e.g. `abi3`)" in h for h in hints)
         assert has_hint == expected_hint, hints
 
 
