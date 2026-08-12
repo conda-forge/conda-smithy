@@ -1360,7 +1360,7 @@ class RattlerBldBat(LinterMessage, _RecipeYamlMessage):
 class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
     """
     `noarch: python` packages install on every Python version at or above
-    `python_min`, so tests should cover both ends of that range.
+    `python_min`, so some test should cover both ends of that range.
     """
 
     kind = "hint"
@@ -1368,9 +1368,9 @@ class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
     added_in = "2026.8"
     message = (
         "`noarch: python` packages install on every Python version at or "
-        "above `python_min`, but the Python test only runs against a single "
-        "version. Consider testing against both the minimum and a latest "
-        "supported Python:\n"
+        "above `python_min`, but at least one `python` test only runs against "
+        "a single `python_version`. Consider testing against both the minimum "
+        "and a latest supported Python:\n\n"
         "```yaml\n"
         "tests:\n"
         "  - python:\n"
@@ -1384,19 +1384,20 @@ class NoarchPythonTestLatest(LinterMessage, _RecipeYamlMessage):
 @dataclass(kw_only=True)
 class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
     """
-    Python version-independent packages (e.g. abi3) are built once against
-    `python_min` but install on every Python version at or above it, so tests
-    should cover both ends of that range.
+    Python version-independent packages (e.g. `abi3`) are built once against
+    `python_min` but should install on every Python version at or above it, so
+    tests should cover both ends of that range.
     """
 
     kind = "hint"
     identifier = "R1-005"
     added_in = "2026.8"
     message = (
-        "This package is Python version-independent (e.g. abi3): it is built "
+        "This package is Python version-independent (e.g. `abi3`): it is built "
         "once but installs on every Python version at or above `python_min`, "
-        "yet the Python test only runs against a single version. Consider "
-        "testing against both the minimum and a latest supported Python:\n"
+        "yet a `python` test only runs against a single `python_version`. "
+        "Consider testing against both the minimum and a latest supported "
+        "Python:\n\n"
         "```yaml\n"
         "tests:\n"
         "  - python:\n"
