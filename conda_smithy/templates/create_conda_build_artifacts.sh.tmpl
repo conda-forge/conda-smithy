@@ -82,7 +82,26 @@ ZSTD="--use-compress-prog=zstd -T0 -12"
 
 # Pattern matching can be quite overzealous, so rather than passing wildcards,
 # we want to expand them into actual paths first.
+#
+# The split is:
+# - artifacts: all packages and related repository files
+# - environments: build, host and test environments
+# - work directory: everything else (modulo excludes)
+
 shopt -s nullglob
+ARTIFACT_PATHS=(
+    # all possible platform directories
+    linux-*
+    osx-*
+    win-*
+
+    # appending '*' here to have nullglob skip these directories and files
+    # conveniently if they don't exist
+    broken*
+    noarch*
+    channeldata.json*
+    index.html*
+)
 ENVIRONMENT_PATHS=(
     # note: always include "./", so that only top-level paths match
     # conda-build
@@ -93,41 +112,29 @@ ENVIRONMENT_PATHS=(
     ./bld/*_*/*_env*
     ./test/test_*/test_env
 )
-WORK_PATHS=(
-    # conda-build
-    ./*_*
 
-    # rattler-build
-    ./bld/*
-    ./test/*
-)
-EXCLUDE_COMMON=(
+EXCLUDE_FROM_WORK=(
     .git
 
     # caches
     ./pkg_cache
     ./src_cache
     ./*_*/pip_cache
-)
-EXCLUDE_FROM_BUILD_ARTIFACTS=(
-    "${EXCLUDE_COMMON[@]}"
-    "${WORK_PATHS[@]}"
-)
-EXCLUDE_FROM_WORK=(
-    "${EXCLUDE_COMMON[@]}"
+
+    # artifacts and environments that go into separate archives
+    "${ARTIFACT_PATHS[@]}"
     "${ENVIRONMENT_PATHS[@]}"
 )
 
 # Make the build artifact archive
-if [[ ! -z "$BLD_ARTIFACT_PREFIX" ]]; then
+if [[ ! -z ${BLD_ARTIFACT_PREFIX} && -n ${ARTIFACT_PATHS} ]]; then
     echo "Creating build artifact archive ..."
     export BLD_ARTIFACT_NAME="${BLD_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
     export BLD_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${BLD_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
 
     # All our CI services have either GNU tar or bsdtar, and zstd.
     # Keep the command compatible with both!
-    if ! tar -c -f "${BLD_ARTIFACT_PATH}" "${ZSTD}" \
-            "${EXCLUDE_FROM_BUILD_ARTIFACTS[@]/#/--exclude=}" . &&
+    if ! tar -c -f "${BLD_ARTIFACT_PATH}" "${ZSTD}" "${ARTIFACT_PATHS[@]}" &&
         [[ -s ${BLD_ARTIFACT_PATH} ]]
     then
         # If tar failed but produced a (partial?) file, upload it as "broken".
@@ -156,7 +163,7 @@ fi
 echo
 
 # Make the workdir artifact archive
-if [[ ! -z "$WRK_ARTIFACT_PREFIX" && -n ${WORK_PATHS[@]} ]]; then
+if [[ ! -z ${WRK_ARTIFACT_PREFIX} ]]; then
     echo "Creating work directory archive ..."
     export WRK_ARTIFACT_NAME="${WRK_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
     export WRK_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${WRK_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
@@ -164,7 +171,7 @@ if [[ ! -z "$WRK_ARTIFACT_PREFIX" && -n ${WORK_PATHS[@]} ]]; then
     # All our CI services have either GNU tar or bsdtar, and zstd.
     # Keep the command compatible with both!
     if ! tar -c -f "${WRK_ARTIFACT_PATH}" "${ZSTD}" \
-            "${EXCLUDE_FROM_WORK[@]/#/--exclude=}" "${WORK_PATHS[@]}" &&
+            "${EXCLUDE_FROM_WORK[@]/#/--exclude=}" . &&
         [[ -s ${WRK_ARTIFACT_PATH} ]]
     then
         # If tar failed but produced a (partial?) file, upload it as "broken".
@@ -193,7 +200,7 @@ fi
 echo
 
 # Make the environments artifact archive
-if [[ ! -z "$ENV_ARTIFACT_PREFIX" && -n ${ENVIRONMENT_PATHS[@]} ]]; then
+if [[ ! -z ${ENV_ARTIFACT_PREFIX} && -n ${ENVIRONMENT_PATHS[@]} ]]; then
     echo "Creating build environment artifact archive ..."
     export ENV_ARTIFACT_NAME="${ENV_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
     export ENV_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${ENV_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"

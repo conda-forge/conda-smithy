@@ -556,13 +556,13 @@ class WorkflowSettings(BaseModel):
         on Azure) are created:
 
         - Build artifacts, containing the built packages (if any). This is
-          always created, though it may contain no packages if none built.
-        - Work directory artifacts, containing the work directory (if any).
-          This is created if the build failed during one of the steps where
-          work directory was available.
+          always created, though it may contain no packages if none were built.
         - Environment artifacts, containing build, host and test environments.
           This is created if the build failed during one of the steps where
           environments were available, with the appropriate environments.
+        - Work directory artifacts, containing the work directory and any other
+          files not covered by the other archives. This is created if the build
+          failed.
 
         The exact contents and paths in the archive will depend on the
         `conda_build_tool` used. If tar fails while creating the archive, it may
