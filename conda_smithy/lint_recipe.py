@@ -209,8 +209,9 @@ def lintify_meta_yaml(
         expected_keys = EXPECTED_SECTION_ORDER
     else:
         expected_keys = (
-            conda_recipe_v1_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
-            + conda_recipe_v1_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
+            conda_recipe_v1_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
+            if "outputs" in major_sections
+            else conda_recipe_v1_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
         )
 
     for section in major_sections:
