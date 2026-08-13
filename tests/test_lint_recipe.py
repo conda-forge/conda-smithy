@@ -652,6 +652,20 @@ class TestLinter(unittest.TestCase):
         expected_msg = "The top level meta key sources is unexpected"
         self.assertIn(expected_msg, lints)
 
+    def test_recipe_v1_bad_top_level_single_output(self):
+        meta = OrderedDict([["recipe", {}], ["build", {}], ["source", {}]])
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        expected_msg = "The top level meta key recipe is unexpected"
+        self.assertIn(expected_msg, lints)
+
+    def test_recipe_v1_bad_top_level_multi_output(self):
+        meta = OrderedDict(
+            [["package", {}], ["build", {}], ["source", {}], ["outputs", []]]
+        )
+        lints, hints = linter.lintify_meta_yaml(meta, recipe_version=1)
+        expected_msg = "The top level meta key package is unexpected"
+        self.assertIn(expected_msg, lints)
+
     def test_bad_order(self):
         meta = OrderedDict([["package", {}], ["build", {}], ["source", {}]])
         lints, hints = linter.lintify_meta_yaml(meta)

@@ -54,9 +54,10 @@ def lint_section_order(
             order = conda_recipe_v1_linter.EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER
         else:
             order = conda_recipe_v1_linter.EXPECTED_SINGLE_OUTPUT_SECTION_ORDER
-    section_order_sorted = sorted(major_sections, key=order.index)
+    known_sections = [x for x in major_sections if x in order]
+    section_order_sorted = sorted(known_sections, key=order.index)
 
-    if major_sections != section_order_sorted:
+    if known_sections != section_order_sorted:
         lints.append(msg.r.SectionOrder(order=section_order_sorted).as_string())
 
 
