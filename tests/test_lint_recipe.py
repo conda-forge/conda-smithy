@@ -4389,6 +4389,31 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
                 """),
             False,
         ),
+        # linter cheating variables -> hint
+        (
+            textwrap.dedent("""
+                package:
+                  name: mypackage
+
+                build:
+                  noarch: python
+
+                requirements:
+                  host:
+                    - python ${{ python_min }}.*
+                  run:
+                    - python >=${{ python_min }}
+
+                tests:
+                  - python:
+                      imports:
+                        - mypackage
+                      python_version:
+                        - ${{ python_min }}.*
+                        - ${{ python_min }}.1.*
+                """),
+                True,
+        ),
         # python_min AND latest -> no hint
         (
             textwrap.dedent("""

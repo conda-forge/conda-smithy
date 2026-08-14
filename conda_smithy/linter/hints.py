@@ -408,6 +408,8 @@ def _python_tests_cover_latest(tests_section, run_reqs):
             python_version = [python_version]
         if len(set(flatten_v1_if_else(python_version))) < 2:
             return False
+        if all("python_min" in pv for pv in python_version):
+            return False
     return True
 
 
