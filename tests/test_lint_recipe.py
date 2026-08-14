@@ -4412,7 +4412,7 @@ def test_lint_recipe_v1_python_min_in_python_version(text):
                         - ${{ python_min }}.*
                         - ${{ python_min }}.1.*
                 """),
-                True,
+            True,
         ),
         # python_min AND latest -> no hint
         (
