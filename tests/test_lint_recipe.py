@@ -2843,6 +2843,76 @@ def test_pin_compatible_in_run_exports_output(recipe_version: int):
     assert any(lint.startswith(expected) for lint in lints)
 
 
+def _variant_dependent_meta(pin_function: str, pinned: str) -> dict:
+    """Recipe whose output names are built from a variant variable.
+
+    ``vc_major`` is only defined in ``conda_build_config.yaml``, so at lint time
+    the output names and the pin all keep their ``${{ ... }}`` template.
+    """
+    return {
+        "recipe": {"name": "vc-feedstock"},
+        "outputs": [
+            {"package": {"name": "vcomp${{ vc_major }}", "version": "1.0"}},
+            {
+                "package": {"name": "vc${{ vc_major }}_runtime", "version": "1.0"},
+                "requirements": {
+                    "run_exports": [f"${{{{ {pin_function}({pinned}) }}}}"],
+                },
+            },
+        ],
+    }
+
+
+def test_pin_subpackage_with_variant_dependent_output_name():
+    """A pin naming an existing output must not be linted, unresolved or not."""
+    meta = _variant_dependent_meta("pin_subpackage", '"vcomp" ~ vc_major')
+
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+
+    expected = "pin_compatible should be used instead"
+    assert not any(lint.startswith(expected) for lint in lints)
+
+
+def test_pin_subpackage_with_variant_dependent_name_not_an_output():
+    """A pin naming no output is still linted, even while unresolved.
+
+    Its name is exactly as unresolved as in the test above, so the two are only
+    told apart by comparing the templates rather than giving up on them.
+    """
+    meta = _variant_dependent_meta("pin_subpackage", '"notanoutput" ~ vc_major')
+
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+
+    expected = "pin_compatible should be used instead"
+    matching = [lint for lint in lints if lint.startswith(expected)]
+    assert matching
+    # the whole name is reported, not the `notanoutput${{` fragment that
+    # splitting on whitespace produces
+    assert "notanoutput${{ vc_major }}" in matching[0]
+
+
+def test_pin_compatible_with_variant_dependent_output_name():
+    """The same, in the other direction: pin_compatible on a real output lints."""
+    meta = _variant_dependent_meta("pin_compatible", '"vcomp" ~ vc_major')
+
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+
+    expected = "pin_subpackage should be used instead"
+    matching = [lint for lint in lints if lint.startswith(expected)]
+    assert matching
+    assert "vcomp${{ vc_major }}" in matching[0]
+
+
+def test_pin_compatible_with_variant_dependent_name_not_an_output():
+    """pin_compatible on a name that is no output is correct, so it must not lint."""
+    meta = _variant_dependent_meta("pin_compatible", '"notanoutput" ~ vc_major')
+
+    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=1)
+
+    expected = "pin_subpackage should be used instead"
+    assert not any(lint.startswith(expected) for lint in lints)
+
+
 def test_v1_recipes():
     with get_recipe_in_dir("v1_recipes/recipe-no-lint.yaml") as recipe_dir:
         lints, hints = linter.main(str(recipe_dir), return_hints=True)
