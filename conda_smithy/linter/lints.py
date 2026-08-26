@@ -566,6 +566,19 @@ def lint_require_lower_bound_on_python_version(
             lints.append(msg.r.PythonLowerBound().as_string())
 
 
+def _pinned_name(pin: str, filter_pin: str) -> str:
+    """Recover the pinned package name from a rendered pin.
+
+    `pin_subpackage` and `pin_compatible` render to `"<filter_pin><name>"`, so
+    the name is the whole remainder. It cannot be recovered by splitting on
+    whitespace: a name built from a variant variable is still an unrendered
+    `${{ ... }}` template at lint time, and those contain spaces. Output names
+    in `subpackage_names` carry the same unresolved template, so the two still
+    compare equal.
+    """
+    return pin[len(filter_pin) :].strip()
+
+
 def lint_pin_subpackages(
     meta,
     outputs_section,
@@ -593,15 +606,17 @@ def lint_pin_subpackages(
     def check_pins(pinning_section):
         if pinning_section is None:
             return
-        filter_pin = "compatible_pin "
         all_pins = flatten_v1_if_else(pinning_section)
+
+        filter_pin = "compatible_pin "
         for pin in (pin for pin in all_pins if pin.startswith(filter_pin)):
-            if pin.split()[1] in subpackage_names:
+            name = _pinned_name(pin, filter_pin)
+            if name in subpackage_names:
                 lints.append(
                     msg.r.PinSubpackagePinCompatible(
                         in_use="pin_compatible",
                         should_use="pin_subpackage",
-                        pin=pin.split()[1],
+                        pin=name,
                         subpackages=subpackage_names,
                         is_output=True,
                     ).as_string()
@@ -609,12 +624,13 @@ def lint_pin_subpackages(
 
         filter_pin = "subpackage_pin "
         for pin in (pin for pin in all_pins if pin.startswith(filter_pin)):
-            if pin.split()[1] not in subpackage_names:
+            name = _pinned_name(pin, filter_pin)
+            if name not in subpackage_names:
                 lints.append(
                     msg.r.PinSubpackagePinCompatible(
                         in_use="pin_subpackage",
                         should_use="pin_compatible",
-                        pin=pin.split()[1],
+                        pin=name,
                         subpackages=subpackage_names,
                         is_output=False,
                     ).as_string()

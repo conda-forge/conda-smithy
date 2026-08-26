@@ -381,7 +381,7 @@ def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
         )
         declared = match.group(1) if match else None
 
-    if declared is None:
+    if declared is None or "${{" in declared or declared == "python_min":
         return
 
     global_python_min = get_global_pinning_python_min()
@@ -534,11 +534,33 @@ def hint_abi3_cross_python_run_exports(
             return
 
 
+def _flatten_v1_test_elements(test_section) -> list:
+    """Expand top-level `if`/`then`/`else` blocks in a v1 `tests` list.
+
+    `flatten_v1_if_else` cannot be reused here because it treats every mapping
+    as a conditional, while a v1 test element is itself a mapping.
+    """
+    flattened = []
+    for test in test_section:
+        if isinstance(test, Mapping) and "if" in test:
+            for branch in ("then", "else"):
+                value = test.get(branch)
+                if isinstance(value, list):
+                    flattened.extend(_flatten_v1_test_elements(value))
+                elif value is not None:
+                    flattened.append(value)
+        else:
+            flattened.append(test)
+    return flattened
+
+
 def _mentions_abi3audit(test_section, recipe_version) -> bool:
     """True if any test declares `abi3audit` as a requirement or runs it."""
     if recipe_version == 1:
-        # v1: a list of test elements, each with `requirements.run` and `script`
-        tests = test_section or []
+        # v1: a list of test elements, each with `requirements.run` and
+        # `script`. A test element may itself be an `if`/`then`/`else` block,
+        # as when the abi3audit test is guarded by `if: is_abi3`.
+        tests = _flatten_v1_test_elements(test_section or [])
     else:
         # v0: a single mapping with `requires` and `commands`
         tests = [test_section] if isinstance(test_section, Mapping) else []
@@ -611,9 +633,10 @@ def hint_abi3_missing_abi3audit(
     for tests, build, requirements in scopes:
         if not isinstance(build, Mapping):
             continue
-        # `noarch: python` packages ship no compiled extension, so there is
-        # nothing for abi3audit to check
-        if build.get("noarch") == "python":
+        # `noarch` packages ship no compiled extension, so there is nothing
+        # for abi3audit to check. `generic` covers the alias output that abi3
+        # recipes often add alongside the real, architecture-specific package.
+        if build.get("noarch") in ("python", "generic"):
             continue
         if not get_version_independent(build, "python", recipe_version):
             continue

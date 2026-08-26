@@ -1807,7 +1807,7 @@ def _add_exec_bit(exe_files, forge_dir):
         target_fname = os.path.join(forge_dir, *exe_file.split("/"))
         # Fix permission of executable files
         if os.path.exists(target_fname):
-            logger.debug("adding exec bit to %", target_fname)
+            logger.debug("adding exec bit to %s", target_fname)
             set_exe_file(target_fname, True)
 
 
