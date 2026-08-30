@@ -103,7 +103,8 @@ call :start_group "Configuring conda"
 :: Activate the base conda environment
 {%- if conda_install_tool != "pixi" %}
 echo Activating environment
-call "%MINIFORGE_HOME%\Scripts\activate.bat"
+set "CONDA_EXE=%MINIFORGE_HOME%\Scripts\conda.exe"
+call "%MINIFORGE_HOME%\condabin\conda.bat" activate "%MINIFORGE_HOME%"
 {%- endif %}
 
 {%- if conda_solver %}
