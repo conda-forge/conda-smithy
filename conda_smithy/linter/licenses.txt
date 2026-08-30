@@ -74,6 +74,7 @@ BSD-2-Clause-Darwin
 BSD-2-Clause-first-lines
 BSD-2-Clause-Patent
 BSD-2-Clause-pkgconf-disclaimer
+BSD-2-Clause-pos-unchanged
 BSD-2-Clause-Views
 BSD-3-Clause
 BSD-3-Clause-acpica
@@ -96,6 +97,7 @@ BSD-4-Clause-UC
 BSD-4.3RENO
 BSD-4.3TAHOE
 BSD-Advertising-Acknowledgement
+BSD-ask-to-endorse
 BSD-Attribution-HPND-disclaimer
 BSD-Inferno-Nettverk
 BSD-Mark-Modifications
