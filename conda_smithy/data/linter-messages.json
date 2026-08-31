@@ -1031,6 +1031,20 @@
       "path": "recipe/recipe.yaml"
     },
     {
+      "name": "UnforwardedVariantVariables",
+      "identifier": "R1-008",
+      "category": "R1",
+      "kind": "hint",
+      "added_in": "2026.8",
+      "deprecated_in": "",
+      "documentation": "Unlike conda-build, rattler-build does not implicitly scan build scripts for\nvariant usage. Variant variables used only in a Bash or batch script may\ntherefore be absent from the build environment. Forward them explicitly with\n`build.script.env` in `recipe.yaml`.",
+      "message": "(dynamic)",
+      "examples": [
+        "Build scripts reference variant variables that are not referenced in `recipe.yaml` and might therefore not be forwarded by rattler-build:\n- `build.sh`: `TARGET`\nForward them explicitly with `build.script.env`."
+      ],
+      "path": "recipe/recipe.yaml"
+    },
+    {
       "name": "MacOSDeploymentTargetRename",
       "identifier": "RC-000",
       "category": "RC",

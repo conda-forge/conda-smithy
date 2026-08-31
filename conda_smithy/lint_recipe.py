@@ -46,6 +46,7 @@ from conda_smithy.linter.hints import (
     hint_shellcheck_usage,
     hint_space_separated_specs,
     hint_suggest_noarch,
+    hint_unforwarded_variant_variables,
 )
 from conda_smithy.linter.lints import (
     lint_about_contents,
@@ -441,6 +442,10 @@ def lintify_meta_yaml(
 
     # 3: suggest fixing all recipe/*.sh shellcheck findings
     hint_shellcheck_usage(recipe_dir, hints, feedstock_config=feedstock_config_keys)
+
+    # 3b: v1 scripts must explicitly request variant environment variables
+    if recipe_version == 1:
+        hint_unforwarded_variant_variables(recipe_dir, hints)
 
     # 4: Check for SPDX
     hint_check_spdx(about_section, hints)

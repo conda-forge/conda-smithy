@@ -1471,4 +1471,36 @@ class Abi3CrossPythonRunExports(LinterMessage, _RecipeYamlMessage):
     )
 
 
+@dataclass(kw_only=True)
+class UnforwardedVariantVariables(LinterMessage, _RecipeYamlMessage):
+    """
+    Unlike conda-build, rattler-build does not implicitly scan build scripts for
+    variant usage. Variant variables used only in a Bash or batch script may
+    therefore be absent from the build environment. Forward them explicitly with
+    `build.script.env` in `recipe.yaml`.
+    """
+
+    kind = "hint"
+    identifier = "R1-008"
+    added_in = "2026.8"
+    findings: dict[str, list[str]]
+
+    @property
+    def message(self):
+        lines = [
+            "Build scripts reference variant variables that are not referenced in "
+            "`recipe.yaml` and might therefore not be forwarded by rattler-build:",
+            *(
+                f"- `{script}`: {', '.join(f'`{var}`' for var in variables)}"
+                for script, variables in self.findings.items()
+            ),
+            "Forward them explicitly with `build.script.env`.",
+        ]
+        return "\n".join(lines)
+
+    @classmethod
+    def examples(cls):
+        return [cls(findings={"build.sh": ["TARGET"]})]
+
+
 # endregion

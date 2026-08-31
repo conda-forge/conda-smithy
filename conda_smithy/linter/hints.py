@@ -157,6 +157,64 @@ def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
                 hints.append(msg.r.ScriptShellcheckFailure().as_string())
 
 
+def hint_unforwarded_variant_variables(recipe_dir, hints):
+    """Warn when v1 build scripts use variant keys absent from recipe.yaml."""
+    if not recipe_dir:
+        return
+
+    variant_files = [
+        *glob(os.path.join(recipe_dir, "conda_build_config.yaml")),
+        *glob(os.path.join(recipe_dir, "variants.yaml")),
+        *glob(os.path.join(recipe_dir, "..", ".ci_support", "*.yaml")),
+        *glob(os.path.join(recipe_dir, "..", ".ci_support", "migrations", "*.yaml")),
+    ]
+    variant_keys = set()
+    for path in variant_files:
+        try:
+            with open(path, encoding="utf-8") as fh:
+                data = get_yaml().load(fh) or {}
+        except Exception:  # other lints report malformed variant files
+            continue
+        if isinstance(data, Mapping):
+            variant_keys.update(data)
+    variant_keys.difference_update(
+        {"__migrator", "channel_sources", "channel_targets", "zip_keys"}
+    )
+
+    recipe_path = os.path.join(recipe_dir, "recipe.yaml")
+    if not variant_keys or not os.path.exists(recipe_path):
+        return
+    with open(recipe_path, encoding="utf-8") as fh:
+        recipe_text = fh.read()
+
+    shell_variables = re.compile(r"\$(?:\{([A-Za-z_]\w*)[^}]*\}|([A-Za-z_]\w*))")
+    batch_variables = re.compile(r"%([A-Za-z_]\w*)%|!([A-Za-z_]\w*)!")
+    findings = {}
+    for script in [
+        *glob(os.path.join(recipe_dir, "*.sh")),
+        *glob(os.path.join(recipe_dir, "*.bat")),
+    ]:
+        with open(script, encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+        pattern = (
+            batch_variables if script.lower().endswith(".bat") else shell_variables
+        )
+        referenced = {
+            next(value for value in match.groups() if value)
+            for match in pattern.finditer(text)
+        }
+        missing = sorted(
+            key
+            for key in variant_keys & referenced
+            if not re.search(rf"\b{re.escape(key)}\b", recipe_text)
+        )
+        if missing:
+            findings[os.path.basename(script)] = missing
+
+    if findings:
+        hints.append(msg.r.UnforwardedVariantVariables(findings=findings).as_string())
+
+
 def hint_check_spdx(about_section, hints):
     import license_expression
 

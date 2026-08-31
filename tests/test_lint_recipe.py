@@ -149,6 +149,37 @@ def test_v1_stdlib_hint(comp_lang, quote):
             assert any(lint.startswith(expected_message) for lint in lints)
 
 
+def test_unforwarded_v1_script_variant_variables():
+    with tmp_directory() as feedstock_dir:
+        recipe_dir = Path(feedstock_dir, "recipe")
+        recipe_dir.mkdir()
+        recipe_dir.joinpath("recipe.yaml").write_text("schema_version: 1\n")
+        recipe_dir.joinpath("variants.yaml").write_text(
+            "TARGET: [linux-64]\nSDK: ['1']\n"
+        )
+        recipe_dir.joinpath("build.sh").write_text("echo $TARGET ${SDK:-default}\n")
+        recipe_dir.joinpath("build.bat").write_text("echo %TARGET% !SDK!\n")
+
+        found = []
+        hints.hint_unforwarded_variant_variables(recipe_dir, found)
+
+        assert len(found) == 1
+        assert "`build.sh`: `SDK`, `TARGET`" in found[0]
+        assert "`build.bat`: `SDK`, `TARGET`" in found[0]
+
+        recipe_dir.joinpath("recipe.yaml").write_text("""
+schema_version: 1
+build:
+  script:
+    env:
+      TARGET: ${{ TARGET }}
+      SDK: ${{ SDK }}
+""")
+        found = []
+        hints.hint_unforwarded_variant_variables(recipe_dir, found)
+        assert found == []
+
+
 def test_sysroot_lint():
     expected_message = "You're setting a requirement on sysroot"
 
