@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 570
+  num_commits: 571
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -476,7 +476,7 @@
   github: jwillemsen
 - name: Jaime Rodríguez-Guerra
   email: jaimergp@users.noreply.github.com
-  num_commits: 320
+  num_commits: 322
   first_commit: 2020-11-01 14:18:08
   github: jaimergp
 - name: Bastian Zimmermann
@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 183
+  num_commits: 184
   first_commit: 2021-11-14 02:53:10
   github: h-vetinari
 - name: Benjamin Tovar
