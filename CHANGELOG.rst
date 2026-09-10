@@ -4,6 +4,20 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.9.10
+====================
+
+**Fixed:**
+
+* Fixed issue where testing recipe parsing w/ the bot infrastructure no longer worked. (#2676)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+
+
+
 v2026.9.1
 ====================
 
