@@ -89,6 +89,7 @@ BSD-3-Clause-No-Nuclear-License
 BSD-3-Clause-No-Nuclear-License-2014
 BSD-3-Clause-No-Nuclear-Warranty
 BSD-3-Clause-Open-MPI
+BSD-3-Clause-OpenWebUI
 BSD-3-Clause-Sun
 BSD-3-Clause-Tso
 BSD-4-Clause
@@ -318,6 +319,7 @@ HDF5
 hdparm
 HIDAPI
 Hippocratic-2.1
+Hippocratic-3.0-core
 HP-1986
 HP-1989
 HPND
