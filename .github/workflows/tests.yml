@@ -22,8 +22,8 @@ jobs:
         include:
           - name: tests
           # Preserve quotes to prevent shell interpretation
-          - name: tests with conda-forge-tick
-            extra-deps: "'conda-forge-tick>=2026.0'"
+          - name: tests with conda-forge-feedstock-ops
+            extra-deps: "'conda-forge-feedstock-ops>=0.20.2'"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -942,7 +942,7 @@ def lint_recipe_is_parsable(
     if recipe_version == 0:
         parse_name = "conda-forge-tick (the bot)"
         try:
-            from conda_forge_tick.recipe_parser import CondaMetaYAML
+            from conda_forge_feedstock_ops.recipe_parser import CondaMetaYAML
         except ImportError:
             parse_results[parse_name] = None
             pass
