@@ -1238,5 +1238,5 @@ def lint_feedstock_name(
 
 def lint_upload_on_all_branches(feedstock_config, lints: list[str]) -> None:
     """Lint that we do not upload on all branches."""
-    if "upload_on_branch" not in feedstock_config:
+    if not feedstock_config.get("upload_on_branch"):
         lints.append(msg.conda_forge.UploadOnAllBranches().as_string())

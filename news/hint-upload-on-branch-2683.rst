@@ -9,7 +9,7 @@
 
 **Deprecated:**
 
-* Deprecated uploads on all branches via having ``upload_on_branch`` unset. Start with
+* Deprecated uploads on all branches via having ``upload_on_branch`` unset. Starting with
   versions on or after ``2026.11.15``, ``conda-smithy`` will lint if ``upload_on_branch``
   is not set. (#2683)
 
