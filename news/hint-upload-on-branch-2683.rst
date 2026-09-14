@@ -1,7 +1,7 @@
 **Added:**
 
-* Added a hint if ``upload-on-branch`` is not set your ``conda-forge.yml``. This hint
-  will become a lint on or after ``cond-smithy`` version ``2026.11.15``. (#2683)
+* Added a hint if ``upload_on_branch`` is not set in ``conda-forge.yml``. This hint
+  will become a lint on or after ``conda-smithy`` version ``2026.11.15``. (#2683)
 
 **Changed:**
 
