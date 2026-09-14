@@ -2688,8 +2688,8 @@
           "type": "null"
         }
       ],
-      "default": null,
-      "description": "This parameter restricts uploading access on work from certain branches of the\nsame repo. Only the branch listed in `upload_on_branch` will trigger uploading\nof packages to the target channel. The default is to skip this check if the key\n`upload_on_branch` is not in `conda-forge.yml`. To restrict uploads to the\nmain branch:\n\n```yaml\nupload_on_branch: main\n```",
+      "default": "main",
+      "description": "This parameter restricts uploading access on work from certain branches of the\nsame repo. Only the branch listed in `upload_on_branch` will trigger uploading\nof packages to the target channel. To restrict uploads to a branch named `foo`,\nyou can write:\n\n```yaml\nupload_on_branch: foo\n```",
       "title": "Upload On Branch"
     },
     "config_version": {

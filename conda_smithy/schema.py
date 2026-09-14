@@ -1061,17 +1061,15 @@ class ConfigModel(BaseModel):
     )
 
     upload_on_branch: Optional[Union[str, Nullable]] = Field(
-        default=None,
-        exclude=True,  # Will not be rendered in the model dump
+        default="main",
         description=cleandoc("""
         This parameter restricts uploading access on work from certain branches of the
         same repo. Only the branch listed in `upload_on_branch` will trigger uploading
-        of packages to the target channel. The default is to skip this check if the key
-        `upload_on_branch` is not in `conda-forge.yml`. To restrict uploads to the
-        main branch:
+        of packages to the target channel. To restrict uploads to a branch named `foo`,
+        you can write:
 
         ```yaml
-        upload_on_branch: main
+        upload_on_branch: foo
         ```
         """),
     )
