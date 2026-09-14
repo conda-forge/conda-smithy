@@ -27,13 +27,13 @@ on:
 {%- if trigger == "push" %}
   push:
     branches:
-{% for upload_branch in upload_branches %}
+{%- for upload_branch in upload_branches %}
       - "{{ upload_branch }}"
-{%- endfor %}
+{%- endfor -%}
 {%- else %}
   {{ trigger }}:
-{%- endif %}
-{% endfor %}
+{% endif %}
+{%- endfor %}
 
 {%- if github_actions.cancel_in_progress %}
 concurrency:
