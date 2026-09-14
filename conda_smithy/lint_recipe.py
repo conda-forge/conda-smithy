@@ -936,8 +936,8 @@ def run_conda_forge_specific(
     # 19: Check for missing feedstock-name (if necessary).
     lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
 
-    # 20: Hint and then lint about uploading on all branches.
-    lint_upload_on_all_branches(feedstock_config, hints)
+    # 20: Lint about uploading on all branches.
+    lint_upload_on_all_branches(feedstock_config, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

@@ -143,6 +143,7 @@ templates: {}
 test: null
 test_on_native_only: false
 travis: {}
+upload_on_branch: main
 woodpecker: {}
 workflow_settings:
   build_workspace_dir: []
