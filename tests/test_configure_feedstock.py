@@ -388,8 +388,9 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         forge_dir=upload_on_branch_recipe.recipe,
     )
     # Check that the parameter is in the configuration.
-    assert "upload_on_branch" in upload_on_branch_recipe.config
-    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
+    assert "upload_on_branch" not in upload_on_branch_recipe.config
+    assert "upload_branches" in upload_on_branch_recipe.config
+    assert upload_on_branch_recipe.config["upload_branches"] == ["foo-branch"]
     # Check that the parameter is in the generated file.
     with open(
         os.path.join(
@@ -400,7 +401,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     ) as fp:
         content_osx = yaml.safe_load(fp)
     assert (
-        'UPLOAD_ON_BRANCH="foo-branch"' in content_osx["jobs"][0]["steps"][0]["script"]
+        'UPLOAD_BRANCHES="foo-branch"' in content_osx["jobs"][0]["steps"][0]["script"]
     )
     assert "BUILD_SOURCEBRANCHNAME" in content_osx["jobs"][0]["steps"][0]["script"]
 
@@ -417,7 +418,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
         for step in content_win["jobs"][0]["steps"]
         if step["displayName"] == "Run Windows build"
     )
-    assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert win_build_step["env"]["UPLOAD_BRANCHES"] == "foo-branch"
     with open(
         os.path.join(
             upload_on_branch_recipe.recipe,
@@ -437,7 +438,7 @@ def test_upload_on_branch_azure(upload_on_branch_recipe, jinja_env):
     ) as fp:
         content_lin = yaml.safe_load(fp)
     assert (
-        'UPLOAD_ON_BRANCH="foo-branch"' in content_lin["jobs"][0]["steps"][1]["script"]
+        'UPLOAD_BRANCHES="foo-branch"' in content_lin["jobs"][0]["steps"][1]["script"]
     )
     assert "BUILD_SOURCEBRANCHNAME" in content_lin["jobs"][0]["steps"][1]["script"]
 
@@ -453,8 +454,9 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
         forge_dir=upload_on_branch_recipe.recipe,
     )
     # Check that the parameter is in the configuration.
-    assert "upload_on_branch" in upload_on_branch_recipe.config
-    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
+    assert "upload_on_branch" not in upload_on_branch_recipe.config
+    assert "upload_branches" in upload_on_branch_recipe.config
+    assert upload_on_branch_recipe.config["upload_branches"] == ["foo-branch"]
     # Check that the parameter is in the generated file.
     with open(
         os.path.join(
@@ -471,7 +473,7 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
         for step in content["jobs"]["build"]["steps"]
         if step["name"] == "Build on Linux"
     )
-    assert linux_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert linux_step["env"]["UPLOAD_BRANCHES"] == "foo-branch"
     assert "${GITHUB_REF_NAME}" in linux_step["run"]
 
     macos_step = next(
@@ -479,7 +481,7 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
         for step in content["jobs"]["build"]["steps"]
         if step["name"] == "Build on macOS"
     )
-    assert macos_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert macos_step["env"]["UPLOAD_BRANCHES"] == "foo-branch"
     assert "${GITHUB_REF_NAME}" in macos_step["run"]
 
     win_build_step = next(
@@ -487,7 +489,7 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
         for step in content["jobs"]["build"]["steps"]
         if step["name"] == "Build on windows"
     )
-    assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert win_build_step["env"]["UPLOAD_BRANCHES"] == "foo-branch"
     with open(
         os.path.join(
             upload_on_branch_recipe.recipe,
@@ -507,14 +509,15 @@ def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
         forge_dir=upload_on_branch_recipe.recipe,
     )
     # Check that the parameter is in the configuration.
-    assert "upload_on_branch" in upload_on_branch_recipe.config
-    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
+    assert "upload_on_branch" not in upload_on_branch_recipe.config
+    assert "upload_branches" in upload_on_branch_recipe.config
+    assert upload_on_branch_recipe.config["upload_branches"] == ["foo-branch"]
 
     # Check that the parameter is in the generated file.
     with open(os.path.join(upload_on_branch_recipe.recipe, ".appveyor.yml")) as fp:
         content = yaml.safe_load(fp)
     assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
-    assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
+    assert "UPLOAD_BRANCHES=foo-branch" in content["deploy_script"][-2]
 
 
 def test_circle_with_yum_reqs(py_recipe, jinja_env):

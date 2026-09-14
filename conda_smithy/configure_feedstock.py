@@ -2799,6 +2799,7 @@ def _read_forge_config(forge_dir, forge_yml=None):
             config["upload_branches"],
         )
         config["upload_branches"] = [file_config["upload_on_branch"]]
+        config.pop("upload_on_branch")
 
     return config
 
