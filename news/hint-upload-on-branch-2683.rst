@@ -5,7 +5,7 @@
 
 **Changed:**
 
-* <news item>
+* Changed test suite to skip redundant and slow tests for file permissions. (#2683)
 
 **Deprecated:**
 
