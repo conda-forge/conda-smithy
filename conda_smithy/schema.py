@@ -1089,7 +1089,7 @@ class ConfigModel(BaseModel):
         default=["**"],
         description=cleandoc("""
         This parameter lists all branches from which built packages are uploaded to the
-        `conda-forge` channel. This field supports recurisve glob patterns (e.g., `v*`,
+        `conda-forge` channel. This field supports recursive glob patterns (e.g., `v*`,
         `**/v*`, etc.). You can use this configuration option to enable uploads
         on the `main` branch and version branches prefixed with `v` by setting it to
 
