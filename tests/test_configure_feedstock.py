@@ -786,7 +786,12 @@ def test_secrets(py_recipe, jinja_env):
 
 @pytest.mark.parametrize("store_artifacts", ["false", "true"])
 @pytest.mark.parametrize("provider", ["azure", "github_actions", "drone", "travis"])
-def test_exec_bits_and_content(py_recipe, jinja_env, provider, store_artifacts):
+def test_exec_bits_and_content(
+    py_recipe, jinja_env, provider, store_artifacts, request
+):
+    if request.getfixturevalue("config_yaml").type == "conda-build":
+        pytest.skip(reason="conda-build is very slow for testing exec bits!")
+
     recipe_dir = py_recipe.recipe
     forge_yml = Path(recipe_dir, "conda-forge.yml")
     with open(forge_yml, "a") as f:
