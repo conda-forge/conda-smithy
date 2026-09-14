@@ -1063,6 +1063,7 @@ class ConfigModel(BaseModel):
     upload_on_branch: Optional[Union[str, Nullable]] = Field(
         default=None,
         exclude=True,  # Will not be rendered in the model dump
+        deprecated=True,
         description=cleandoc("""
         This parameter restricts uploading access on work from certain branches of the
         same repo. Only the branch listed in `upload_on_branch` will trigger uploading
@@ -1073,6 +1074,35 @@ class ConfigModel(BaseModel):
         ```yaml
         upload_on_branch: main
         ```
+
+        If set, this field overrides the value of `upload_branches`. Further, it is
+        deprecated as of `conda-smithy` version 2026.9.15. Use `upload_branches` instead:
+
+        ```yaml
+        upload_branches:
+          - main
+        ```
+        """),
+    )
+
+    upload_branches: list[str] = Field(
+        default=["**"],
+        deprecated=True,
+        description=cleandoc("""
+        This parameter lists all branches from which built packages are uploaded to the
+        `conda-forge` channel. This field supports recurisve glob patterns (e.g., `v*`,
+        `**/v*`, etc.). You can use this configuration option to enable uploads
+        on the `main` branch and version branches prefixed with `v` by setting it to
+
+        ```yaml
+        upload_branches:
+          - main
+          - v*
+        ```
+
+        The current default of `**` is deprecated as of `conda-smithy` version 2026.9.15.
+        Starting with `conda-smithy` versions 2026.11.15 or later, this default will change
+        to the default branch of the feedstock (i.e., `main`).
         """),
     )
 

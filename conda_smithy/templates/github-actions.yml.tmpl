@@ -24,10 +24,12 @@
 name: Build conda package
 on:
 {%- for trigger in github_actions.triggers %}
-{%- if trigger == "push" and upload_on_branch %}
+{%- if trigger == "push" %}
   push:
     branches:
-      - {{ upload_on_branch }}
+{% for upload_branch in upload_branches %}
+      - "{{ upload_branch }}"
+{%- endfor %}
 {%- else %}
   {{ trigger }}:
 {%- endif %}
@@ -135,6 +137,7 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        UPLOAD_BRANCHES: "{{ upload_branches | join(":") }}"
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
@@ -168,6 +171,7 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        UPLOAD_BRANCHES: "{{ upload_branches | join(":") }}"
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
@@ -244,6 +248,7 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        UPLOAD_BRANCHES: "{{ upload_branches | join(":") }}"
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'

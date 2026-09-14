@@ -235,8 +235,9 @@ if /i "%CI%" == "azure" (
 )
 {%- if upload_on_branch %}
 set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
-:: Note, this needs GIT_BRANCH too
 {%- endif %}
+- set "UPLOAD_BRANCHES={{ upload_branches | join(":") }}"
+:: Note, these need GIT_BRANCH too
 
 :: Validate
 {%- if conda_forge_output_validation %}

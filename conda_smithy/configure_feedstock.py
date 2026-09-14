@@ -2788,6 +2788,18 @@ def _read_forge_config(forge_dir, forge_yml=None):
             "Use 'conda_build_tool' instead."
         )
 
+    if (
+        "upload_on_branch" in file_config
+        and file_config["upload_on_branch"] is not None
+    ):
+        logger.warning(
+            "upload_on_branch is set to '%s' and will override the "
+            "current value of upload_branches: '%r'",
+            config["upload_on_branch"],
+            config["upload_branches"],
+        )
+        config["upload_branches"] = [file_config["upload_on_branch"]]
+
     return config
 
 

@@ -2689,8 +2689,21 @@
         }
       ],
       "default": null,
-      "description": "This parameter restricts uploading access on work from certain branches of the\nsame repo. Only the branch listed in `upload_on_branch` will trigger uploading\nof packages to the target channel. The default is to skip this check if the key\n`upload_on_branch` is not in `conda-forge.yml`. To restrict uploads to the\nmain branch:\n\n```yaml\nupload_on_branch: main\n```",
+      "deprecated": true,
+      "description": "This parameter restricts uploading access on work from certain branches of the\nsame repo. Only the branch listed in `upload_on_branch` will trigger uploading\nof packages to the target channel. The default is to skip this check if the key\n`upload_on_branch` is not in `conda-forge.yml`. To restrict uploads to the\nmain branch:\n\n```yaml\nupload_on_branch: main\n```\n\nIf set, this field overrides the value of `upload_branches`. Further, it is\ndeprecated as of `conda-smithy` version 2026.9.15. Use `upload_branches` instead:\n\n```yaml\nupload_branches:\n  - main\n```",
       "title": "Upload On Branch"
+    },
+    "upload_branches": {
+      "default": [
+        "**"
+      ],
+      "deprecated": true,
+      "description": "This parameter lists all branches from which built packages are uploaded to the\n`conda-forge` channel. This field supports recurisve glob patterns (e.g., `v*`,\n`**/v*`, etc.). You can use this configuration option to enable uploads\non the `main` branch and version branches prefixed with `v` by setting it to\n\n```yaml\nupload_branches:\n  - main\n  - v*\n```\n\nThe current default of `**` is deprecated as of `conda-smithy` version 2026.9.15.\nStarting with `conda-smithy` versions 2026.11.15 or later, this default will change\nto the default branch of the feedstock (i.e., `main`).",
+      "items": {
+        "type": "string"
+      },
+      "title": "Upload Branches",
+      "type": "array"
     },
     "config_version": {
       "anyOf": [

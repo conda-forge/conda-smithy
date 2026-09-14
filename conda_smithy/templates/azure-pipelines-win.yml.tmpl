@@ -88,6 +88,7 @@ jobs:
 {%- if upload_on_branch %}
         UPLOAD_ON_BRANCH: {{ upload_on_branch }}
 {%- endif %}
+        UPLOAD_BRANCHES: "{{ upload_branches | join(":") }}"
         UPLOAD_PACKAGES: $(UPLOAD_PACKAGES)
         UPLOAD_TEMP: $(UPLOAD_TEMP)
         build_platform: $(build_platform)
