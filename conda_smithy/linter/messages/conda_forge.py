@@ -284,4 +284,4 @@ class UploadOnAllBranches(LinterMessage):
     kind = "hint"
     identifier = "CF-014"
     added_in = "2026.9"
-    message = "The feedstock is currently configured to upload on all branches. Please specify the branch for which you'd like package uploads in the `upload_on_branch` option in the `conda-forge.yml`. This hint will become a lint on or after `conda-smithy` version `2026.9.15`.\n"
+    message = "The feedstock is currently configured to upload on all branches. Please specify the branch for which you'd like package uploads in the `upload_on_branch` option in the `conda-forge.yml`. This hint will become a lint on or after `conda-smithy` version `2026.11.15`.\n"
