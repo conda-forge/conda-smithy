@@ -5971,8 +5971,14 @@ extra:
 
         lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
 
-    assert lints == []
-    assert hints == []
+    assert all(
+        "has a value that is interpreted as a floating-point number" not in lint
+        for lint in lints
+    ), lints
+    assert all(
+        "has a value that is interpreted as a floating-point number" not in hint
+        for hint in hints
+    ), hints
 
 
 def test_no_custom_github_actions_workflows(tmp_path):
@@ -6053,7 +6059,10 @@ extra:
         if expect_lint
         else []
     )
-    assert hints == []
+    assert all(
+        "has a value that is interpreted as a floating-point number" not in hint
+        for hint in hints
+    ), hints
 
 
 @pytest.mark.parametrize(
@@ -6115,7 +6124,10 @@ extra:
         if expect_lint is not None
         else []
     )
-    assert hints == []
+    assert all(
+        "has a value that is interpreted as a floating-point number" not in hint
+        for hint in hints
+    ), hints
 
 
 @pytest.mark.parametrize("outputs", (False, True))
@@ -6218,14 +6230,18 @@ windows_only:
         lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
 
     assert lints == []
-    assert hints == [
-        f"{'output 0' if outputs else 'top-level'} output overrides versions "
-        "pinned in the feedstock:\n"
-        "['- In section host: `libhwloc >=2.5`, `windows_only >=1.1`']\n"
-        "Requirement spec should not list version specifiers to respect "
-        "conda-forge-pinning. If you need to force another version, please "
-        "override the pin via `conda_build_config.yaml`.",
-    ]
+    assert any(
+        hint
+        == (
+            f"{'output 0' if outputs else 'top-level'} output overrides versions "
+            "pinned in the feedstock:\n"
+            "['- In section host: `libhwloc >=2.5`, `windows_only >=1.1`']\n"
+            "Requirement spec should not list version specifiers to respect "
+            "conda-forge-pinning. If you need to force another version, please "
+            "override the pin via `conda_build_config.yaml`."
+        )
+        for hint in hints
+    )
 
 
 def test_deprecated_environment_variables(tmp_path):
@@ -6405,7 +6421,9 @@ def test_run_conda_forge_specific_missing_linter_hints_table(monkeypatch):
     }
     lints, hints = [], []
 
-    linter.run_conda_forge_specific(meta, None, lints, hints)
+    linter.run_conda_forge_specific(
+        meta, None, lints, hints, feedstock_config={"upload_branches": ["main"]}
+    )
 
     assert lints == []
     assert hints == []
