@@ -196,6 +196,18 @@
       "path": ""
     },
     {
+      "name": "UploadOnAllBranches",
+      "identifier": "CF-014",
+      "category": "CF",
+      "kind": "hint",
+      "added_in": "2026.9",
+      "deprecated_in": "",
+      "documentation": "Hint (and eventually lint) when the feedstock uploads on all branches.",
+      "message": "The feedstock is currently configured to upload on all branches. Please specify the branches for which you'd like package uploads in the `upload_branches` option in the `conda-forge.yml`.\n",
+      "examples": [],
+      "path": ""
+    },
+    {
       "name": "NoDuplicateKeys",
       "identifier": "FC-001",
       "category": "FC",

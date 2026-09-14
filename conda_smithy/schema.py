@@ -1087,7 +1087,6 @@ class ConfigModel(BaseModel):
 
     upload_branches: list[str] = Field(
         default=["**"],
-        deprecated=True,
         description=cleandoc("""
         This parameter lists all branches from which built packages are uploaded to the
         `conda-forge` channel. This field supports recurisve glob patterns (e.g., `v*`,

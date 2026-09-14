@@ -273,3 +273,17 @@ class MismatchedFeedstockName(LinterMessage):
     message = "Mismatched feedstock name in the recipe: ${current}. Specify `extra.feedstock_name: ${expected}`.\n"
     current: str
     expected: str
+
+
+@dataclass(kw_only=True)
+class UploadOnAllBranches(LinterMessage):
+    """
+    Hint (and eventually lint) when the feedstock uploads on all branches.
+    """
+
+    kind = "hint"
+    identifier = "CF-014"
+    added_in = "2026.9"
+    message = "The feedstock is currently configured to upload on all branches. Please specify the branches for which you'd like package uploads in the `upload_branches` option in the `conda-forge.yml`.\n"
+    current: str
+    expected: str

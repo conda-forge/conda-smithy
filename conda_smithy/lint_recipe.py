@@ -86,6 +86,7 @@ from conda_smithy.linter.lints import (
     lint_sources_should_have_hash,
     lint_stdlib,
     lint_subheaders,
+    lint_upload_on_all_branches,
     lint_usage_of_legacy_patterns,
 )
 from conda_smithy.linter.utils import (
@@ -934,6 +935,9 @@ def run_conda_forge_specific(
 
     # 19: Check for missing feedstock-name (if necessary).
     lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
+
+    # 20: Hint and then lint about uploading on all branches.
+    lint_upload_on_all_branches(feedstock_config, hints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

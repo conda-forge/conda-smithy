@@ -1234,3 +1234,22 @@ def lint_feedstock_name(
                 current=feedstock_name, expected=expected_name
             ).as_string()
         )
+
+
+def lint_upload_on_all_branches(
+    feedstock_config,
+    lints: list[str],
+) -> None:
+    """Lint that we do not upload on all branches."""
+
+    hint_or_lint = False
+    if "upload_branches" not in feedstock_config:
+        hint_or_lint = True
+    else:
+        for branch in feedstock_config["upload_branches"]:
+            if branch.strip() == "**":
+                hint_or_lint = True
+                break
+
+    if hint_or_lint:
+        lints.append(msg.conda_forge.UploadOnAllBranches().as_string())
