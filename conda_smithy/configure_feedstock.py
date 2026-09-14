@@ -691,8 +691,60 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
             }
         )
         result.append(new_dict)
+    result = _zip_osx_versions_with_stdlib(result)
     # ensure we keep type of wrapper container (set stays set, etc.)
     return type(container_of_dicts)(result)
+
+
+def _zip_osx_versions_with_stdlib(list_of_dicts):
+    """Record that MACOSX_DEPLOYMENT_TARGET/MACOSX_SDK_VERSION follow c_stdlib_version.
+
+    ``_merge_deployment_target`` above derives both keys from ``c_stdlib_version``
+    for every variant, so the three co-vary by construction.  Neither of the two
+    is a loop variable of its own though, so unless that relationship is spelled
+    out in ``zip_keys``, a feedstock that builds several deployment-target tiers
+    side by side (i.e. one that gives ``c_stdlib_version`` more than one value)
+    gets *all* the tiers' values written into *every* rendered .ci_support file,
+    and the build tool then builds each tier once per tier.
+
+    This is a no-op unless ``c_stdlib_version`` actually varies, so the single
+    tier case -- which is nearly every feedstock -- renders exactly as before.
+    """
+    stdlib_versions = {
+        var_dict["c_stdlib_version"]
+        for var_dict in list_of_dicts
+        if "c_stdlib_version" in var_dict
+    }
+    if len(stdlib_versions) < 2:
+        return list_of_dicts
+
+    result = []
+    for var_dict in list_of_dicts:
+        keys_to_zip = [
+            key
+            for key in ("MACOSX_DEPLOYMENT_TARGET", "MACOSX_SDK_VERSION")
+            if key in var_dict
+        ]
+        if "c_stdlib_version" not in var_dict or not keys_to_zip:
+            result.append(var_dict)
+            continue
+
+        groups = var_dict.get("zip_keys", [])
+        # zip_keys may be a single group given as a flat list of keys
+        if groups and not isinstance(groups[0], (list, tuple)):
+            groups = [groups]
+        groups = [list(group) for group in groups]
+
+        for group in groups:
+            if "c_stdlib_version" in group:
+                break
+        else:
+            group = ["c_stdlib_version"]
+            groups.append(group)
+        group.extend(key for key in keys_to_zip if key not in group)
+
+        result.append(HashableDict({**var_dict, "zip_keys": groups}))
+    return result
 
 
 def _collapse_subpackage_variants(
