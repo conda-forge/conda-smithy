@@ -157,7 +157,7 @@ NATIVE_CI_PROVIDER = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
     "linux_ppc64le": "travis",
-    "linux_riscv64": "github_actions",  # emulated
+    "linux_riscv64": None,  # no CI service offers native riscv64 runners
     "linux_s390x": "travis",
     "osx_64": "azure",
     "osx_arm64": "azure",
@@ -207,7 +207,6 @@ GITHUB_ACTIONS_RUNS_ON = {
     "linux-riscv64": {
         "os": "ubuntu",
         "hosted_labels": ("ubuntu-latest",),
-        # like ppc64le: GitHub defines no architecture label for riscv64
         "self_hosted_labels": ("linux",),
     },
     "win-64": {
@@ -2908,6 +2907,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     for plat, ci in NATIVE_CI_PROVIDER.items():
         if config["provider"][plat] == "native":
+            if ci is None:
+                raise RuntimeError(
+                    f"No native CI provider is available for '{plat}'; "
+                    "use 'default'/'emulated' instead, or cross-compile via "
+                    "'build_platform'."
+                )
             config["provider"][plat] = ci
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(config["remote_ci_setup"])

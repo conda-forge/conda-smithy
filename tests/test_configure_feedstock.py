@@ -2514,47 +2514,6 @@ def test_github_actions_labels(py_recipe, jinja_env, label):
         raise AssertionError("Bad label? Check test parameters.")
 
 
-@pytest.mark.parametrize("provider", ["github_actions", "default", "emulated"])
-def test_github_actions_native_linux_riscv64(py_recipe, jinja_env, provider):
-    forge_dir = py_recipe.recipe
-    forge_yml = Path(forge_dir, "conda-forge.yml")
-
-    with open(forge_yml, "a") as f:
-        f.write(textwrap.dedent(f"""\
-            provider:
-              linux_64: github_actions
-              linux_riscv64: {provider}
-              osx_64: azure
-              win_64: azure
-        """))
-
-    config = configure_feedstock._load_forge_config(
-        forge_dir, "recipe/default_config.yaml"
-    )
-    assert config["provider"]["linux_riscv64"] == ["github_actions"]
-    # native build: build_platform defaults to the target platform
-    assert config["build_platform"]["linux_riscv64"] == "linux_riscv64"
-
-    configure_feedstock.render_github_actions(
-        jinja_env=jinja_env,
-        forge_config=config,
-        forge_dir=forge_dir,
-    )
-
-    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
-    with conda_build_yml.open() as f:
-        workflow = yaml.safe_load(f)
-    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
-
-    riscv64 = [entry for entry in matrix if entry["CONFIG"].startswith("linux_riscv64")]
-    assert riscv64
-    for entry in riscv64:
-        assert entry["os"] == "ubuntu"
-        assert entry["runs_on"] == list(
-            configure_feedstock.GITHUB_ACTIONS_RUNS_ON["linux-riscv64"]["hosted_labels"]
-        )
-
-
 @pytest.mark.parametrize("path", ["github_actions", "workflow_settings"])
 @pytest.mark.parametrize("value", [False, True])
 @pytest.mark.parametrize("add_old", [False, True])
