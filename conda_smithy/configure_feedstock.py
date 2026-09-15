@@ -126,6 +126,7 @@ ALL_PLATFORMS = (
     "linux_64",
     "linux_aarch64",
     "linux_ppc64le",
+    "linux_riscv64",
     "linux_s390x",
     "osx_64",
     "osx_arm64",
@@ -144,6 +145,7 @@ DEFAULT_PROVIDERS = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
     "linux_ppc64le": "github_actions",  # emulated
+    "linux_riscv64": "github_actions",  # emulated
     "linux_s390x": "github_actions",  # emulated
     "osx_64": "azure",
     "osx_arm64": "azure",
@@ -155,6 +157,7 @@ NATIVE_CI_PROVIDER = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
     "linux_ppc64le": "travis",
+    "linux_riscv64": "github_actions",  # emulated
     "linux_s390x": "travis",
     "osx_64": "azure",
     "osx_arm64": "azure",
@@ -166,6 +169,7 @@ FANCY_PLATFORM_NAMES = {
     "linux_64": "Linux",
     "linux_aarch64": "Arm64",
     "linux_ppc64le": "PowerPC64",
+    "linux_riscv64": "RISCV64",
     "linux_s390x": "S390X",
     "osx_64": "OSX",
     "osx_arm64": "OSXARM",
@@ -198,6 +202,12 @@ GITHUB_ACTIONS_RUNS_ON = {
     "linux-ppc64le": {
         "os": "ubuntu",
         "hosted_labels": ("ubuntu-latest",),
+        "self_hosted_labels": ("linux",),
+    },
+    "linux-riscv64": {
+        "os": "ubuntu",
+        "hosted_labels": ("ubuntu-latest",),
+        # like ppc64le: GitHub defines no architecture label for riscv64
         "self_hosted_labels": ("linux",),
     },
     "win-64": {
