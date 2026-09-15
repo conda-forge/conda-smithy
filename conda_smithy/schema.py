@@ -905,6 +905,7 @@ class ConfigModel(BaseModel):
         * `win_arm64`
         * `linux_aarch64`
         * `linux_ppc64le`
+        * `linux_riscv64`
         * `linux_s390x`
         * `linux_armv7l`
 
