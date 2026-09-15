@@ -120,6 +120,9 @@ jobs:
       run: |
         if [[ "$(uname -m)" == "x86_64" ]]; then
           docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
+        elif [[ "$(uname -m)" == "aarch64" ]]; then
+          # multiarch/qemu-user-static has no arm64 image
+          docker run --rm --privileged tonistiigi/binfmt --install all
         fi
 
     - name: Build on Linux
