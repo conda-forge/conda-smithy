@@ -1,0 +1,17 @@
+schema_version: 1
+
+package:
+  name: single-extras
+  version: 0.0.0
+
+requirements:
+  extras:
+    x-single:
+      - something
+    x-multiple:
+      # intentionally unsorted
+      - something
+      - another-thing
+    all:
+      # intentionally unsorted
+      - single-extras[extras=[ex-single,ex-multiple]]
