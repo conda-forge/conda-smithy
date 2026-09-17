@@ -69,6 +69,7 @@ def tmp_directory():
         "m2w64_fortran",
         "go-cgo",
         "go-nocgo",
+        "ocaml",
     ],
 )
 def test_stdlib_lint(comp_lang):
@@ -124,6 +125,7 @@ def test_m2w64_stdlib_legal():
         "m2w64_fortran",
         "go-cgo",
         "go-nocgo",
+        "ocaml",
     ],
 )
 @pytest.mark.parametrize("quote", ["'", '"'])
