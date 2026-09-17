@@ -647,6 +647,101 @@ class WorkflowSettings(BaseModel):
     )
 
 
+class GitHubTrustedPublisher(BaseModel):
+    """A GitHub Actions workflow allowed to publish this feedstock."""
+
+    model_config: ConfigDict = ConfigDict(extra="forbid")
+
+    provider: Literal["github"]
+
+    repository: str = Field(
+        description="The repository the workflow runs in, as `owner/name`.",
+    )
+
+    workflow: str = Field(
+        description=cleandoc("""
+        The file name of the workflow, such as `release.yml`. It must be a
+        workflow in `repository` itself, not one it calls.
+        """),
+    )
+
+    repository_owner_id: int = Field(
+        description=cleandoc("""
+        The numeric id of the account owning the repository, which pins the
+        trust to that account rather than to a name that could be given up and
+        taken by somebody else. Find it with:
+
+        ```
+        curl -s https://api.github.com/users/<owner> | jq .id
+        ```
+        """),
+    )
+
+    environment: Optional[str] = Field(
+        default=None,
+        description=cleandoc("""
+        Require the job to run in this GitHub Actions environment, which can
+        gate on a reviewer or a branch.
+        """),
+    )
+
+
+class GitLabTrustedPublisher(BaseModel):
+    """A GitLab CI/CD job allowed to publish this feedstock."""
+
+    model_config: ConfigDict = ConfigDict(extra="forbid")
+
+    provider: Literal["gitlab"]
+
+    project_path: str = Field(
+        description="The project the job runs in, as `group/subgroup/project`.",
+    )
+
+    url: Optional[str] = Field(
+        default="https://gitlab.com",
+        description=cleandoc("""
+        The GitLab instance, which is also the issuer its tokens carry. Set it
+        for a self-managed instance, which has to be reachable over https.
+        """),
+    )
+
+    namespace_id: int = Field(
+        description=cleandoc("""
+        The numeric id of the group the project belongs to, which pins the
+        trust to that group rather than to a path that could be given up and
+        taken by somebody else. Find it with:
+
+        ```
+        curl -s <url>/api/v4/groups/<group> | jq .id
+        ```
+        """),
+    )
+
+    ref_type: Optional[Literal["branch", "tag"]] = Field(
+        default=None,
+        description=cleandoc("""
+        Require the job to be running for a ref of this kind. Releases normally
+        come from a tag, and saying so stops a push to a branch publishing.
+        """),
+    )
+
+    ref_protected: Optional[bool] = Field(
+        default=None,
+        description="Require the ref to be protected.",
+    )
+
+    environment: Optional[str] = Field(
+        default=None,
+        description="Require the job to run in this GitLab environment.",
+    )
+
+
+TrustedPublisher = Annotated[
+    Union[GitHubTrustedPublisher, GitLabTrustedPublisher],
+    Field(discriminator="provider"),
+]
+
+
 class ConfigModel(BaseModel):
     """
     This model describes in detail the top-level fields in  `conda-forge.yml`.
@@ -1057,6 +1152,31 @@ class ConfigModel(BaseModel):
         ```
 
         Will do testing only if the platform is native.
+        """),
+    )
+
+    trusted_publishers: Optional[list[TrustedPublisher]] = Field(
+        default_factory=list,
+        description=cleandoc("""
+        CI jobs allowed to ask conda-forge to update this feedstock's version,
+        in the manner of trusted publishing. A job sends the identity token its
+        provider issued it and the claims are checked against these entries, so
+        no secret is held by either side. Only the version is under the
+        requester's control; the sources come from the recipe as always.
+
+        ```yaml
+        trusted_publishers:
+          - provider: github
+            repository: DIRACGrid/DIRAC
+            repository_owner_id: 694842
+            workflow: deploy.yml
+          - provider: gitlab
+            url: https://gitlab.cern.ch
+            project_path: lhcb-core/LbEnv
+            namespace_id: 783
+            ref_type: tag
+            ref_protected: true
+        ```
         """),
     )
 

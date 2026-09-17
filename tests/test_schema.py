@@ -51,6 +51,70 @@ def test_schema_validate_json_schema_with_bot():
     assert hints == []
 
 
+def test_schema_validate_trusted_publishers():
+    cfyaml = {
+        "trusted_publishers": [
+            {
+                "provider": "github",
+                "repository": "DIRACGrid/DIRAC",
+                "workflow": "deploy.yml",
+                "repository_owner_id": 1234,
+                "environment": "release",
+            },
+            {
+                "provider": "gitlab",
+                "url": "https://gitlab.cern.ch",
+                "project_path": "lhcb-core/LbEnv",
+                "namespace_id": 4321,
+                "ref_type": "tag",
+                "ref_protected": True,
+                "environment": "production",
+            },
+        ]
+    }
+    lints, hints = validate_json_schema(cfyaml)
+    assert lints == []
+    assert hints == []
+
+
+@pytest.mark.parametrize(
+    "publisher",
+    [
+        # a typo in an optional key would otherwise silently not constrain
+        {
+            "provider": "github",
+            "repository": "a/b",
+            "workflow": "x.yml",
+            "enviroment": "release",
+        },
+        # the workflow is what pins which job may publish, so it is required
+        {"provider": "github", "repository": "a/b"},
+        {"provider": "gitlab"},
+        {"provider": "bitbucket", "repository": "a/b"},
+        {
+            "provider": "gitlab",
+            "project_path": "a/b",
+            "namespace_id": 1,
+            "ref_type": "commit",
+        },
+        # the ids are required, not an optional hardening people forget
+        {"provider": "github", "repository": "a/b", "workflow": "x.yml"},
+        {"provider": "gitlab", "project_path": "a/b"},
+        # the ids pin the account, so a quoted one has to be caught not coerced
+        {"provider": "gitlab", "project_path": "a/b", "namespace_id": "4321"},
+        {
+            "provider": "github",
+            "repository": "a/b",
+            "workflow": "x.yml",
+            "repository_owner_id": "1234",
+        },
+    ],
+)
+def test_schema_validate_bad_trusted_publishers(publisher):
+    lints, hints = validate_json_schema({"trusted_publishers": [publisher]})
+    assert lints != []
+
+
 def test_schema_no_empty_properties_for_bot():
     """
     If a property references a remote schema with $ref, it should NOT have a properties key.
