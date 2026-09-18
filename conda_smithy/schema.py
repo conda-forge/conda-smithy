@@ -683,8 +683,9 @@ class GitHubTrustedPublisher(BaseModel):
     environment: Optional[str] = Field(
         default=None,
         description=cleandoc("""
-        Require the job to run in this GitHub Actions environment, which can
-        gate on a reviewer or a branch.
+        The name of a GitHub Actions environment that must be used by the CI
+        job. This field can be used to gate version publishing on a reviewer or
+        a branch.
         """),
     )
 
@@ -739,7 +740,10 @@ class GitLabTrustedPublisher(BaseModel):
 
     environment: Optional[str] = Field(
         default=None,
-        description="Require the job to run in this GitLab environment.",
+        description=cleandoc("""
+        The name of a GitLab environment that must be used by the CI job. This
+        field can be used to gate version publishing on a reviewer or a branch.
+        """),
     )
 
 
@@ -1165,8 +1169,8 @@ class ConfigModel(BaseModel):
     trusted_publishers: Optional[list[TrustedPublisher]] = Field(
         default_factory=list,
         description=cleandoc("""
-        CI jobs allowed to ask conda-forge to update this feedstock's version,
-        in the manner of trusted publishing. A job sends the identity token its
+        CI jobs allowed to ask conda-forge to update this feedstock's version
+        via conda-forge's trusted publishing. A job sends the identity token its
         provider issued it and the claims are checked against these entries, so
         no secret is held by either side. Only the version is under the
         requester's control; the sources come from the recipe as always.

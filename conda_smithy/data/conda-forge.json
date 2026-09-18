@@ -723,7 +723,7 @@
             }
           ],
           "default": null,
-          "description": "Require the job to run in this GitHub Actions environment, which can\ngate on a reviewer or a branch.",
+          "description": "The name of a GitHub Actions environment that must be used by the CI\njob. This field can be used to gate version publishing on a reviewer or\na branch.",
           "title": "Environment"
         }
       },
@@ -804,7 +804,7 @@
             }
           ],
           "default": null,
-          "description": "Require the job to run in this GitLab environment.",
+          "description": "The name of a GitLab environment that must be used by the CI job. This\nfield can be used to gate version publishing on a reviewer or a branch.",
           "title": "Environment"
         }
       },
@@ -2832,7 +2832,7 @@
           "type": "null"
         }
       ],
-      "description": "CI jobs allowed to ask conda-forge to update this feedstock's version,\nin the manner of trusted publishing. A job sends the identity token its\nprovider issued it and the claims are checked against these entries, so\nno secret is held by either side. Only the version is under the\nrequester's control; the sources come from the recipe as always.\n\n```yaml\ntrusted_publishers:\n  - provider: github\n    repository: DIRACGrid/DIRAC\n    repository_owner_id: 694842\n    workflow: deploy.yml\n  - provider: gitlab\n    url: https://gitlab.cern.ch\n    project_path: lhcb-core/LbEnv\n    namespace_id: 783\n    ref_type: tag\n    ref_protected: true\n```",
+      "description": "CI jobs allowed to ask conda-forge to update this feedstock's version\nvia conda-forge's trusted publishing. A job sends the identity token its\nprovider issued it and the claims are checked against these entries, so\nno secret is held by either side. Only the version is under the\nrequester's control; the sources come from the recipe as always.\n\n```yaml\ntrusted_publishers:\n  - provider: github\n    repository: DIRACGrid/DIRAC\n    repository_owner_id: 694842\n    workflow: deploy.yml\n  - provider: gitlab\n    url: https://gitlab.cern.ch\n    project_path: lhcb-core/LbEnv\n    namespace_id: 783\n    ref_type: tag\n    ref_protected: true\n```",
       "title": "Trusted Publishers"
     },
     "upload_on_branch": {
