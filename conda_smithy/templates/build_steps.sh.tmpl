@@ -13,6 +13,16 @@ export FEEDSTOCK_ROOT="${FEEDSTOCK_ROOT:-/home/conda/feedstock_root}"
 FEEDSTOCK_ROOT=$(cd "${FEEDSTOCK_ROOT}"; pwd)
 source ${FEEDSTOCK_ROOT}/.scripts/logging_utils.sh
 
+RUN_SCRIPT=$1
+case ${RUN_SCRIPT} in
+    build_common.sh|upload.sh)
+        ;;
+    *)
+        echo "Unknown script requested: ${RUN_SCRIPT}"
+        exit 1
+        ;;
+esac
+
 {# This closes the matching `startgroup` on `run_docker_build.sh` #}
 ( endgroup "Start Docker" ) 2> /dev/null
 
@@ -90,19 +100,14 @@ popd
 ( startgroup "Configuring conda" ) 2> /dev/null
 
 {%- if conda_build_tool == "mambabuild" %}
-{%- set BUILD_CMD="conda-mambabuild" %}
 {%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-{%- set BUILD_CMD="CONDA_SOLVER=libmamba conda-build" %}
 {%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
-{%- set BUILD_CMD="CONDA_SOLVER=classic conda-build" %}
 {%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "rattler-build" %}
-{%- set BUILD_CMD="rattler-build build" %}
 {%- set NO_TEST_FLAG="--test skip" %}
 {%- else %}
-{%- set BUILD_CMD="conda-build" %}
 {%- set NO_TEST_FLAG="--no-test" %}
 {%- endif %}
 {%- if conda_solver == "libmamba" %}
@@ -164,97 +169,7 @@ fi
 
 ( endgroup "Configuring conda" ) 2> /dev/null
 
-if [[ -f "${FEEDSTOCK_ROOT}/LICENSE.txt" ]]; then
-    echo Copying feedstock license
-    cp "${FEEDSTOCK_ROOT}/LICENSE.txt" "${RECIPE_ROOT}/recipe-scripts-license.txt"
-fi
-
-if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
-    # differences between conda-build vs. rattler-build
-    #   - 1 step (conda debug + manually open shell) vs. 2 step (rb debug {setup, shell})
-    #   - recipe is positional vs. --recipe "${RECIPE_ROOT}"
-    #   - --output-id vs. --output-name
-    #   - --clobber-file vs. none
-    #   - none vs. --target-platform
-    {%- if conda_build_tool.startswith("conda-build") %}
-    CONDA_SUBDIR="${BUILD_PLATFORM}" conda debug \
-        "${RECIPE_ROOT}" \
-        -m "${CONFIG_FILE}" \
-        ${EXTRA_CB_OPTIONS:-} \
-        ${BUILD_OUTPUT_ID:+--output-id "${BUILD_OUTPUT_ID}"} \
-        --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
-
-    # Drop into an interactive shell
-    /bin/bash
-    {%- elif conda_build_tool == "rattler-build" %}
-    export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${FEEDSTOCK_ROOT}/build_artifacts}"
-    rattler-build debug setup \
-        --recipe "${RECIPE_ROOT}" \
-        -m "${CONFIG_FILE}" \
-        ${EXTRA_CB_OPTIONS:-} \
-        ${BUILD_OUTPUT_ID:+--output-name "${BUILD_OUTPUT_ID}"} \
-        --build-platform "${BUILD_PLATFORM}" \
-        --target-platform "${HOST_PLATFORM}"
-
-    rattler-build debug shell
-    exit 0
-    {%- else %}
-    echo "Build tool {{ conda_build_tool }} is not currently supported in debug mode"
-    exit 1
-    {%- endif %}
-fi
-
-# Build the recipe
-echo Building recipe
-
-# differences between conda-build vs. rattler-build
-#   - recipe is positional vs. --recipe "${RECIPE_ROOT}"
-#   - --suppress-variables vs. none
-#   - --clobber-file vs. none
-#   - none vs. --target-platform
-#   - --extra-meta a=b c=d vs. --extra-meta a=b --extra-meta c=d
-{%- if conda_build_tool != "rattler-build" %}
-
-CONDA_SUBDIR="${BUILD_PLATFORM}" {{ BUILD_CMD }} \
-    "${RECIPE_ROOT}" \
-    -m "${CONFIG_FILE}" \
-    ${EXTRA_CB_OPTIONS:-} \
-    --suppress-variables \
-    --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
-    --extra-meta flow_run_id="${flow_run_id:-}" remote_url="${remote_url:-}" sha="${sha:-}"
-
-{%- else %}
-
-{{ BUILD_CMD }} \
-    --recipe "${RECIPE_ROOT}" \
-    -m "${CONFIG_FILE}" \
-    ${EXTRA_CB_OPTIONS:-} \
-    --build-platform "${BUILD_PLATFORM}" \
-    --target-platform "${HOST_PLATFORM}" \
-    --extra-meta flow_run_id="${flow_run_id:-}" \
-    --extra-meta remote_url="${remote_url:-}" \
-    --extra-meta sha="${sha:-}"
-
-{%- endif %}
-
-( startgroup "Inspecting artifacts" ) 2> /dev/null
-
-# inspect_artifacts was only added in conda-forge-ci-setup 4.9.4
-command -v inspect_artifacts >/dev/null 2>&1 && inspect_artifacts --recipe-dir "${RECIPE_ROOT}" -m "${CONFIG_FILE}" || echo "inspect_artifacts needs conda-forge-ci-setup >=4.9.4"
-
-( endgroup "Inspecting artifacts" ) 2> /dev/null
-
-{%- if conda_forge_output_validation %}
-( startgroup "Validating outputs" ) 2> /dev/null
-validate_recipe_outputs "${FEEDSTOCK_NAME}"
-( endgroup "Validating outputs" ) 2> /dev/null
-{%- endif %}
-
-if [[ "${UPLOAD_PACKAGES}" != "False" ]] && [[ "${IS_PR_BUILD}" == "False" ]]; then
-    ( startgroup "Uploading packages" ) 2> /dev/null
-    upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="${FEEDSTOCK_NAME}" {% endif %}{% if private_upload %} --private{% endif %} "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
-    ( endgroup "Uploading packages" ) 2> /dev/null
-fi
+source "${FEEDSTOCK_ROOT}/.scripts/${RUN_SCRIPT}"
 
 ( startgroup "Leaving the Docker container" ) 2> /dev/null
 
