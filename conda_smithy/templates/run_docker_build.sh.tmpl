@@ -124,11 +124,10 @@ ${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
            -e GIT_BRANCH \
            -e GITHUB_ACTIONS \
            -e HOST_USER_ID \
-           -e IS_PR_BUILD \
            -e RATTLER_BUILD_COLOR \
            -e RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION \
+           -e STEP_ACTION \
            -e UPLOAD_ON_BRANCH \
-           -e UPLOAD_PACKAGES \
            -e flow_run_id \
            -e remote_url \
            -e sha \
