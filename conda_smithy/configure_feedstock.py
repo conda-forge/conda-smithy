@@ -1648,6 +1648,8 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
         "linux": [
             ".scripts/run_docker_build.sh",
             ".scripts/build_steps.sh",
+            ".scripts/build_common.sh",
+            ".scripts/upload.sh",
         ],
         "osx": [
             ".scripts/run_osx_build.sh",
@@ -2803,6 +2805,8 @@ def clear_scripts(forge_dir):
             "create_pagefile.sh",
             "SetPageFileSize.ps1",
             "free_disk_space.sh",
+            "build_common.sh",
+            "upload.sh",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
