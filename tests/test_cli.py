@@ -435,3 +435,47 @@ def test_render_readme_with_v1_recipe_name(testing_workdir):
         readme = readme_file.read()
         assert "recipe-iregi--split-green" not in readme
         assert "`iregi-split, iregi-static` can be installed" not in readme
+
+
+@pytest.mark.parametrize("recipe_name", ["v1-multiple", "v1-single"])
+def test_render_readme_with_v1_extras(testing_workdir, recipe_name):
+    parser = argparse.ArgumentParser()
+    subparser = parser.add_subparsers()
+    init_obj = cli.Init(subparser)
+    regen_obj = cli.Regenerate(subparser)
+    _thisdir = os.path.abspath(os.path.dirname(__file__))
+    feedstock_dir = os.path.join(testing_workdir, "v1-extras-test-feedstock")
+    recipe_dir = os.path.join(testing_workdir, "recipe")
+    with open(os.path.join(_thisdir, f"recipes/extras/{recipe_name}.md")) as fh:
+        expect_readme = fh.read()
+    os.mkdir(recipe_dir)
+    cbc = os.path.join(recipe_dir, "conda_build_config.yaml")
+    with open(cbc, "w") as fh:
+        fh.write("{} # empty")
+    shutil.copy2(
+        os.path.join(_thisdir, f"recipes/extras/{recipe_name}.yaml"),
+        os.path.join(
+            recipe_dir, "recipe.yaml" if recipe_name.startswith("v1") else "meta.yaml"
+        ),
+    )
+    args = InitArgs(
+        recipe_directory=recipe_dir,
+        feedstock_directory=feedstock_dir,
+        temporary_directory=os.path.join(recipe_dir, "temp"),
+    )
+    init_obj(args)
+    args = RegenerateArgs(
+        feedstock_directory=feedstock_dir,
+        feedstock_config=None,
+        commit=False,
+        no_check_uptodate=True,
+        check=False,
+        exclusive_config_file=cbc,
+        temporary_directory=os.path.join(testing_workdir, "temp"),
+    )
+    regen_obj(args)
+    readme_path = os.path.join(feedstock_dir, "README.md")
+    assert os.path.exists(readme_path)
+    with open(readme_path) as readme_file:
+        readme = readme_file.read()
+    assert expect_readme in readme
