@@ -686,6 +686,136 @@
       "title": "DeprecatedCIservices",
       "type": "string"
     },
+    "GitHubTrustedPublisher": {
+      "additionalProperties": false,
+      "description": "A GitHub Actions workflow allowed to publish this feedstock.",
+      "properties": {
+        "provider": {
+          "const": "github",
+          "title": "Provider",
+          "type": "string"
+        },
+        "repository": {
+          "description": "The repository the workflow runs in, as `owner/name`.",
+          "pattern": "^[^/\\s]+/[^/\\s]+$",
+          "title": "Repository",
+          "type": "string"
+        },
+        "workflow": {
+          "description": "The file name of the workflow, such as `release.yml`. It must live in\n`repository`; if the job runs in a reusable workflow, name that file\nrather than the one that calls it.",
+          "pattern": "^[^/\\s]+\\.ya?ml$",
+          "title": "Workflow",
+          "type": "string"
+        },
+        "repository_owner_id": {
+          "description": "The numeric id of the account owning the repository, which pins the\ntrust to that account rather than to a name that could be given up and\ntaken by somebody else. Find it with:\n\n```\ncurl -s https://api.github.com/users/<owner> | jq .id\n```",
+          "exclusiveMinimum": 0,
+          "title": "Repository Owner Id",
+          "type": "integer"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The name of a GitHub Actions environment that must be used by the CI\njob. This field can be used to gate version publishing on a reviewer or\na branch.",
+          "title": "Environment"
+        }
+      },
+      "required": [
+        "provider",
+        "repository",
+        "workflow",
+        "repository_owner_id"
+      ],
+      "title": "GitHubTrustedPublisher",
+      "type": "object"
+    },
+    "GitLabTrustedPublisher": {
+      "additionalProperties": false,
+      "description": "A GitLab CI/CD job allowed to publish this feedstock.",
+      "properties": {
+        "provider": {
+          "const": "gitlab",
+          "title": "Provider",
+          "type": "string"
+        },
+        "project_path": {
+          "description": "The project the job runs in, as `group/subgroup/project`.",
+          "pattern": "^[^/\\s]+(/[^/\\s]+)+$",
+          "title": "Project Path",
+          "type": "string"
+        },
+        "url": {
+          "default": "https://gitlab.com",
+          "description": "The GitLab instance, which is also the issuer its tokens carry. Set it\nfor a self-managed instance, which has to be reachable over https. It\nis compared with the token's issuer as written, so no trailing slash.",
+          "pattern": "^https://[^/\\s]+$",
+          "title": "Url",
+          "type": "string"
+        },
+        "namespace_id": {
+          "description": "The numeric id of the group the project belongs to, which pins the\ntrust to that group rather than to a path that could be given up and\ntaken by somebody else. Find it with:\n\n```\ncurl -s <url>/api/v4/groups/<group> | jq .id\n```",
+          "exclusiveMinimum": 0,
+          "title": "Namespace Id",
+          "type": "integer"
+        },
+        "ref_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "branch",
+                "tag"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Require the job to be running for a ref of this kind. Releases normally\ncome from a tag, and saying so stops a push to a branch publishing.",
+          "title": "Ref Type"
+        },
+        "ref_protected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Require the ref to be protected.",
+          "title": "Ref Protected"
+        },
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The name of a GitLab environment that must be used by the CI job. This\nfield can be used to gate version publishing on a reviewer or a branch.",
+          "title": "Environment"
+        }
+      },
+      "required": [
+        "provider",
+        "project_path",
+        "namespace_id"
+      ],
+      "title": "GitLabTrustedPublisher",
+      "type": "object"
+    },
     "GithubActionsConfig": {
       "additionalProperties": false,
       "properties": {
@@ -2675,6 +2805,35 @@
       "default": null,
       "description": "This is used to configure on which platforms a recipe is tested.\n\n```yaml\ntest: native_and_emulated\n```\n\nWill do testing only if the platform is native or if there is an emulator.\n\n```yaml\ntest: native\n```\n\nWill do testing only if the platform is native.",
       "title": "Test"
+    },
+    "trusted_publishers": {
+      "anyOf": [
+        {
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "github": "#/$defs/GitHubTrustedPublisher",
+                "gitlab": "#/$defs/GitLabTrustedPublisher"
+              },
+              "propertyName": "provider"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/GitHubTrustedPublisher"
+              },
+              {
+                "$ref": "#/$defs/GitLabTrustedPublisher"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "CI jobs allowed to ask conda-forge to update this feedstock's version\nvia conda-forge's trusted publishing. A job sends the identity token its\nprovider issued it and the claims are checked against these entries, so\nno secret is held by either side. Only the version is under the\nrequester's control; the sources come from the recipe as always.\n\n```yaml\ntrusted_publishers:\n  - provider: github\n    repository: DIRACGrid/DIRAC\n    repository_owner_id: 694842\n    workflow: deploy.yml\n  - provider: gitlab\n    url: https://gitlab.cern.ch\n    project_path: lhcb-core/LbEnv\n    namespace_id: 783\n    ref_type: tag\n    ref_protected: true\n```",
+      "title": "Trusted Publishers"
     },
     "upload_on_branch": {
       "anyOf": [
