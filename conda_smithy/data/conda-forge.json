@@ -702,7 +702,7 @@
           "type": "string"
         },
         "workflow": {
-          "description": "The file name of the workflow, such as `release.yml`. It must be a\nworkflow in `repository` itself, not one it calls.",
+          "description": "The file name of the workflow, such as `release.yml`. It must live in\n`repository`; if the job runs in a reusable workflow, name that file\nrather than the one that calls it.",
           "pattern": "^[^/\\s]+\\.ya?ml$",
           "title": "Workflow",
           "type": "string"

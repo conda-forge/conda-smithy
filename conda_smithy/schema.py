@@ -662,8 +662,9 @@ class GitHubTrustedPublisher(BaseModel):
     workflow: str = Field(
         pattern=r"^[^/\s]+\.ya?ml$",
         description=cleandoc("""
-        The file name of the workflow, such as `release.yml`. It must be a
-        workflow in `repository` itself, not one it calls.
+        The file name of the workflow, such as `release.yml`. It must live in
+        `repository`; if the job runs in a reusable workflow, name that file
+        rather than the one that calls it.
         """),
     )
 
