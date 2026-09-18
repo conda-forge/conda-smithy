@@ -939,7 +939,8 @@ class LicenseSPDX(LinterMessage, _AnyRecipeMessage):
     """
     The `license` field must be a valid SPDX identifier.
 
-    See list at [`licenses.txt`](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/licenses.txt).
+    See the [SPDX License List](https://spdx.org/licenses/), as shipped by the
+    `spdx-license-list-data` conda package.
     """
 
     kind = "hint"
@@ -958,7 +959,8 @@ class LicenseSPDX(LinterMessage, _AnyRecipeMessage):
 class InvalidLicenseException(LinterMessage, _AnyRecipeMessage):
     """
     The `license` field may accept some SPDX exception expressions, as controlled
-    in [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/license_exceptions.txt)
+    by the [SPDX exceptions list](https://spdx.org/licenses/exceptions-index.html),
+    as shipped by the `spdx-license-list-data` conda package.
     """
 
     kind = "hint"
