@@ -64,7 +64,7 @@ def test_schema_validate_trusted_publishers():
             {
                 "provider": "gitlab",
                 "url": "https://gitlab.cern.ch",
-                "project_path": "lhcb-core/LbEnv",
+                "project_path": "lhcb-core/subgroup/LbEnv",
                 "namespace_id": 4321,
                 "ref_type": "tag",
                 "ref_protected": True,
@@ -108,6 +108,40 @@ def test_schema_validate_trusted_publishers():
             "workflow": "x.yml",
             "repository_owner_id": "1234",
         },
+        # each of these parses but can never equal the claim it is compared
+        # with, which reads as a broken token rather than a typo
+        {
+            "provider": "github",
+            "repository": "a/b",
+            "workflow": ".github/workflows/x.yml",
+            "repository_owner_id": 1234,
+        },
+        {
+            "provider": "github",
+            "repository": "a/b",
+            "workflow": "Deploy",
+            "repository_owner_id": 1234,
+        },
+        {
+            "provider": "github",
+            "repository": "https://github.com/a/b",
+            "workflow": "x.yml",
+            "repository_owner_id": 1234,
+        },
+        {
+            "provider": "gitlab",
+            "project_path": "a/b",
+            "namespace_id": 4321,
+            "url": "https://gitlab.cern.ch/",
+        },
+        {
+            "provider": "gitlab",
+            "project_path": "a/b",
+            "namespace_id": 4321,
+            "url": "http://gitlab.cern.ch",
+        },
+        {"provider": "gitlab", "project_path": "b", "namespace_id": 4321},
+        {"provider": "gitlab", "project_path": "a/b", "namespace_id": 0},
     ],
 )
 def test_schema_validate_bad_trusted_publishers(publisher):

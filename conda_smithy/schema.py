@@ -655,10 +655,12 @@ class GitHubTrustedPublisher(BaseModel):
     provider: Literal["github"]
 
     repository: str = Field(
+        pattern=r"^[^/\s]+/[^/\s]+$",
         description="The repository the workflow runs in, as `owner/name`.",
     )
 
     workflow: str = Field(
+        pattern=r"^[^/\s]+\.ya?ml$",
         description=cleandoc("""
         The file name of the workflow, such as `release.yml`. It must be a
         workflow in `repository` itself, not one it calls.
@@ -666,6 +668,7 @@ class GitHubTrustedPublisher(BaseModel):
     )
 
     repository_owner_id: int = Field(
+        gt=0,
         description=cleandoc("""
         The numeric id of the account owning the repository, which pins the
         trust to that account rather than to a name that could be given up and
@@ -694,18 +697,22 @@ class GitLabTrustedPublisher(BaseModel):
     provider: Literal["gitlab"]
 
     project_path: str = Field(
+        pattern=r"^[^/\s]+(/[^/\s]+)+$",
         description="The project the job runs in, as `group/subgroup/project`.",
     )
 
-    url: Optional[str] = Field(
+    url: str = Field(
         default="https://gitlab.com",
+        pattern=r"^https://[^/\s]+$",
         description=cleandoc("""
         The GitLab instance, which is also the issuer its tokens carry. Set it
-        for a self-managed instance, which has to be reachable over https.
+        for a self-managed instance, which has to be reachable over https. It
+        is compared with the token's issuer as written, so no trailing slash.
         """),
     )
 
     namespace_id: int = Field(
+        gt=0,
         description=cleandoc("""
         The numeric id of the group the project belongs to, which pins the
         trust to that group rather than to a path that could be given up and

@@ -697,16 +697,19 @@
         },
         "repository": {
           "description": "The repository the workflow runs in, as `owner/name`.",
+          "pattern": "^[^/\\s]+/[^/\\s]+$",
           "title": "Repository",
           "type": "string"
         },
         "workflow": {
           "description": "The file name of the workflow, such as `release.yml`. It must be a\nworkflow in `repository` itself, not one it calls.",
+          "pattern": "^[^/\\s]+\\.ya?ml$",
           "title": "Workflow",
           "type": "string"
         },
         "repository_owner_id": {
           "description": "The numeric id of the account owning the repository, which pins the\ntrust to that account rather than to a name that could be given up and\ntaken by somebody else. Find it with:\n\n```\ncurl -s https://api.github.com/users/<owner> | jq .id\n```",
+          "exclusiveMinimum": 0,
           "title": "Repository Owner Id",
           "type": "integer"
         },
@@ -744,24 +747,20 @@
         },
         "project_path": {
           "description": "The project the job runs in, as `group/subgroup/project`.",
+          "pattern": "^[^/\\s]+(/[^/\\s]+)+$",
           "title": "Project Path",
           "type": "string"
         },
         "url": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "default": "https://gitlab.com",
-          "description": "The GitLab instance, which is also the issuer its tokens carry. Set it\nfor a self-managed instance, which has to be reachable over https.",
-          "title": "Url"
+          "description": "The GitLab instance, which is also the issuer its tokens carry. Set it\nfor a self-managed instance, which has to be reachable over https. It\nis compared with the token's issuer as written, so no trailing slash.",
+          "pattern": "^https://[^/\\s]+$",
+          "title": "Url",
+          "type": "string"
         },
         "namespace_id": {
           "description": "The numeric id of the group the project belongs to, which pins the\ntrust to that group rather than to a path that could be given up and\ntaken by somebody else. Find it with:\n\n```\ncurl -s <url>/api/v4/groups/<group> | jq .id\n```",
+          "exclusiveMinimum": 0,
           "title": "Namespace Id",
           "type": "integer"
         },
