@@ -255,7 +255,7 @@ def _spdx_license_list_data() -> tuple[set[str], set[str]]:
     return expected_licenses, expected_exceptions
 
 
-def _hint_check_spdx(about_section, hints):
+def _hint_check_spdx(about_section):
     import license_expression
 
     hints = []

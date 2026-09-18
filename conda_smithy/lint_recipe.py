@@ -1065,7 +1065,7 @@ def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
     # see https://github.com/prefix-dev/rattler-build-conda-compat/issues/88
     validation_errors, validation_hints = lintify_forge_yaml(recipe_dir=recipe_dir)
 
-    results, hints = lintify_meta_yaml(
+    results, hints = lint_meta_yaml(
         meta,
         recipe_dir,
         conda_forge,
