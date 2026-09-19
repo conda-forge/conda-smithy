@@ -466,37 +466,13 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
     ) as fp:
         content = yaml.safe_load(fp)
 
-    linux_step = next(
+    upload_step = next(
         step
         for step in content["jobs"]["build"]["steps"]
-        if step["name"] == "Build on Linux"
+        if step["name"] == "Upload packages"
     )
-    assert linux_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
-    assert "${GITHUB_REF_NAME}" in linux_step["run"]
-
-    macos_step = next(
-        step
-        for step in content["jobs"]["build"]["steps"]
-        if step["name"] == "Build on macOS"
-    )
-    assert macos_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
-    assert "${GITHUB_REF_NAME}" in macos_step["run"]
-
-    win_build_step = next(
-        step
-        for step in content["jobs"]["build"]["steps"]
-        if step["name"] == "Build on windows"
-    )
-    assert win_build_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
-    with open(
-        os.path.join(
-            upload_on_branch_recipe.recipe,
-            ".scripts",
-            "run_win_build.bat",
-        )
-    ) as fp:
-        build_script_win = fp.read()
-    assert r"%GITHUB_REF_NAME%" in build_script_win
+    assert upload_step["env"]["UPLOAD_ON_BRANCH"] == "foo-branch"
+    assert "${GITHUB_REF_NAME}" in upload_step["run"]
 
 
 def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
@@ -2571,7 +2547,6 @@ def test_store_build_artifacts_gha(
         "Store conda build environment artifacts",
         "Store conda build artifacts",
         "Prepare conda build artifacts",
-        "Determine build outcome",
     }
     if value:
         assert step_names.issuperset(wf_step_names)
@@ -2704,7 +2679,6 @@ def test_store_build_artifacts_gha_conditions(py_recipe, jinja_env):
         "Store conda build environment artifacts",
         "Store conda build artifacts",
         "Prepare conda build artifacts",
-        "Determine build outcome",
     }
     assert step_names.issuperset(wf_step_names)
 
@@ -2826,7 +2800,6 @@ def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
         "Store conda build environment artifacts",
         "Store conda build artifacts",
         "Prepare conda build artifacts",
-        "Determine build outcome",
     }
     assert step_names.issuperset(wf_step_names)
 

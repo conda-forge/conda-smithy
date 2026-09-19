@@ -132,12 +132,9 @@ jobs:
         CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
         MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
         DOCKER_IMAGE: {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %}
-{%- if upload_on_branch %}
-        UPLOAD_ON_BRANCH: {{ upload_on_branch }}
-{%- endif %}
-        UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
+        STEP_ACTION: build
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
@@ -150,11 +147,6 @@ jobs:
         export flow_run_id="github_$GITHUB_RUN_ID"
         export remote_url="https://github.com/$GITHUB_REPOSITORY"
         export sha="$GITHUB_SHA"
-        if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
-          export IS_PR_BUILD="True"
-        else
-          export IS_PR_BUILD="False"
-        fi
         ./.scripts/run_docker_build.sh
 
     - name: Build on macOS
@@ -171,9 +163,6 @@ jobs:
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
-{%- for secret in secrets %}
-        {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
-{%- endfor %}
       shell: bash
       run: |
         export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
@@ -250,7 +239,6 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
-{%- if vars.store_build_artifacts %}
 
     - name: Determine build outcome
       # this is to merge the status of the linux/osx/win builds into
@@ -274,6 +262,34 @@ jobs:
         fi
         echo "status=$STATUS" >> $GITHUB_OUTPUT
 
+    - name: Upload packages
+      if: {% raw %}${{ always() && steps.determine-status.outputs.status == 'success' && matrix.UPLOAD_PACKAGES && github.event_name != 'pull_request' }}{% endraw %}
+      shell: bash
+      env:
+        CI: github_actions
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
+        CONDA_FORGE_DOCKER_RUN_ARGS: {% raw %}${{ matrix.docker_run_args }}{% endraw %}
+        CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
+        DOCKER_IMAGE: {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %}
+        STEP_ACTION: upload
+{%- if upload_on_branch %}
+        UPLOAD_ON_BRANCH: {{ upload_on_branch }}
+{%- endif %}
+{%- for secret in secrets %}
+        {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
+{%- endfor %}
+      run: |
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
+        export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
+        export GIT_BRANCH="${GITHUB_REF_NAME}"
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        export flow_run_id="github_$GITHUB_RUN_ID"
+        export remote_url="https://github.com/$GITHUB_REPOSITORY"
+        export sha="$GITHUB_SHA"
+        ./.scripts/run_docker_build.sh
+
+{%- if vars.store_build_artifacts %}
     - name: Prepare conda build artifacts
       continue-on-error: true
       id: prepare-artifacts
