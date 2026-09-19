@@ -14,7 +14,7 @@ source ${FEEDSTOCK_ROOT}/.scripts/logging_utils.sh
 {# This closes the matching `startgroup` on `run_docker_build.sh` #}
 ( endgroup "Start Docker" ) 2> /dev/null
 
-( startgroup "Configuring conda" ) 2> /dev/null
+( startgroup "Configuring build environment" ) 2> /dev/null
 
 export PYTHONUNBUFFERED=1
 export RECIPE_ROOT="${RECIPE_ROOT:-/home/conda/recipe_root}"
@@ -37,30 +37,37 @@ solver: {{ conda_solver }}
 CONDARC
 
 {%- if conda_install_tool == "micromamba" %}
+
+( startgroup "Provisioning base env with micromamba" ) 2> /dev/null
 mv /opt/conda/conda-meta/history /opt/conda/conda-meta/history.$(date +%Y-%m-%d-%H-%M-%S)
 echo > /opt/conda/conda-meta/history
 micromamba install --root-prefix ~/.conda --prefix /opt/conda \
     --yes --override-channels --channel conda-forge --strict-channel-priority \
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
+( endgroup "Provisioning base env with micromamba" ) 2> /dev/null
 {%- elif conda_install_tool == "pixi" %}
+( startgroup "Provisioning base env with pixi" ) 2> /dev/null
 pushd "${FEEDSTOCK_ROOT}"
 arch=$(uname -m)
 if [[ "$arch" == "x86_64" ]]; then
   arch="64"
 fi
+PIXI_ENV=docker-build-linux-${arch}
 {#- We patch the pixi.toml file to only solve for one platform, and to create a platform-specific
 environment identical to 'build'. Otherwise local usage might result in 'build' being clobbered
 by the OS-specific builds (e.g. running Docker Linux on macOS). #}
-sed -i.bak -e "s/platforms = .*/platforms = [\"linux-${arch}\"]/" -e "s/# __PLATFORM_SPECIFIC_ENV__ =/docker-build-linux-$arch =/" pixi.toml
+sed -i.bak -e "s/platforms = .*/platforms = [\"linux-${arch}\"]/" -e "s/# __PLATFORM_SPECIFIC_ENV__ =/${PIXI_ENV} =/" pixi.toml
 echo "Creating environment"
-PIXI_CACHE_DIR=/opt/conda pixi install --environment docker-build-linux-$arch
-pixi list --environment docker-build-linux-$arch
+PIXI_CACHE_DIR=/opt/conda pixi install --environment "${PIXI_ENV}"
+pixi list --environment "${PIXI_ENV}"
 echo "Activating environment"
-eval "$(pixi shell-hook --environment docker-build-linux-$arch)"
+eval "$(pixi shell-hook --environment "${PIXI_ENV}")"
 mv pixi.toml.bak pixi.toml
 popd
+( endgroup "Provisioning base env with pixi" ) 2> /dev/null
 {%- endif %}
 
+( startgroup "Configuring conda" ) 2> /dev/null
 {%- if conda_build_tool == "mambabuild" %}
 {%- set BUILD_CMD="conda-mambabuild" %}
 {%- set NO_TEST_FLAG="--no-test" %}
@@ -89,7 +96,7 @@ export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
     pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup_update) }}
 {%- endif %}
 {% if local_ci_setup %}
-conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup)}}
+conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
 pip install --no-deps "${RECIPE_ROOT}/."
 {%- endif %}
 # set up the condarc
@@ -114,9 +121,6 @@ ulimit -n 1024
 {{ yum_build_setup }}
 ){%- endif %}
 
-# make the build number clobber
-make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
-
 {% if test == "native" -%}
 if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]] && [[ "${BUILD_WITH_CONDA_DEBUG:-0}" != 1 ]]; then
     EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} {{ NO_TEST_FLAG }}"
@@ -128,6 +132,9 @@ fi
 {% endif %}
 
 ( endgroup "Configuring conda" ) 2> /dev/null
+
+# make the build number clobber
+make_build_number "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
 
 if [[ -f "${FEEDSTOCK_ROOT}/LICENSE.txt" ]]; then
   cp "${FEEDSTOCK_ROOT}/LICENSE.txt" "${RECIPE_ROOT}/recipe-scripts-license.txt"
