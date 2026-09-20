@@ -145,7 +145,7 @@ DEFAULT_PROVIDERS = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
     "linux_ppc64le": "github_actions",  # emulated
-    "linux_riscv64": "github_actions",  # emulated
+    "linux_riscv64": "github_actions",
     "linux_s390x": "github_actions",  # emulated
     "osx_64": "azure",
     "osx_arm64": "azure",
@@ -157,7 +157,7 @@ NATIVE_CI_PROVIDER = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
     "linux_ppc64le": "travis",
-    "linux_riscv64": None,  # no CI service offers native riscv64 runners
+    "linux_riscv64": "github_actions",
     "linux_s390x": "travis",
     "osx_64": "azure",
     "osx_arm64": "azure",
@@ -206,7 +206,9 @@ GITHUB_ACTIONS_RUNS_ON = {
     },
     "linux-riscv64": {
         "os": "ubuntu",
-        "hosted_labels": ("ubuntu-latest",),
+        # RISC-V hardware provided by the RISE GitHub App,
+        # see https://riscv-runners.riseproject.dev/
+        "hosted_labels": ("ubuntu-24.04-riscv",),
         "self_hosted_labels": ("linux",),
     },
     "win-64": {

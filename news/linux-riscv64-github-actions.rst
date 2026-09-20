@@ -2,7 +2,9 @@
 
 * Native ``linux_riscv64`` builds can now be rendered on GitHub Actions using
   the usual interface (``provider: {linux_riscv64: X}`` where ``X`` is
-  ``github_actions`` or ``default``) in ``conda-forge.yml``. (#2686)
+  ``github_actions``, ``default`` or ``native``) in ``conda-forge.yml``. Jobs run
+  on RISC-V hardware (``ubuntu-24.04-riscv``) provided by the RISE RISC-V
+  runners GitHub App. (#2686)
 
 **Changed:**
 

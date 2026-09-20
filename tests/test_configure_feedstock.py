@@ -2514,6 +2514,23 @@ def test_github_actions_labels(py_recipe, jinja_env, label):
         raise AssertionError("Bad label? Check test parameters.")
 
 
+def test_native_provider_unavailable_raises(py_recipe, monkeypatch):
+    forge_dir = py_recipe.recipe
+    with open(Path(forge_dir, "conda-forge.yml"), "a") as f:
+        f.write("provider:\n  linux_riscv64: native\n")
+
+    # resolves normally while a native provider exists ...
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    assert config["provider"]["linux_riscv64"] == ["github_actions"]
+
+    # ... and errors out clearly when there is none
+    monkeypatch.setitem(configure_feedstock.NATIVE_CI_PROVIDER, "linux_riscv64", None)
+    with pytest.raises(RuntimeError, match="No native CI provider"):
+        configure_feedstock._load_forge_config(forge_dir, "recipe/default_config.yaml")
+
+
 @pytest.mark.parametrize("path", ["github_actions", "workflow_settings"])
 @pytest.mark.parametrize("value", [False, True])
 @pytest.mark.parametrize("add_old", [False, True])
