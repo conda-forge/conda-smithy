@@ -143,6 +143,7 @@ templates: {}
 test: null
 test_on_native_only: false
 travis: {}
+trusted_publishers: []
 woodpecker: {}
 workflow_settings:
   build_workspace_dir: []
