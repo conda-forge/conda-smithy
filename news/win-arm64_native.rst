@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Builds of `win-arm64` will now use native toolchains. (#2680)
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Fixed issue where testing recipe parsing w/ the bot infrastructure no longer worked. (#2676)
+* <news item>
 
 **Security:**
 

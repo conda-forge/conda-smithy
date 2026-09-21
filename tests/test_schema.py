@@ -51,6 +51,159 @@ def test_schema_validate_json_schema_with_bot():
     assert hints == []
 
 
+def test_schema_validate_trusted_publishers():
+    cfyaml = {
+        "trusted_publishers": [
+            {
+                "provider": "github",
+                "repository": "DIRACGrid/DIRAC",
+                "workflow": "deploy.yml",
+                "repository_owner_id": 1234,
+                "environment": "release",
+            },
+            {
+                "provider": "gitlab",
+                "url": "https://gitlab.cern.ch",
+                "project_path": "lhcb-core/subgroup/LbEnv",
+                "namespace_id": 4321,
+                "ref_type": "tag",
+                "ref_protected": True,
+                "environment": "production",
+            },
+        ]
+    }
+    lints, _ = validate_json_schema(cfyaml)
+    assert [lint for lint in lints if "trusted_publishers" in lint.json_path] == []
+
+
+def _publisher_schema_errors(publisher):
+    """Every reason the schema gave for rejecting a trusted publisher.
+
+    The entries are a discriminated union, so the error that names the real
+    problem is nested inside the one saying the union did not match.
+    """
+
+    def _leaves(error):
+        if not error.context:
+            yield error.message
+        for nested in error.context or []:
+            yield from _leaves(nested)
+
+    lints, _ = validate_json_schema({"trusted_publishers": [publisher]})
+    return {message for lint in lints for message in _leaves(lint)}
+
+
+@pytest.mark.parametrize(
+    "publisher,expected",
+    [
+        # a misspelled key would otherwise be ignored, leaving the job ungated
+        (
+            {
+                "provider": "github",
+                "repository": "a/b",
+                "workflow": "x.yml",
+                "enviroment": "release",
+            },
+            "'enviroment' was unexpected",
+        ),
+        # the workflow is what pins which job may publish, so it is required
+        ({"provider": "github", "repository": "a/b"}, "'workflow' is a required"),
+        ({"provider": "gitlab"}, "'project_path' is a required"),
+        ({"provider": "bitbucket", "repository": "a/b"}, "'github' was expected"),
+        (
+            {
+                "provider": "gitlab",
+                "project_path": "a/b",
+                "namespace_id": 1,
+                "ref_type": "commit",
+            },
+            "'commit' is not one of",
+        ),
+        # the ids are required, not an optional hardening people forget
+        (
+            {"provider": "github", "repository": "a/b", "workflow": "x.yml"},
+            "'repository_owner_id' is a required",
+        ),
+        (
+            {"provider": "gitlab", "project_path": "a/b"},
+            "'namespace_id' is a required",
+        ),
+        # the ids pin the account, so a quoted one has to be caught not coerced
+        (
+            {"provider": "gitlab", "project_path": "a/b", "namespace_id": "4321"},
+            "'4321' is not of type 'integer'",
+        ),
+        (
+            {
+                "provider": "github",
+                "repository": "a/b",
+                "workflow": "x.yml",
+                "repository_owner_id": "1234",
+            },
+            "'1234' is not of type 'integer'",
+        ),
+        # each of these parses but can never equal the claim it is compared
+        # with, which reads as a broken token rather than a typo
+        (
+            {
+                "provider": "github",
+                "repository": "a/b",
+                "workflow": ".github/workflows/x.yml",
+                "repository_owner_id": 1234,
+            },
+            "'.github/workflows/x.yml' does not match",
+        ),
+        (
+            {
+                "provider": "github",
+                "repository": "a/b",
+                "workflow": "Deploy",
+                "repository_owner_id": 1234,
+            },
+            "'Deploy' does not match",
+        ),
+        (
+            {
+                "provider": "github",
+                "repository": "https://github.com/a/b",
+                "workflow": "x.yml",
+                "repository_owner_id": 1234,
+            },
+            "'https://github.com/a/b' does not match",
+        ),
+        (
+            {
+                "provider": "gitlab",
+                "project_path": "a/b",
+                "namespace_id": 4321,
+                "url": "https://gitlab.cern.ch/",
+            },
+            "'https://gitlab.cern.ch/' does not match",
+        ),
+        (
+            {
+                "provider": "gitlab",
+                "project_path": "a/b",
+                "namespace_id": 4321,
+                "url": "http://gitlab.cern.ch",
+            },
+            "'http://gitlab.cern.ch' does not match",
+        ),
+        (
+            {"provider": "gitlab", "project_path": "b", "namespace_id": 4321},
+            "'b' does not match",
+        ),
+        (
+            {"provider": "gitlab", "project_path": "a/b", "namespace_id": 0},
+            "less than or equal to the minimum of 0",
+        ),
+    ],
+)
+def test_schema_validate_bad_trusted_publishers(publisher, expected):
+    errors = _publisher_schema_errors(publisher)
+    assert any(expected in error for error in errors), errors
+
+
 def test_schema_no_empty_properties_for_bot():
     """
     If a property references a remote schema with $ref, it should NOT have a properties key.

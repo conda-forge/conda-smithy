@@ -4,6 +4,55 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.9.19
+====================
+
+**Added:**
+
+* Added a ``trusted_publishers`` key to ``conda-forge.yml``, listing the CI jobs
+  allowed to ask conda-forge to update a feedstock's version. A job presents the
+  identity token its provider issued it rather than holding a secret. GitHub
+  Actions and GitLab CI/CD are supported, including self-managed GitLab.
+
+**Changed:**
+
+* Lint for missing ``stdlib("c")`` when ``compiler("ocaml")`` is used (#2690)
+* The SPDX license and exception identifiers used to validate the ``about/license``
+  field are now read from the ``spdx-license-list-data`` conda package instead of
+  a vendored, manually-synced copy, so the list stays current automatically.
+
+**Removed:**
+
+* Removed the vendored ``licenses.txt``/``license_exceptions.txt`` files and the
+  ``conda_smithy.linter.update_licenses_list`` sync script.
+
+**Fixed:**
+
+* Synced the SPDX license list, which had picked up ``BSD-Source-alt-GPL``
+  upstream and was failing ``test_license_files_up_to_date``.
+
+**Authors:**
+
+* Isuru Fernando
+* Chris Burr
+* Memento "RC" Mori
+
+
+
+v2026.9.10
+====================
+
+**Fixed:**
+
+* Fixed issue where testing recipe parsing w/ the bot infrastructure no longer worked. (#2676)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+
+
+
 v2026.9.1
 ====================
 

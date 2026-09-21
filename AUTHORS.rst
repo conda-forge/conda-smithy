@@ -24,11 +24,11 @@ Authors are sorted by number of commits.
 * shadow_walker
 * Michael Sarahan
 * Bastian Zimmermann
+* Chris Burr
 * Leo Fang
 * Ryan Volz
 * Johnny Willemsen
 * Pavel Zwerschke
-* Chris Burr
 * Nicholas Bollweg
 * Julian Rüth
 * Yannik Tausch
@@ -158,3 +158,4 @@ Authors are sorted by number of commits.
 * Scott Wang
 * Benjamin Bertrand
 * Sophia Castellarin
+* Memento "RC" Mori
