@@ -2865,7 +2865,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     )
 
     # NOTE: We are not shell escaping, so no ><! symbols in the version constraints, just =
-    python_version = "3.12"  # make it match latest Miniforge, if possible
+    python_version = "3.14"  # make it match latest Miniforge, if possible
     if config["conda_build_tool"] == "mambabuild":
         config["conda_build_tool_deps"] = f"python={python_version} conda-build boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
