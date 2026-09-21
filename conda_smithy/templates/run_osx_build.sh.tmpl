@@ -21,6 +21,8 @@ export RECIPE_ROOT="{{ recipe_dir }}"
 export CI_SUPPORT="${FEEDSTOCK_ROOT}/.ci_support"
 export CONFIG_FILE="${CI_SUPPORT}/${CONFIG}.yaml"
 
+( endgroup "Configuring build environment" ) 2> /dev/null
+
 {%- if conda_install_tool == "micromamba" %}
 
 ( startgroup "Provisioning base env with micromamba" ) 2> /dev/null

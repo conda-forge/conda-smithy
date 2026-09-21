@@ -36,6 +36,8 @@ solver: {{ conda_solver }}
 
 CONDARC
 
+( endgroup "Configuring build environment" ) 2> /dev/null
+
 {%- if conda_install_tool == "micromamba" %}
 
 ( startgroup "Provisioning base env with micromamba" ) 2> /dev/null
