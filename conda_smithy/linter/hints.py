@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -157,6 +158,38 @@ def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
                 hints.append(msg.r.ScriptShellcheckFailure().as_string())
 
 
+def _spdx_license_list_data_dir() -> str:
+    """Locate the JSON data installed by the `spdx-license-list-data` conda package."""
+    candidates = [
+        os.path.join(sys.prefix, *prefix_parts, "spdx", "license-list-data", "json")
+        for prefix_parts in (("share",), ("Library", "share"))
+    ]
+    for candidate in candidates:
+        if os.path.isdir(candidate):
+            return candidate
+    raise FileNotFoundError(
+        "Could not find the spdx-license-list-data package data in any of: "
+        f"{', '.join(candidates)}. Is the spdx-license-list-data conda package installed?"
+    )
+
+
+def _spdx_license_list_data() -> tuple[set[str], set[str]]:
+    data_dir = _spdx_license_list_data_dir()
+    with open(os.path.join(data_dir, "licenses.json"), encoding="utf-8") as f:
+        expected_licenses = {
+            li["licenseId"]
+            for li in json.load(f)["licenses"]
+            if not li["isDeprecatedLicenseId"]
+        }
+    with open(os.path.join(data_dir, "exceptions.json"), encoding="utf-8") as f:
+        expected_exceptions = {
+            exc["licenseExceptionId"]
+            for exc in json.load(f)["exceptions"]
+            if not exc["isDeprecatedLicenseId"]
+        }
+    return expected_licenses, expected_exceptions
+
+
 def hint_check_spdx(about_section, hints):
     import license_expression
 
@@ -183,18 +216,7 @@ def hint_check_spdx(about_section, hints):
         if not licenseref_regex.match(license):
             filtered_licenses.append(license)
 
-    with open(
-        os.path.join(os.path.dirname(__file__), "licenses.txt"),
-        encoding="utf-8",
-    ) as f:
-        expected_licenses = f.readlines()
-        expected_licenses = {li.strip() for li in expected_licenses}
-    with open(
-        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"),
-        encoding="utf-8",
-    ) as f:
-        expected_exceptions = f.readlines()
-        expected_exceptions = {li.strip() for li in expected_exceptions}
+    expected_licenses, expected_exceptions = _spdx_license_list_data()
     if set(filtered_licenses) - expected_licenses:
         hints.append(msg.r.LicenseSPDX().as_string())
     if set(parsed_exceptions) - expected_exceptions:

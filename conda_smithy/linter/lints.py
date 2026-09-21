@@ -866,11 +866,11 @@ def lint_stdlib(
 
     if recipe_version == 0:
         pat_compiler_stub = re.compile(
-            "(m2w64_)?(c|cxx|fortran|rust|go-cgo)_compiler_stub"
+            "(m2w64_)?(c|cxx|fortran|rust|go-cgo|ocaml)_compiler_stub"
         )
     else:
         pat_compiler_stub = re.compile(
-            r"^\${{ compiler\(['\"](m2w64_)?(c|cxx|fortran|rust|go-cgo)"
+            r"^\${{ compiler\(['\"](m2w64_)?(c|cxx|fortran|rust|go-cgo|ocaml)"
         )
 
     outputs = get_section(meta, "outputs", lints, recipe_version)
@@ -942,7 +942,7 @@ def lint_recipe_is_parsable(
     if recipe_version == 0:
         parse_name = "conda-forge-tick (the bot)"
         try:
-            from conda_forge_tick.recipe_parser import CondaMetaYAML
+            from conda_forge_feedstock_ops.recipe_parser import CondaMetaYAML
         except ImportError:
             parse_results[parse_name] = None
             pass
