@@ -122,15 +122,8 @@ jobs:
           docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
         elif [[ "$(uname -m)" == "aarch64" ]]; then
           # multiarch/qemu-user-static has no arm64 image; register the
-          # image's own emulators. Needs conda-forge/docker-images#339.
-          docker run --rm --privileged --entrypoint /bin/sh {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %} -c '
-            mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc 2>/dev/null || true
-            echo -1 > /proc/sys/fs/binfmt_misc/status 2>/dev/null || true
-            echo ":qemu-ppc64le:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x15\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\x00:/usr/bin/qemu-ppc64le-static-aarch64:OC" > /proc/sys/fs/binfmt_misc/register
-            echo ":qemu-s390x:M::\x7fELF\x02\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x16:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/usr/bin/qemu-s390x-static-aarch64:OC" > /proc/sys/fs/binfmt_misc/register
-            echo ":qemu-riscv64:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xf3\x00:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/usr/bin/qemu-riscv64-static-aarch64:OC" > /proc/sys/fs/binfmt_misc/register
-            echo ":qemu-x86_64:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x3e\x00:\xff\xff\xff\xff\xff\xfe\xfe\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/usr/bin/qemu-x86_64-static-aarch64:OC" > /proc/sys/fs/binfmt_misc/register
-          '
+          # image's own emulators. Needs conda-forge/docker-images#340.
+          docker run --rm --privileged --entrypoint /opt/docker/bin/register-binfmt {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %}
         fi
 
     - name: Build on Linux
