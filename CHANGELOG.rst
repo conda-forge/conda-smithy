@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.9.22
+====================
+
+**Changed:**
+
+* Bump python version of root environment containing build tools (#2697).
+
+**Authors:**
+
+* H. Vetinari
+
+
+
 v2026.9.21
 ====================
 
