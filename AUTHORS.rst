@@ -30,9 +30,9 @@ Authors are sorted by number of commits.
 * Johnny Willemsen
 * Pavel Zwerschke
 * Nicholas Bollweg
+* dependabot[bot]
 * Julian Rüth
 * Yannik Tausch
-* dependabot[bot]
 * Daniel Bast
 * Daniel Ching
 * Billy K. Poon
@@ -86,6 +86,7 @@ Authors are sorted by number of commits.
 * Jannis Leidel
 * Matt Fisher
 * Bas Zalmstra
+* velonica0
 * Guilherme Quentel Melo
 * santi
 * buijennifer
