@@ -25,6 +25,11 @@ if "%MINIFORGE_HOME%"=="" set "MINIFORGE_HOME=%USERPROFILE%\Miniforge3"
 :: Remove trailing backslash, if present
 if "%MINIFORGE_HOME:~-1%"=="\" set "MINIFORGE_HOME=%MINIFORGE_HOME:~0,-1%"
 
+set FEEDSTOCK_ROOT=%cd%
+set RECIPE_ROOT=%FEEDSTOCK_ROOT%\{{ recipe_dir }}
+set CI_SUPPORT=%FEEDSTOCK_ROOT%\.ci_support
+set CONFIG_FILE=%CI_SUPPORT%\%CONFIG%.yaml
+
 {#- NOTE: We are NOT setting a default CONDA_BLD_PATH here; that's done in conda-forge-ci-setup #}
 
 {%- if conda_install_tool == "micromamba" %}
@@ -126,13 +131,13 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 echo Overriding conda-forge-ci-setup with local version
 conda.exe uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
 if !errorlevel! neq 0 exit /b !errorlevel!
-pip install --no-deps ".\{{ recipe_dir }}\."
+pip install --no-deps "%RECIPE_ROOT%\."
 if !errorlevel! neq 0 exit /b !errorlevel!
 {%- endif %}
 
 :: Set basic configuration
 echo Setting up configuration
-setup_conda_rc .\ ".\{{ recipe_dir }}" .\.ci_support\%CONFIG%.yaml
+setup_conda_rc "%FEEDSTOCK_ROOT%" "%RECIPE_ROOT%" "%CONFIG_FILE%"
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 {%- if build_setup %}
@@ -143,7 +148,7 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 
 if EXIST LICENSE.txt (
     echo Copying feedstock license
-    copy LICENSE.txt "{{ recipe_dir }}\\recipe-scripts-license.txt"
+    copy LICENSE.txt "%RECIPE_ROOT%\\recipe-scripts-license.txt"
 )
 
 {%- if conda_build_tool == "mambabuild" %}
@@ -188,17 +193,17 @@ set "_OLD_CONDA_SUBDIR=%CONDA_SUBDIR%"
 set "CONDA_SUBDIR=%BUILD_PLATFORM%"
 {%- endif %}
 {%- if conda_build_tool == "mambabuild" %}
-conda-mambabuild.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-mambabuild.exe "%RECIPE_ROOT%" -m %CONFIG_FILE% --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
 set "CONDA_SOLVER=libmamba"
-conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "%RECIPE_ROOT%" -m %CONFIG_FILE% --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build+classic" %}
 set "CONDA_SOLVER=classic"
-conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "%RECIPE_ROOT%" -m %CONFIG_FILE% --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "conda-build" %}
-conda-build.exe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml --suppress-variables %EXTRA_CB_OPTIONS%
+conda-build.exe "%RECIPE_ROOT%" -m %CONFIG_FILE% --suppress-variables %EXTRA_CB_OPTIONS%
 {%- elif conda_build_tool == "rattler-build" %}
-rattler-build.exe build --recipe "{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml %EXTRA_CB_OPTIONS% --build-platform %BUILD_PLATFORM% --target-platform %HOST_PLATFORM%
+rattler-build.exe build --recipe "%RECIPE_ROOT%" -m %CONFIG_FILE% %EXTRA_CB_OPTIONS% --build-platform %BUILD_PLATFORM% --target-platform %HOST_PLATFORM%
 {%- endif %}
 if !errorlevel! neq 0 exit /b !errorlevel!
 {%- if conda_build_tool.startswith(("conda-build", "mambabuild")) %}
@@ -208,7 +213,7 @@ set "CONDA_SUBDIR=%_OLD_CONDA_SUBDIR%"
 
 call :start_group "Inspecting artifacts"
 :: inspect_artifacts was only added in conda-forge-ci-setup 4.9.4
-WHERE inspect_artifacts >nul 2>nul && inspect_artifacts --recipe-dir ".\{{ recipe_dir }}" -m .ci_support\%CONFIG%.yaml || echo "inspect_artifacts needs conda-forge-ci-setup >=4.9.4"
+WHERE inspect_artifacts >nul 2>nul && inspect_artifacts --recipe-dir "%RECIPE_ROOT%" -m %CONFIG_FILE% || echo "inspect_artifacts needs conda-forge-ci-setup >=4.9.4"
 call :end_group
 
 :: Prepare some environment variables for the upload step
@@ -250,7 +255,7 @@ if /i "%UPLOAD_PACKAGES%" == "true" (
         call :start_group "Uploading packages"
         if not exist "%TEMP%\" md "%TEMP%"
         set "TMP=%TEMP%"
-        upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} .\ ".\{{ recipe_dir }}" .ci_support\%CONFIG%.yaml
+        upload_package {% if conda_forge_output_validation %}--validate --feedstock-name="%FEEDSTOCK_NAME%"{% endif %}{% if private_upload %} --private{% endif %} "%FEEDSTOCK_ROOT%" "%RECIPE_ROOT%" "%CONFIG_FILE%"
         if !errorlevel! neq 0 exit /b !errorlevel!
         call :end_group
     )
