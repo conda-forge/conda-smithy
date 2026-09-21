@@ -39,6 +39,10 @@ search-path = [".", "tests"]
 # matches black's default value
 line-length = 88
 
+[tool.pyrefly]
+project-includes = ["**/*.py"]
+search-path = [".", "tests"]
+
 [tool.ruff.lint]
 ignore = [
     "E501",  # https://docs.astral.sh/ruff/faq/#is-the-ruff-linter-compatible-with-black
