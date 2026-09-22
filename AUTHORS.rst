@@ -76,6 +76,7 @@ Authors are sorted by number of commits.
 * David Hirschfeld
 * Finn Womack
 * M Bussonnier
+* velonica0
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -86,7 +87,6 @@ Authors are sorted by number of commits.
 * Jannis Leidel
 * Matt Fisher
 * Bas Zalmstra
-* velonica0
 * Guilherme Quentel Melo
 * santi
 * buijennifer

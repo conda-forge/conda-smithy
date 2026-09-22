@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 577
+  num_commits: 580
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -697,7 +697,7 @@
   email: mgorny@gentoo.org
   alternate_emails:
   - mgorny@quansight.com
-  num_commits: 196
+  num_commits: 197
   first_commit: 2024-11-06 09:06:27
   github: mgorny
 - name: Matt Chan
@@ -831,7 +831,7 @@
   first_commit: 2026-09-17 14:17:42
 - name: velonica0
   email: like@mail.nankai.edu.cn
-  num_commits: 3
+  num_commits: 4
   first_commit: 2026-09-14 22:51:07
   alternate_emails:
   - 47554626+velonica0@users.noreply.github.com
