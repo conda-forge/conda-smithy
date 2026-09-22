@@ -29,7 +29,7 @@ fi
 # in a container, as the file may be deleted with the container while the
 # kernel still uses it as swap.
 if fs_cant_swap "${SWAPFILE}"; then
-    warn "The path ${SWAPFILE} is on $(stat -f -c %T "$(dirname "${SWAPFILE}")"), which cannot hold a swap file; skipping pagefile_size=${PAGEFILE_SIZE}"
+    warn "The path ${SWAPFILE} is on a filesystem of type $(stat -f -c %T "$(dirname "${SWAPFILE}")"), which cannot hold a swap file; skipping pagefile_size=${PAGEFILE_SIZE}"
     exit 0
 fi
 
