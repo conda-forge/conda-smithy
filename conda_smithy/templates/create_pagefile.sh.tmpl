@@ -17,7 +17,7 @@ warn() {
 # riscv64 runners) and tmpfs cannot, and fail with "Invalid argument".
 fs_cant_swap() {
     local fstype
-    fstype=$(stat -f -c %T "${1}")
+    fstype=$(stat -f -c %T "$(dirname "${1}")")
     [[ ${fstype} == overlay* || ${fstype} == tmpfs ]]
 }
 
@@ -25,13 +25,11 @@ SWAPFILE=/swapfile
 if [[ ${GHA_RUNS_ON} == *namespace-profile-* ]]; then
     SWAPFILE=/namespace/scratch/swapfile
 fi
-SWAPDIR=$(dirname "${SWAPFILE}")
-
 # Swap is a host-wide resource; don't try to find another writable volume
 # in a container, as the file may be deleted with the container while the
 # kernel still uses it as swap.
-if fs_cant_swap "${SWAPDIR}"; then
-    warn "${SWAPDIR} is on $(stat -f -c %T "${SWAPDIR}"), which cannot hold a swap file; skipping pagefile_size=${PAGEFILE_SIZE}"
+if fs_cant_swap "${SWAPFILE}"; then
+    warn "The path ${SWAPFILE} is on $(stat -f -c %T "$(dirname "${SWAPFILE}")"), which cannot hold a swap file; skipping pagefile_size=${PAGEFILE_SIZE}"
     exit 0
 fi
 
