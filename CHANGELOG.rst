@@ -4,6 +4,24 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.9.23
+====================
+
+**Fixed:**
+
+* ``workflow_settings.pagefile_size`` no longer fails the job on runners whose
+  filesystem cannot hold a swap file, such as the containerized (overlayfs)
+  RISE ``ubuntu-24.04-riscv`` runners: the step is skipped with a warning
+  instead (#2698).
+
+**Authors:**
+
+* Matthew R. Becker
+* Michał Górny
+* velonica0
+
+
+
 v2026.9.22
 ====================
 
