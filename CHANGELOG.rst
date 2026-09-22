@@ -4,6 +4,98 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.9.23
+====================
+
+**Fixed:**
+
+* ``workflow_settings.pagefile_size`` no longer fails the job on runners whose
+  filesystem cannot hold a swap file, such as the containerized (overlayfs)
+  RISE ``ubuntu-24.04-riscv`` runners: the step is skipped with a warning
+  instead (#2698).
+
+**Authors:**
+
+* Matthew R. Becker
+* Michał Górny
+* velonica0
+
+
+
+v2026.9.22
+====================
+
+**Changed:**
+
+* Bump python version of root environment containing build tools (#2697).
+
+**Authors:**
+
+* H. Vetinari
+
+
+
+v2026.9.21
+====================
+
+**Added:**
+
+* Native ``linux_riscv64`` builds can now be rendered on GitHub Actions using
+  the usual interface (``provider: {linux_riscv64: X}`` where ``X`` is
+  ``github_actions``, ``default`` or ``native``) in ``conda-forge.yml``. Jobs run
+  on RISC-V hardware (``ubuntu-24.04-riscv``) provided by the RISE RISC-V
+  runners GitHub App. (#2686)
+
+**Changed:**
+
+* Requesting ``provider: {<platform>: native}`` for a platform without a native
+  CI provider now raises an error instead of being silently ignored. (#2686)
+* Builds of `win-arm64` will now use native toolchains. (#2680)
+
+**Authors:**
+
+* H. Vetinari
+* pre-commit-ci[bot]
+* dependabot[bot]
+* velonica0
+
+
+
+v2026.9.19
+====================
+
+**Added:**
+
+* Added a ``trusted_publishers`` key to ``conda-forge.yml``, listing the CI jobs
+  allowed to ask conda-forge to update a feedstock's version. A job presents the
+  identity token its provider issued it rather than holding a secret. GitHub
+  Actions and GitLab CI/CD are supported, including self-managed GitLab.
+
+**Changed:**
+
+* Lint for missing ``stdlib("c")`` when ``compiler("ocaml")`` is used (#2690)
+* The SPDX license and exception identifiers used to validate the ``about/license``
+  field are now read from the ``spdx-license-list-data`` conda package instead of
+  a vendored, manually-synced copy, so the list stays current automatically.
+
+**Removed:**
+
+* Removed the vendored ``licenses.txt``/``license_exceptions.txt`` files and the
+  ``conda_smithy.linter.update_licenses_list`` sync script.
+
+**Fixed:**
+
+* Synced the SPDX license list, which had picked up ``BSD-Source-alt-GPL``
+  upstream and was failing ``test_license_files_up_to_date``.
+
+**Authors:**
+
+* Isuru Fernando
+* Chris Burr
+* Memento "RC" Mori
+
+
+
 v2026.9.10
 ====================
 

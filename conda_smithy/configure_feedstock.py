@@ -126,6 +126,7 @@ ALL_PLATFORMS = (
     "linux_64",
     "linux_aarch64",
     "linux_ppc64le",
+    "linux_riscv64",
     "linux_s390x",
     "osx_64",
     "osx_arm64",
@@ -144,6 +145,7 @@ DEFAULT_PROVIDERS = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
     "linux_ppc64le": "github_actions",  # emulated
+    "linux_riscv64": "github_actions",
     "linux_s390x": "github_actions",  # emulated
     "osx_64": "azure",
     "osx_arm64": "azure",
@@ -155,6 +157,7 @@ NATIVE_CI_PROVIDER = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
     "linux_ppc64le": "travis",
+    "linux_riscv64": "github_actions",
     "linux_s390x": "travis",
     "osx_64": "azure",
     "osx_arm64": "azure",
@@ -166,6 +169,7 @@ FANCY_PLATFORM_NAMES = {
     "linux_64": "Linux",
     "linux_aarch64": "Arm64",
     "linux_ppc64le": "PowerPC64",
+    "linux_riscv64": "RISCV64",
     "linux_s390x": "S390X",
     "osx_64": "OSX",
     "osx_arm64": "OSXARM",
@@ -198,6 +202,13 @@ GITHUB_ACTIONS_RUNS_ON = {
     "linux-ppc64le": {
         "os": "ubuntu",
         "hosted_labels": ("ubuntu-latest",),
+        "self_hosted_labels": ("linux",),
+    },
+    "linux-riscv64": {
+        "os": "ubuntu",
+        # RISC-V hardware provided by the RISE GitHub App,
+        # see https://riscv-runners.riseproject.dev/
+        "hosted_labels": ("ubuntu-24.04-riscv",),
         "self_hosted_labels": ("linux",),
     },
     "win-64": {
@@ -2854,7 +2865,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     )
 
     # NOTE: We are not shell escaping, so no ><! symbols in the version constraints, just =
-    python_version = "3.12"  # make it match latest Miniforge, if possible
+    python_version = "3.14"  # make it match latest Miniforge, if possible
     if config["conda_build_tool"] == "mambabuild":
         config["conda_build_tool_deps"] = f"python={python_version} conda-build boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
@@ -2898,6 +2909,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     for plat, ci in NATIVE_CI_PROVIDER.items():
         if config["provider"][plat] == "native":
+            if ci is None:
+                raise RuntimeError(
+                    f"No native CI provider is available for '{plat}'; "
+                    "use 'default'/'emulated' instead, or cross-compile via "
+                    "'build_platform'."
+                )
             config["provider"][plat] = ci
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(config["remote_ci_setup"])
