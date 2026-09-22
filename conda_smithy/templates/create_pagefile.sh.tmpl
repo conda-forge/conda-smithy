@@ -15,10 +15,10 @@ warn() {
 # swapon(2) needs a filesystem that can map the swap file to disk blocks.
 # overlayfs (the root filesystem of containerized runners, e.g. the RISE
 # riscv64 runners) and tmpfs cannot, and fail with "Invalid argument".
-swapfile_supported() {
+fs_cant_swap() {
     local fstype
     fstype=$(stat -f -c %T "${1}")
-    [[ ${fstype} != overlay* && ${fstype} != tmpfs ]]
+    [[ ${fstype} == overlay* || ${fstype} == tmpfs ]]
 }
 
 SWAPFILE=/swapfile
@@ -30,7 +30,7 @@ SWAPDIR=$(dirname "${SWAPFILE}")
 # Swap is a host-wide resource; don't try to find another writable volume
 # in a container, as the file may be deleted with the container while the
 # kernel still uses it as swap.
-if ! swapfile_supported "${SWAPDIR}"; then
+if fs_cant_swap "${SWAPDIR}"; then
     warn "${SWAPDIR} is on $(stat -f -c %T "${SWAPDIR}"), which cannot hold a swap file; skipping pagefile_size=${PAGEFILE_SIZE}"
     exit 0
 fi
@@ -44,9 +44,4 @@ fi
 sudo fallocate -l "${PAGEFILE_SIZE}GiB" "${SWAPFILE}"
 sudo chmod 600 "${SWAPFILE}"
 sudo mkswap "${SWAPFILE}"
-if ! sudo swapon "${SWAPFILE}"; then
-    # e.g. a container without the capability to enable swap; the swap
-    # file is only an optimization, so don't fail the build over it.
-    warn "could not enable swap file ${SWAPFILE}; continuing without it"
-    sudo rm -f "${SWAPFILE}"
-fi
+sudo swapon "${SWAPFILE}"
