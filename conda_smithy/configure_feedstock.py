@@ -122,6 +122,13 @@ CONDA_FORGE_ALIAS_PLATFORMS["unix"] = {
 
 CONDA_FORGE_PIXI_VERSION = "0.59.0"
 
+# environment variables set when a recipe uses the corresponding GPU compiler,
+# picked up by selectors in conda-forge-pinning's conda_build_config.yaml
+GPU_COMPILER_ENV_VARS = {
+    "cuda": "CF_CUDA_ENABLED",
+    "hip": "CF_HIP_ENABLED",
+}
+
 ALL_PLATFORMS = (
     "linux_64",
     "linux_aarch64",
@@ -1299,19 +1306,21 @@ def _render_ci_provider(
         else:
             recipe_file = "meta.yaml"
 
-        # detect if `compiler('cuda')` is used in meta.yaml,
-        # and set appropriate environment variable
+        # detect if `compiler('cuda')` or `compiler('hip')` is used in the
+        # recipe, and set the corresponding environment variable; the global
+        # pinning uses these to enable the GPU compiler variants only for
+        # recipes that actually need them
         with open(
             os.path.join(forge_dir, forge_config["recipe_dir"], recipe_file),
             encoding="utf-8",
         ) as f:
             meta_lines = f.readlines()
-        # looking for `compiler('cuda')` with both quote variants;
-        # do not match if there is a `#` somewhere before on the line
-        pat = re.compile(r"^[^\#]*compiler\((\"cuda\"|\'cuda\')\).*")
-        for ml in meta_lines:
-            if pat.match(ml):
-                os.environ["CF_CUDA_ENABLED"] = "True"
+        for lang, env_var in GPU_COMPILER_ENV_VARS.items():
+            # looking for `compiler('<lang>')` with both quote variants;
+            # do not match if there is a `#` somewhere before on the line
+            pat = re.compile(rf"^[^\#]*compiler\((\"{lang}\"|\'{lang}\')\).*")
+            if any(pat.match(ml) for ml in meta_lines):
+                os.environ[env_var] = "True"
 
         config = conda_build.config.get_or_merge_config(
             None,
