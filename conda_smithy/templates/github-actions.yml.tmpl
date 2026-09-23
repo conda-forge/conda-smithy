@@ -121,8 +121,6 @@ jobs:
         if [[ "$(uname -m)" == "x86_64" ]]; then
           docker run --rm --privileged multiarch/qemu-user-static:register --reset --credential yes
         elif [[ "$(uname -m)" == "aarch64" ]]; then
-          # multiarch/qemu-user-static has no arm64 image; register the
-          # image's own emulators. Needs conda-forge/docker-images#340.
           docker run --rm --privileged --entrypoint /opt/docker/bin/register-binfmt {% raw %}${{ matrix.DOCKER_IMAGE }}{% endraw %} aarch64
         fi
 
