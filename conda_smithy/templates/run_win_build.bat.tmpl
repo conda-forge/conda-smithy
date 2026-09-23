@@ -33,7 +33,9 @@ set CONFIG_FILE=%CI_SUPPORT%\%CONFIG%.yaml
 {#- NOTE: We are NOT setting a default CONDA_BLD_PATH here; that's done in conda-forge-ci-setup #}
 
 {%- if conda_install_tool == "micromamba" %}
+
 call :start_group "Provisioning base env with micromamba"
+
 set "MAMBA_ROOT_PREFIX=%MINIFORGE_HOME%-micromamba-%RANDOM%"
 set "MICROMAMBA_VERSION=1.5.10-0"
 set "MICROMAMBA_URL=https://github.com/mamba-org/micromamba-releases/releases/download/%MICROMAMBA_VERSION%/micromamba-win-64"
@@ -53,16 +55,22 @@ call "%MICROMAMBA_EXE%" create --yes --root-prefix "%MAMBA_ROOT_PREFIX%" --prefi
     pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 if !errorlevel! neq 0 exit /b !errorlevel!
 {#- set "CONDA_PKGS_DIRS=" #}
-echo Removing %MAMBA_ROOT_PREFIX%
+
+echo Cleaning up micromamba
 del /S /Q "%MAMBA_ROOT_PREFIX%" >nul
 del /S /Q "%MICROMAMBA_TMPDIR%" >nul
+
 call :end_group
+
 {%- elif conda_install_tool == "pixi" %}
+
 call :start_group "Provisioning base env with pixi"
+
 echo Installing pixi
 powershell -NoProfile -ExecutionPolicy unrestricted -Command "iwr -useb https://pixi.sh/install.ps1 | iex"
 if !errorlevel! neq 0 exit /b !errorlevel!
 set "PATH=%USERPROFILE%\.pixi\bin;%PATH%"
+
 echo Installing environment
 if "%PIXI_CACHE_DIR%"=="%MINIFORGE_HOME%" (
     mkdir "%MINIFORGE_HOME%"
@@ -71,38 +79,60 @@ if "%PIXI_CACHE_DIR%"=="%MINIFORGE_HOME%" (
 ) else (
     pushd "%REPO_ROOT%"
 )
-move /y pixi.toml pixi.toml.bak
 set "arch=64"
 if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64"
+set PIXI_ENV=build
+move /y pixi.toml pixi.toml.bak
 powershell -NoProfile -ExecutionPolicy unrestricted -Command "(Get-Content pixi.toml.bak -Encoding UTF8) -replace 'platforms = .*', 'platforms = [''win-%arch%'']' | Out-File pixi.toml -Encoding UTF8"
 :: Git on Windows needs to run post link scripts to properly set up SSL certificates
 pixi config set --global run-post-link-scripts insecure
 if !errorlevel! neq 0 exit /b !errorlevel!
-pixi install --environment build
+pixi install --environment %PIXI_ENV%
 if !errorlevel! neq 0 exit /b !errorlevel!
-pixi list --environment build
+pixi list --environment %PIXI_ENV%
 if !errorlevel! neq 0 exit /b !errorlevel!
+
+echo Activating environment
 set "ACTIVATE_PIXI=%TMP%\pixi-activate-%RANDOM%.bat"
-pixi shell-hook --environment build > "%ACTIVATE_PIXI%"
+pixi shell-hook --environment %PIXI_ENV% > "%ACTIVATE_PIXI%"
 if !errorlevel! neq 0 exit /b !errorlevel!
 call "%ACTIVATE_PIXI%"
 if !errorlevel! neq 0 exit /b !errorlevel!
 move /y pixi.toml.bak pixi.toml
 popd
+
 call :end_group
+
 {%- else %}
+
 call :start_group "Installing a fresh version of Miniforge"
+
+echo Downloading Miniforge
 set "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe"
 set "MINIFORGE_EXE=Miniforge3-Windows-x86_64.exe"
-echo Downloading Miniforge
 powershell -ExecutionPolicy Bypass -Command "(New-Object Net.WebClient).DownloadFile('%MINIFORGE_URL%', '%MINIFORGE_EXE%')"
 if !errorlevel! neq 0 exit /b !errorlevel!
+
 echo Installing Miniforge
 start /wait "" %MINIFORGE_EXE% /InstallationType=JustMe /RegisterPython=0 /S /D=%MINIFORGE_HOME%
+
 call :end_group
+
 {%- endif %}
 
 call :start_group "Configuring conda"
+
+{%- if conda_build_tool == "mambabuild" %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- elif conda_build_tool == "conda-build+classic" %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- elif conda_build_tool == "rattler-build" %}
+{%- set NO_TEST_FLAG="--test skip" %}
+{%- else %}
+{%- set NO_TEST_FLAG="--no-test" %}
+{%- endif %}
 
 :: Activate the base conda environment
 {%- if conda_install_tool != "pixi" %}
@@ -123,7 +153,8 @@ set "CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1"
 {%- if conda_install_tool in ("conda", "mamba") %}
 :: Provision the necessary dependencies to build the recipe later
 echo Installing dependencies
-{{ conda_install_tool }}.exe install pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }} -c conda-forge --strict-channel-priority --yes
+{{ conda_install_tool }}.exe install --update-specs --yes --quiet --channel conda-forge --strict-channel-priority ^
+    pip {{ conda_install_tool_deps }} {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 if !errorlevel! neq 0 exit /b !errorlevel!
 {%- endif %}
 
@@ -140,28 +171,18 @@ echo Setting up configuration
 setup_conda_rc "%FEEDSTOCK_ROOT%" "%RECIPE_ROOT%" "%CONFIG_FILE%"
 if !errorlevel! neq 0 exit /b !errorlevel!
 
-{%- if build_setup %}
+{%- if build_setup -%}
 echo Running build setup
 {{ build_setup }}
 if !errorlevel! neq 0 exit /b !errorlevel!
 {%- endif %}
 
-if EXIST LICENSE.txt (
-    echo Copying feedstock license
-    copy LICENSE.txt "%RECIPE_ROOT%\\recipe-scripts-license.txt"
-)
+call :end_group
 
-{%- if conda_build_tool == "mambabuild" %}
-{%- set NO_TEST_FLAG="--no-test" %}
-{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-{%- set NO_TEST_FLAG="--no-test" %}
-{%- elif conda_build_tool == "conda-build+classic" %}
-{%- set NO_TEST_FLAG="--no-test" %}
-{%- elif conda_build_tool == "rattler-build" %}
-{%- set NO_TEST_FLAG="--test skip" %}
-{%- else %}
-{%- set NO_TEST_FLAG="--no-test" %}
-{%- endif %}
+if EXIST %FEEDSTOCK_ROOT%\LICENSE.txt (
+    echo Copying feedstock license
+    copy "%FEEDSTOCK_ROOT%\\LICENSE.txt" "%RECIPE_ROOT%\\recipe-scripts-license.txt"
+)
 
 {%- if test == "native" %}
 if NOT [%HOST_PLATFORM%] == [%BUILD_PLATFORM%] (
@@ -183,8 +204,6 @@ if NOT [%flow_run_id%] == [] (
         set "EXTRA_CB_OPTIONS=%EXTRA_CB_OPTIONS% --extra-meta flow_run_id=%flow_run_id% remote_url=%remote_url% sha=%sha%"
     {%- endif %}
 )
-
-call :end_group
 
 :: Build the recipe
 echo Building recipe
@@ -212,8 +231,10 @@ set "CONDA_SUBDIR=%_OLD_CONDA_SUBDIR%"
 {%- endif %}
 
 call :start_group "Inspecting artifacts"
+
 :: inspect_artifacts was only added in conda-forge-ci-setup 4.9.4
 WHERE inspect_artifacts >nul 2>nul && inspect_artifacts --recipe-dir "%RECIPE_ROOT%" -m %CONFIG_FILE% || echo "inspect_artifacts needs conda-forge-ci-setup >=4.9.4"
+
 call :end_group
 
 :: Prepare some environment variables for the upload step
@@ -242,7 +263,6 @@ set "UPLOAD_ON_BRANCH={{ upload_on_branch }}"
 :: Note, this needs GIT_BRANCH too
 {%- endif %}
 
-:: Validate
 {%- if conda_forge_output_validation %}
 call :start_group "Validating outputs"
 validate_recipe_outputs "%FEEDSTOCK_NAME%"
