@@ -9,6 +9,8 @@
 
 set -xeuo pipefail
 export FEEDSTOCK_ROOT="${FEEDSTOCK_ROOT:-/home/conda/feedstock_root}"
+# ensure absolute path
+FEEDSTOCK_ROOT=$(cd "${FEEDSTOCK_ROOT}"; pwd)
 source ${FEEDSTOCK_ROOT}/.scripts/logging_utils.sh
 
 {# This closes the matching `startgroup` on `run_docker_build.sh` #}
@@ -18,6 +20,8 @@ source ${FEEDSTOCK_ROOT}/.scripts/logging_utils.sh
 
 export PYTHONUNBUFFERED=1
 export RECIPE_ROOT="${RECIPE_ROOT:-/home/conda/recipe_root}"
+# ensure absolute path
+RECIPE_ROOT=$(cd "${RECIPE_ROOT}"; pwd)
 export CI_SUPPORT="${FEEDSTOCK_ROOT}/.ci_support"
 export CONFIG_FILE="${CI_SUPPORT}/${CONFIG}.yaml"
 export RATTLER_CACHE_DIR="${FEEDSTOCK_ROOT}/build_artifacts/pkg_cache"
@@ -99,7 +103,7 @@ export CONDA_LIBMAMBA_SOLVER_NO_CHANNELS_FROM_INSTALLED=1
 {%- endif %}
 {% if local_ci_setup %}
 conda uninstall --quiet --yes --force {{ " ".join(remote_ci_setup) }}
-pip install --no-deps "${RECIPE_ROOT}/."
+pip install --no-deps "${RECIPE_ROOT}"
 {%- endif %}
 # set up the condarc
 setup_conda_rc "${FEEDSTOCK_ROOT}" "${RECIPE_ROOT}" "${CONFIG_FILE}"
