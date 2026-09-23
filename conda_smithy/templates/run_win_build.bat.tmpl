@@ -123,14 +123,19 @@ call :end_group
 call :start_group "Configuring conda"
 
 {%- if conda_build_tool == "mambabuild" %}
+{%- set BUILD_CMD="conda-mambabuild.exe" %}
 {%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
+{%- set BUILD_CMD="set CONDA_SOLVER=libmamba\nconda-build.exe" %}
 {%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "conda-build+classic" %}
+{%- set BUILD_CMD="set CONDA_SOLVER=classic\nconda-build.exe" %}
 {%- set NO_TEST_FLAG="--no-test" %}
 {%- elif conda_build_tool == "rattler-build" %}
+{%- set BUILD_CMD="rattler-build.exe build" %}
 {%- set NO_TEST_FLAG="--test skip" %}
 {%- else %}
+{%- set BUILD_CMD="conda-build.exe" %}
 {%- set NO_TEST_FLAG="--no-test" %}
 {%- endif %}
 
@@ -211,19 +216,26 @@ echo Building recipe
 set "_OLD_CONDA_SUBDIR=%CONDA_SUBDIR%"
 set "CONDA_SUBDIR=%BUILD_PLATFORM%"
 {%- endif %}
-{%- if conda_build_tool == "mambabuild" %}
-conda-mambabuild.exe "%RECIPE_ROOT%" -m %CONFIG_FILE% --suppress-variables %EXTRA_CB_OPTIONS%
-{%- elif conda_build_tool == "conda-build+conda-libmamba-solver" %}
-set "CONDA_SOLVER=libmamba"
-conda-build.exe "%RECIPE_ROOT%" -m %CONFIG_FILE% --suppress-variables %EXTRA_CB_OPTIONS%
-{%- elif conda_build_tool == "conda-build+classic" %}
-set "CONDA_SOLVER=classic"
-conda-build.exe "%RECIPE_ROOT%" -m %CONFIG_FILE% --suppress-variables %EXTRA_CB_OPTIONS%
-{%- elif conda_build_tool == "conda-build" %}
-conda-build.exe "%RECIPE_ROOT%" -m %CONFIG_FILE% --suppress-variables %EXTRA_CB_OPTIONS%
-{%- elif conda_build_tool == "rattler-build" %}
-rattler-build.exe build --recipe "%RECIPE_ROOT%" -m %CONFIG_FILE% %EXTRA_CB_OPTIONS% --build-platform %BUILD_PLATFORM% --target-platform %HOST_PLATFORM%
+
+{%- if conda_build_tool != "rattler-build" %}
+
+{{ BUILD_CMD }} ^
+    "%RECIPE_ROOT%"
+    -m %CONFIG_FILE% ^
+    %EXTRA_CB_OPTIONS% ^
+    --suppress-variables
+
+{%- else %}
+
+{{ BUILD_CMD }} ^
+    --recipe "%RECIPE_ROOT%" ^
+    -m %CONFIG_FILE% ^
+    %EXTRA_CB_OPTIONS% ^
+    --build-platform %BUILD_PLATFORM% ^
+    --target-platform %HOST_PLATFORM%
+
 {%- endif %}
+
 if !errorlevel! neq 0 exit /b !errorlevel!
 {%- if conda_build_tool.startswith(("conda-build", "mambabuild")) %}
 set "_OLD_CONDA_SUBDIR="

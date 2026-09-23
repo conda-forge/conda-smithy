@@ -217,7 +217,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     {%- if conda_build_tool.startswith("conda-build") %}
     CONDA_SUBDIR="${BUILD_PLATFORM}" conda debug \
         "${RECIPE_ROOT}" \
-        -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+        -m "${CONFIG_FILE}" \
         ${EXTRA_CB_OPTIONS:-} \
         ${BUILD_OUTPUT_ID:+--output-id "${BUILD_OUTPUT_ID}"} \
         --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml"
@@ -228,7 +228,7 @@ if [[ "${BUILD_WITH_CONDA_DEBUG:-0}" == 1 ]]; then
     export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${FEEDSTOCK_ROOT}/build_artifacts}"
     rattler-build debug setup \
         --recipe "${RECIPE_ROOT}" \
-        -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+        -m "${CONFIG_FILE}" \
         ${EXTRA_CB_OPTIONS:-} \
         ${BUILD_OUTPUT_ID:+--output-name "${BUILD_OUTPUT_ID}"} \
         --build-platform "${BUILD_PLATFORM}" \
@@ -252,9 +252,10 @@ echo Building recipe
 #   - none vs. --target-platform
 #   - --extra-meta a=b c=d vs. --extra-meta a=b --extra-meta c=d
 {%- if conda_build_tool != "rattler-build" %}
+
 CONDA_SUBDIR="${BUILD_PLATFORM}" {{ BUILD_CMD }} \
     "${RECIPE_ROOT}" \
-    -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    -m "${CONFIG_FILE}" \
     ${EXTRA_CB_OPTIONS:-} \
     --suppress-variables \
     --clobber-file "${CI_SUPPORT}/clobber_${CONFIG}.yaml" \
@@ -264,7 +265,7 @@ CONDA_SUBDIR="${BUILD_PLATFORM}" {{ BUILD_CMD }} \
 
 {{ BUILD_CMD }} \
     --recipe "${RECIPE_ROOT}" \
-    -m "${CI_SUPPORT}/${CONFIG}.yaml" \
+    -m "${CONFIG_FILE}" \
     ${EXTRA_CB_OPTIONS:-} \
     --build-platform "${BUILD_PLATFORM}" \
     --target-platform "${HOST_PLATFORM}" \
