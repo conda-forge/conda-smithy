@@ -187,6 +187,9 @@ else
         --recipe "${RECIPE_ROOT}" \
         -m "${CI_SUPPORT}/${CONFIG}.yaml" \
         ${EXTRA_CB_OPTIONS:-} \
+        {%- if channel_priority %}
+        --channel-priority {{ channel_priority }} \
+        {%- endif %}
         --build-platform "${BUILD_PLATFORM}" \
         --target-platform "${HOST_PLATFORM}" \
         --extra-meta flow_run_id="${flow_run_id:-}" \
