@@ -232,6 +232,27 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     )
 
 
+def test_channel_sources_not_used_in_ci_support_filename(
+    recipe_migration_with_channel_sources, jinja_env
+):
+    recipe_migration_with_channel_sources.config["provider"]["linux"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=recipe_migration_with_channel_sources.config,
+        forge_dir=recipe_migration_with_channel_sources.recipe,
+    )
+
+    matrix_dir = Path(recipe_migration_with_channel_sources.recipe, ".ci_support")
+    config_files = sorted(matrix_dir.glob("linux_64_*.yaml"))
+    assert config_files
+    assert all("channel_sources" not in path.name for path in config_files)
+    assert all(
+        yaml.safe_load(path.read_text())["channel_sources"]
+        == ["conda-forge", "conda-forge/label/python_rc"]
+        for path in config_files
+    )
+
+
 def test_py_matrix_on_azure(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "azure"
 
