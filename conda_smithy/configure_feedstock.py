@@ -779,6 +779,8 @@ def _collapse_subpackage_variants(
     ]
     top_level_vars = set.intersection(*top_level_vars)
     top_level_loop_vars = set.intersection(*top_level_loop_vars)
+    # Discard channel_sources to not include it in ci_support filenames #2681
+    top_level_loop_vars.discard("channel_sources")
 
     if "target_platform" in all_used_vars:
         top_level_loop_vars.add("target_platform")
