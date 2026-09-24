@@ -22,6 +22,8 @@ export RECIPE_ROOT="{{ recipe_dir }}"
 RECIPE_ROOT=$(cd "${RECIPE_ROOT}"; pwd)
 export CI_SUPPORT="${FEEDSTOCK_ROOT}/.ci_support"
 export CONFIG_FILE="${CI_SUPPORT}/${CONFIG}.yaml"
+export PIXI_CACHE_DIR="${MINIFORGE_HOME}"
+export RATTLER_CACHE_DIR="${CONDA_BLD_PATH}/pkg_cache"
 
 ( endgroup "Configuring build environment" ) 2> /dev/null
 
@@ -46,7 +48,7 @@ chmod +x "${MICROMAMBA_EXE}"
 
 echo Creating environment
 "${MICROMAMBA_EXE}" create --yes --root-prefix "${MAMBA_ROOT_PREFIX}" --prefix "${MINIFORGE_HOME}" \
-    --channel conda-forge \
+    --override-channels --channel conda-forge --strict-channel-priority \
     pip {{ conda_build_tool_deps }} {{ " ".join(remote_ci_setup) }}
 echo "Moving pkgs cache from ${MAMBA_ROOT_PREFIX} to ${MINIFORGE_HOME}"
 mv "${MAMBA_ROOT_PREFIX}/pkgs" "${MINIFORGE_HOME}"
@@ -64,6 +66,7 @@ echo Installing pixi
 curl -fsSL https://pixi.sh/install.sh | bash
 export PATH="~/.pixi/bin:$PATH"
 
+pushd "${FEEDSTOCK_ROOT}"
 echo Installing environment
 mkdir -p "${MINIFORGE_HOME}"
 arch=$(uname -m)
@@ -78,6 +81,7 @@ pixi list --environment "${PIXI_ENV}"
 echo Activating environment
 eval "$(pixi shell-hook --environment "${PIXI_ENV}")"
 mv pixi.toml.bak pixi.toml
+popd
 
 ( endgroup "Provisioning base env with pixi" ) 2> /dev/null
 
