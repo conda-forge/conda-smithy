@@ -220,7 +220,7 @@ set "CONDA_SUBDIR=%BUILD_PLATFORM%"
 {%- if conda_build_tool != "rattler-build" %}
 
 {{ BUILD_CMD }} ^
-    "%RECIPE_ROOT%"
+    "%RECIPE_ROOT%" ^
     -m %CONFIG_FILE% ^
     %EXTRA_CB_OPTIONS% ^
     --suppress-variables
