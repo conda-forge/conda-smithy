@@ -322,6 +322,43 @@ def test_stdlib_deployment_target(
     assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
 
 
+def test_stdlib_multiple_deployment_targets(
+    stdlib_multiple_deployment_targets_recipe, jinja_env, request
+):
+    conda_build_param = request.node.callspec.params["config_yaml"]
+    if conda_build_param == "rattler-build":
+        # fixture doesn't have a recipe.yaml variant
+        pytest.skip("skipping test for rattler-build usecase")
+
+    default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
+    for provider in default_providers:
+        render_func = getattr(configure_feedstock, f"render_{provider}")
+        render_func(
+            jinja_env=jinja_env,
+            forge_config=stdlib_multiple_deployment_targets_recipe.config,
+            forge_dir=stdlib_multiple_deployment_targets_recipe.recipe,
+        )
+    matrix_dir = os.path.join(
+        stdlib_multiple_deployment_targets_recipe.recipe, ".ci_support"
+    )
+    assert os.path.isdir(matrix_dir)
+
+    # one .ci_support file per deployment target, each pinned to a single
+    # MACOSX_DEPLOYMENT_TARGET matching its own c_stdlib_version; if the keys
+    # aren't zipped together, every file lists both targets and the build tool
+    # ends up building each target twice
+    for version in ["10.13", "10.15"]:
+        config_file = os.path.join(
+            matrix_dir, f"osx_64_c_stdlib_version{version}.yaml"
+        )
+        assert os.path.isfile(config_file)
+        with open(config_file) as f:
+            content = yaml.safe_load(f)
+        assert content["c_stdlib_version"] == [version]
+        assert content["MACOSX_DEPLOYMENT_TARGET"] == [version]
+        assert content["MACOSX_SDK_VERSION"] == [version]
+
+
 def test_mixed_python_min(mixed_python_min_recipe, jinja_env, caplog, request):
     conda_build_param = request.node.callspec.params["config_yaml"]
     if conda_build_param == "rattler-build":
