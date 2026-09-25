@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Reduced the divergence between Linux and macOS build scripts. (#2695)
+* Reduced the divergence among Linux, macOS and Windows build scripts. (#2695)
 
 **Deprecated:**
 
