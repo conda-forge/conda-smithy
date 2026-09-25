@@ -29,7 +29,6 @@ if "%MINIFORGE_HOME:~-1%"=="\" set "MINIFORGE_HOME=%MINIFORGE_HOME:~0,-1%"
 
 set "arch=64"
 if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "arch=arm64"
-
 {%- if conda_install_tool == "micromamba" %}
 call :start_group "Provisioning base env with micromamba"
 set "MAMBA_ROOT_PREFIX=%MINIFORGE_HOME%-micromamba-%RANDOM%"
@@ -37,10 +36,16 @@ set "MICROMAMBA_VERSION=2.9.0-0"
 set "MICROMAMBA_URL=https://github.com/mamba-org/micromamba-releases/releases/download/%MICROMAMBA_VERSION%/micromamba-win-%arch%"
 set "MICROMAMBA_TMPDIR=%TMP%\micromamba-%RANDOM%"
 set "MICROMAMBA_EXE=%MICROMAMBA_TMPDIR%\micromamba.exe"
+if "%arch%"=="64" set "MICROMAMBA_SHA256=a6d804394b2418991c4e29562853eaace2f2ce9d9da661a98e74e02e8dbb44b0"
+if "%arch%"=="arm64" set "MICROMAMBA_SHA256=f0da836d2398c00ac0b43e01f7581ba3430224a04405075c39eb3dd78bf0339a"
 
 echo Downloading micromamba %MICROMAMBA_VERSION%
 if not exist "%MICROMAMBA_TMPDIR%" mkdir "%MICROMAMBA_TMPDIR%"
 powershell -ExecutionPolicy Bypass -Command "(New-Object Net.WebClient).DownloadFile('%MICROMAMBA_URL%', '%MICROMAMBA_EXE%')"
+if !errorlevel! neq 0 exit /b !errorlevel!
+
+if "%MICROMAMBA_SHA256%"=="" exit /b 1
+powershell -ExecutionPolicy Bypass -Command "$h = Get-FileHash '%MICROMAMBA_EXE%' -ErrorAction Stop; if ($h.Hash -ne 'MICROMAMBA_SHA256') { exit 1 }"
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 echo Creating environment
