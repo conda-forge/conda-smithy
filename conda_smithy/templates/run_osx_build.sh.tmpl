@@ -28,8 +28,13 @@ export RATTLER_CACHE_DIR="${CONDA_BLD_PATH}/pkg_cache"
 ( endgroup "Configuring build environment" ) 2> /dev/null
 
 arch=$(uname -m)
+MICROMAMBA_VERSION="2.10.0-0"
 if [[ "${arch}" == "x86_64" ]]; then
   arch="64"
+  MICROMAMBA_SHA256="8421462a1ef1df9f7acd114f9e2a24c1332ce4f4e29f44465b4acb44e2755172"
+else
+  # arch is already correct
+  MICROMAMBA_SHA256="c547639f5caf742236641c362746abb4a3505774753ecd08fe341643670c4c01"
 fi
 
 {%- if conda_install_tool == "micromamba" %}
@@ -37,13 +42,13 @@ fi
 ( startgroup "Provisioning base env with micromamba" ) 2> /dev/null
 
 MAMBA_ROOT_PREFIX="${MINIFORGE_HOME}-micromamba-$(date +%s)"
-MICROMAMBA_VERSION="2.10.0-0"
 MICROMAMBA_URL="https://github.com/mamba-org/micromamba-releases/releases/download/${MICROMAMBA_VERSION}/micromamba-osx-${arch}"
 MICROMAMBA_TMPDIR=$(mktemp -d)
 MICROMAMBA_EXE=${MICROMAMBA_TMPDIR}/micromamba
 
 echo "Downloading micromamba ${MICROMAMBA_VERSION}"
 curl --fail --retry 5 --retry-delay 5 -L -o "${MICROMAMBA_EXE}" "${MICROMAMBA_URL}"
+echo "${MICROMAMBA_SHA256} *${MICROMAMBA_EXE}" | shasum -a 256 -c
 chmod +x "${MICROMAMBA_EXE}"
 
 echo Creating environment
