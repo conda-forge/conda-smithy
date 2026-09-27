@@ -343,6 +343,7 @@ def lintify_meta_yaml(
                 noarch_platforms,
                 lints,
                 meta,
+                recipe_config_keys["conda_build_config.yaml"],
             )
         else:
             lint_noarch_and_runtime_dependencies(

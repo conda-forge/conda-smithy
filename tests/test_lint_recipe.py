@@ -1293,6 +1293,51 @@ linter:
                 line_number=8,
             )
 
+    def test_recipe_v1_noarch_selector_allows_cbc_variant_keys(self):
+        # gh-2337: a conditional on a conda_build_config.yaml key is a variant,
+        # not a platform selector, so it does not make the package arch specific.
+        # The v0 path has allowed this since gh-1843; v1 never received the keys.
+        expected_start = "`noarch` packages can't have"
+        recipe = """
+package:
+  name: test
+  version: "1.0"
+build:
+  noarch: generic
+requirements:
+  run:
+    - if: build_win
+      then: __win
+      else: __unix
+"""
+
+        def run(with_cbc):
+            with tmp_directory() as recipe_dir:
+                with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+                    fh.write(recipe)
+                with open(os.path.join(recipe_dir, "conda-forge.yml"), "w") as fh:
+                    fh.write("conda_build_tool: rattler-build\n")
+                if with_cbc:
+                    with open(
+                        os.path.join(recipe_dir, "conda_build_config.yaml"), "w"
+                    ) as fh:
+                        fh.write("build_win:\n  - true\n  - false\n")
+                lints = linter.main(recipe_dir, feedstock_dir=recipe_dir)
+                return [lint for lint in lints if lint.startswith(expected_start)]
+
+        self.assertEqual(
+            run(with_cbc=True),
+            [],
+            "a conditional on a conda_build_config.yaml key must not be lifted "
+            "into a noarch selector lint",
+        )
+        # Control: without the key defined it is an unknown noun and still lints,
+        # so the assertion above is not vacuously true.
+        self.assertTrue(
+            run(with_cbc=False),
+            "the control must still lint, otherwise the test above proves nothing",
+        )
+
     def test_recipe_v1_noarch_selectors(self):
         expected_start = "`noarch` packages can't have"
 
