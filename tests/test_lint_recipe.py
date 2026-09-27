@@ -4177,6 +4177,48 @@ def test_lint_recipe_parses_ok():
         ), hints
 
 
+def test_lint_recipe_parses_duplicate_key_under_exclusive_selectors():
+    # gh-2161: conda-build resolves selectors before the text is parsed as YAML, so
+    # the same key under mutually exclusive selectors is legal. The parsers see the
+    # raw text and report a duplicate key.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+            f.write(textwrap.dedent("""
+                    package:
+                      name: foo
+                      version: "1.0"
+
+                    build:
+                      number: 0
+                      string: cuda_py{{ CONDA_PY }}  # [cuda_compiler_version != "None"]
+                      string: cpu_py{{ CONDA_PY }}  # [cuda_compiler_version == "None"]
+
+                    test:
+                      imports:
+                        - foo
+
+                    about:
+                      home: something
+                      license: MIT
+                      license_file: LICENSE
+                      summary: a test recipe
+
+                    extra:
+                      recipe-maintainers:
+                        - a
+                    """))
+        lints, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any(
+            lint.startswith(
+                "The recipe is not parsable by any of the known recipe parsers"
+            )
+            for lint in lints
+        ), lints
+        assert not any(
+            hint.startswith("The recipe is not parsable by parser") for hint in hints
+        ), hints
+
+
 def test_lint_recipe_parses_forblock():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:

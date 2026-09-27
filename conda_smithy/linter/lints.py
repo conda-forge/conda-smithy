@@ -931,6 +931,49 @@ def lint_stdlib(
         msg.r.StdlibMacOS(recipe_version=recipe_version).append_if_absent(lints)
 
 
+def _selector_resolved(recipe_text: str) -> Optional[str]:
+    """Return the v0 recipe with its selectors applied, or None if that is not possible.
+
+    conda-build resolves selectors on the raw text before it is parsed as YAML, so a key
+    repeated under mutually exclusive selectors is legal. The parsers below see the raw
+    text and call that a duplicate key. Resolving first is how `variant_algebra` already
+    reads selector-bearing files.
+    """
+    try:
+        from conda_build.config import Config
+        from conda_build.metadata import get_selectors, select_lines
+
+        return select_lines(
+            recipe_text, get_selectors(Config()), variants_in_place=False
+        )
+    except Exception:
+        return None
+
+
+def _parses(parse_fn, recipe_text: str, selected_text: Optional[str]):
+    """Whether a parser accepts the recipe, retrying once with selectors resolved.
+
+    Returns (ok, first_error). The raw text is tried first so nothing changes for a
+    recipe that already parses.
+    """
+    first_error = None
+    try:
+        parse_fn(recipe_text)
+        return True, None
+    except Exception as exc:
+        # Python unbinds the `as` name at the end of the block, so keep a reference.
+        first_error = exc
+
+    if selected_text is not None and selected_text != recipe_text:
+        try:
+            parse_fn(selected_text)
+            return True, None
+        except Exception:
+            pass
+
+    return False, first_error
+
+
 def lint_recipe_is_parsable(
     recipe_text: str,
     lints: list[str],
@@ -938,6 +981,8 @@ def lint_recipe_is_parsable(
     recipe_version: int = 0,
 ):
     parse_results = {}
+    # Selectors are a v0 construct; a v1 recipe has none to resolve.
+    selected_text = _selector_resolved(recipe_text) if recipe_version == 0 else None
 
     if recipe_version == 0:
         parse_name = "conda-forge-tick (the bot)"
@@ -947,17 +992,16 @@ def lint_recipe_is_parsable(
             parse_results[parse_name] = None
             pass
         else:
-            try:
-                CondaMetaYAML(recipe_text)
-            except Exception as e:
+            ok, err = _parses(CondaMetaYAML, recipe_text, selected_text)
+            if ok:
+                parse_results[parse_name] = True
+            else:
                 logger.warning(
                     "Error parsing recipe with conda-forge-tick (the bot): %s",
-                    repr(e),
-                    exc_info=e,
+                    repr(err),
+                    exc_info=err,
                 )
                 parse_results[parse_name] = False
-            else:
-                parse_results[parse_name] = True
 
         parse_name = "conda-souschef (grayskull)"
         try:
@@ -968,20 +1012,22 @@ def lint_recipe_is_parsable(
         else:
             with tempfile.TemporaryDirectory() as tmpdir:
                 recipe_file = os.path.join(tmpdir, "meta.yaml")
-                with open(recipe_file, "w", encoding="utf-8") as f:
-                    f.write(recipe_text)
 
-                try:
-                    Recipe(load_file=recipe_file)
-                except Exception as e:
+                def _souschef(text: str, _path=recipe_file):
+                    with open(_path, "w", encoding="utf-8") as f:
+                        f.write(text)
+                    Recipe(load_file=_path)
+
+                ok, err = _parses(_souschef, recipe_text, selected_text)
+                if ok:
+                    parse_results[parse_name] = True
+                else:
                     logger.warning(
                         "Error parsing recipe with conda-souschef: %s",
-                        repr(e),
-                        exc_info=e,
+                        repr(err),
+                        exc_info=err,
                     )
                     parse_results[parse_name] = False
-                else:
-                    parse_results[parse_name] = True
     elif recipe_version == 1:
         parse_name = "ruamel.yaml"
         try:
@@ -1002,17 +1048,16 @@ def lint_recipe_is_parsable(
     except ImportError:
         parse_results[parse_name] = None
     else:
-        try:
-            RecipeParser(recipe_text)
-        except Exception as e:
+        ok, err = _parses(RecipeParser, recipe_text, selected_text)
+        if ok:
+            parse_results[parse_name] = True
+        else:
             logger.warning(
                 "Error parsing recipe with conda-recipe-manager: %s",
-                repr(e),
-                exc_info=e,
+                repr(err),
+                exc_info=err,
             )
             parse_results[parse_name] = False
-        else:
-            parse_results[parse_name] = True
 
     if parse_results:
         if any(pv is not None for pv in parse_results.values()):
