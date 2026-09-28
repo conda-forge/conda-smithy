@@ -4177,6 +4177,63 @@ def test_lint_recipe_parses_ok():
         ), hints
 
 
+def test_lint_v1_malformed_structures_do_not_crash_the_linter():
+    """A malformed v1 section must still lint, not raise.
+
+    Each of these iterates to something the linter expected to be a mapping or a
+    string. Before the guards they raised, and a raise loses every other lint for
+    the whole recipe, which reaches the contributor as "I failed to even lint the
+    recipe, probably because of a conda-smithy bug".
+    """
+    base = """
+        package:
+          name: foo
+          version: "1.0"
+        build:
+          number: 0
+        about:
+          homepage: https://example.com
+          license: MIT
+          license_file: LICENSE
+          summary: s
+        extra:
+          recipe-maintainers:
+            - a
+        """
+
+    malformed = {
+        "tests as a mapping": """
+            tests:
+              python:
+                imports:
+                  - foo
+            """,
+        "tests entry as a bare string": """
+            tests:
+              - pytest
+            """,
+        "run with a non-conditional mapping": """
+            requirements:
+              run:
+                - pin_subpackage: liba
+            """,
+        "if without then": """
+            requirements:
+              run:
+                - if: win
+            """,
+    }
+
+    for name, extra in malformed.items():
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+                f.write(textwrap.dedent(base) + textwrap.dedent(extra))
+            with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+                f.write("MIT\n")
+            # The assertion is that this returns at all.
+            linter.main(tmpdir, return_hints=True, conda_forge=True), name
+
+
 def test_lint_recipe_parses_forblock():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:

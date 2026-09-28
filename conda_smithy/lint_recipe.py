@@ -733,6 +733,9 @@ def run_conda_forge_specific(
         all_reqs = flatten_v1_if_else(all_reqs)
 
     for rq in all_reqs:
+        # A malformed conditional can flatten to None or to a mapping.
+        if not isinstance(rq, str):
+            continue
         dep = rq.split(" ")[0].strip()
         dep_hint = specific_hints.get(dep)
         if dep_hint:
