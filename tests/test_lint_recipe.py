@@ -4230,8 +4230,23 @@ def test_lint_v1_malformed_structures_do_not_crash_the_linter():
                 f.write(textwrap.dedent(base) + textwrap.dedent(extra))
             with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
                 f.write("MIT\n")
-            # The assertion is that this returns at all.
-            linter.main(tmpdir, return_hints=True, conda_forge=True), name
+            # It must return rather than raise, and it must say what it skipped.
+            lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+            assert any("is malformed" in lint for lint in lints), (name, lints)
+
+    # A well formed recipe must not draw the lint.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(textwrap.dedent(base) + textwrap.dedent("""
+                    tests:
+                      - python:
+                          imports:
+                            - foo
+                    """))
+        with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+            f.write("MIT\n")
+        lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any("is malformed" in lint for lint in lints), lints
 
 
 def test_lint_recipe_parses_forblock():

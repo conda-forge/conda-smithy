@@ -87,6 +87,7 @@ from conda_smithy.linter.lints import (
     lint_stdlib,
     lint_subheaders,
     lint_usage_of_legacy_patterns,
+    lint_v1_malformed_sections,
 )
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
@@ -305,6 +306,10 @@ def lintify_meta_yaml(
             package_section,
             lints,
         )
+
+    # 13b: Report v1 sections that had to be skipped for their shape
+    if recipe_version == 1:
+        lint_v1_malformed_sections(meta, lints)
 
     # 14: Run conda-forge specific lints
     if conda_forge:

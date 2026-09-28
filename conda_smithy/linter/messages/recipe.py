@@ -1392,6 +1392,23 @@ class NoCommentSelectors(LinterMessage, _RecipeYamlMessage):
 
 
 @dataclass(kw_only=True)
+class MalformedSectionV1(LinterMessage, _RecipeYamlMessage):
+    """
+    A section has a shape the linter cannot read, so it was skipped.
+    """
+
+    kind = "lint"
+    identifier = "R1-009"
+    message = (
+        "The `${section}` section is malformed: ${detail}. It was skipped, so the"
+        " rest of the recipe was still linted, but rattler-build will not read it"
+        " either."
+    )
+    section: str
+    detail: str
+
+
+@dataclass(kw_only=True)
 class NoarchSelectorsV1(LinterMessage, _RecipeYamlMessage):
     """
     Noarch packages are not generally compatible with v1 conditional blocks.
