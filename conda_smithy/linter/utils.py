@@ -78,6 +78,17 @@ VALID_PYTHON_BUILD_BACKENDS = [
 ]
 
 
+def as_text(value) -> str:
+    """Read a recipe field as text, treating anything that is not a string as absent.
+
+    `dict.get(key, "")` only applies the default when the key is missing. A field
+    written with no value after the colon is present and None, and a field written
+    as a list or mapping is present and the wrong type. Both reach string methods
+    and raise, which loses every other lint for the recipe.
+    """
+    return value if isinstance(value, str) else ""
+
+
 def get_section(parent, name, lints, recipe_version: int = 0):
     if recipe_version == 0:
         return get_meta_section(parent, name, lints)

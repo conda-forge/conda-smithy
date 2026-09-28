@@ -92,6 +92,7 @@ from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     EXPECTED_SECTION_ORDER,
     RATTLER_BUILD_TOOL,
+    as_text,
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
@@ -286,13 +287,19 @@ def lintify_meta_yaml(
         except RuntimeError:
             lints.append(
                 msg.r.InvalidLicenseFamily(
-                    license_family=meta["about"].get("license_family", ""),
+                    license_family=(meta.get("about") or {}).get("license_family", ""),
                     allowed_license_families=allowed_license_families,
                 ).as_string()
             )
+        except (AttributeError, TypeError):
+            # conda-build assumes `about` and its fields are well formed, so an
+            # empty section or a license written as a list reaches string methods
+            # inside it. The shape is already reported by the section and about
+            # lints, so there is nothing to add here beyond not dying.
+            pass
 
     # 12a: License family must be valid (conda-build checks for that)
-    license = about_section.get("license", "").lower()
+    license = as_text(about_section.get("license")).lower()
     lint_license_family_should_be_valid(
         about_section, license, NEEDED_FAMILIES, lints, recipe_version
     )
@@ -672,7 +679,7 @@ def run_conda_forge_specific(
     if recipe_version == 1:
         recipe_name = conda_recipe_v1_linter.get_recipe_name(meta)
     else:
-        recipe_name = package_section.get("name", "").strip()
+        recipe_name = as_text(package_section.get("name")).strip()
     is_staged_recipes = recipe_dirname != "recipe"
 
     # 1: Check that the recipe does not exist in conda-forge or bioconda

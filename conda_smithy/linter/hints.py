@@ -17,6 +17,7 @@ from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
+    as_text,
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
@@ -193,7 +194,7 @@ def _spdx_license_list_data() -> tuple[set[str], set[str]]:
 def hint_check_spdx(about_section, hints):
     import license_expression
 
-    license = about_section.get("license", "")
+    license = as_text(about_section.get("license"))
     licensing = license_expression.Licensing()
     parsed_exceptions = []
     try:
