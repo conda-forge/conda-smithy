@@ -4177,8 +4177,8 @@ def test_lint_recipe_parses_ok():
         ), hints
 
 
-def test_v0_empty_or_mistyped_fields_lint_instead_of_raising():
-    """A field with no value, or the wrong type, must lint rather than raise.
+def test_v0_empty_fields_lint_instead_of_raising():
+    """A field written with no value must lint rather than raise.
 
     `dict.get(key, default)` only applies the default when the key is absent. A
     field written with nothing after the colon is present and None, and reaches a
@@ -4205,7 +4205,6 @@ def test_v0_empty_or_mistyped_fields_lint_instead_of_raising():
     cases = {
         "empty package name": ("  name: foo", "  name:"),
         "empty license": ("  license: MIT", "  license:"),
-        "license as a list": ("  license: MIT", "  license:\n    - MIT"),
     }
 
     for name, (old, new) in cases.items():

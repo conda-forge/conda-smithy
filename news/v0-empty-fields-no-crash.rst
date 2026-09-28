@@ -4,8 +4,7 @@
 
 **Changed:**
 
-* An ``about`` item that is present but not text, such as a license written as a
-  list, is now treated as missing rather than accepted.
+* <news item>
 
 **Deprecated:**
 
@@ -17,9 +16,9 @@
 
 **Fixed:**
 
-* The linter no longer raises on a v0 field written with no value after the colon,
-  or with a list or mapping where text was expected. It used to lose every other
-  lint for the recipe, so the author saw only that the linting service had failed.
+* The linter no longer raises on a v0 ``about`` or ``package`` field written with
+  no value after the colon. It used to lose every other lint for the recipe, so
+  the author saw only that the linting service had failed.
 
 **Security:**
 
