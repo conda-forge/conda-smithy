@@ -3723,3 +3723,21 @@ def test_namespace_pagefile_label(py_recipe, jinja_env):
         "namespace-profile-8cpu-on-linux-64;container.privileged=true;container.mount-scratch=true"
         in labels
     )
+
+
+def test_get_migrations_in_dir_timestamp_formats(tmp_path):
+    """The same instant is the same migration, however it is written."""
+    for name, ts in [
+        ("epoch", "1790912420"),
+        ("zulu", "2026-10-02T03:40:20Z"),
+        ("offset", "2026-10-01T23:40:20-04:00"),
+    ]:
+        d = tmp_path / name
+        d.mkdir()
+        (d / "zlib.yaml").write_text(f"migrator_ts: {ts}\nzlib:\n  - 1001\n")
+
+    keys = [
+        set(configure_feedstock.get_migrations_in_dir(str(tmp_path / name)))
+        for name in ("epoch", "zulu", "offset")
+    ]
+    assert keys[0] == keys[1] == keys[2] == {("zlib.yaml", 1790912420.0)}

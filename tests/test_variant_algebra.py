@@ -3,7 +3,11 @@ from textwrap import dedent
 
 import pytest
 
-from conda_smithy.variant_algebra import parse_variant, variant_add
+from conda_smithy.variant_algebra import (
+    parse_migrator_ts,
+    parse_variant,
+    variant_add,
+)
 
 tv1 = parse_variant("""\
 foo:
@@ -820,3 +824,50 @@ def test_variant_remove_add(platform, arch):
         ]
     else:
         raise RuntimeError("Should have a check")
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        1790912420,
+        1790912420.0,
+        "1790912420",
+        "1790912420.0",
+        "2026-10-02T03:40:20Z",
+        "2026-10-02T03:40:20+00:00",
+        "2026-10-01T23:40:20-04:00",
+        "2026-10-02T09:10:20+05:30",
+        "2026-10-02 03:40:20Z",
+    ],
+)
+def test_parse_migrator_ts(value):
+    assert parse_migrator_ts(value) == 1790912420.0
+
+
+def test_parse_migrator_ts_fractional_seconds():
+    assert parse_migrator_ts("2026-10-02T03:40:20.5Z") == 1790912420.5
+    assert parse_migrator_ts("1790912420.5") == 1790912420.5
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        # no UTC offset: which instant this is depends on who reads it
+        "2026-10-02T03:40:20",
+        "2026-10-02",
+        "not a timestamp",
+    ],
+)
+def test_parse_migrator_ts_invalid(value):
+    with pytest.raises(ValueError):
+        parse_migrator_ts(value)
+
+
+def test_parse_variant_iso_migrator_ts():
+    variant = parse_variant(dedent("""\
+    migrator_ts: 2026-10-02T03:40:20Z
+    foo:
+        - 1.10
+    """))
+    assert variant["migrator_ts"] == 1790912420.0
+    assert variant["foo"] == ["1.10"]

@@ -3183,13 +3183,19 @@ def get_migrations_in_dir(migrations_root):
     Given a directory, return the migrations as a mapping
     from the (filename, timestamp) to (full_path, migration_number, use_local)
     """
+    from conda_smithy.variant_algebra import parse_migrator_ts
+
     res = {}
     for full_path in glob.glob(os.path.join(migrations_root, "*.yaml")):
         with open(full_path, encoding="utf-8") as f:
             contents = f.read()
             migration_yaml = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
-            # Use a object as timestamp to not delete it
-            ts = migration_yaml.get("migrator_ts", object())
+            if "migrator_ts" in migration_yaml:
+                # Normalize, so that the same instant matches across formats
+                ts = parse_migrator_ts(migration_yaml["migrator_ts"])
+            else:
+                # Use a object as timestamp to not delete it
+                ts = object()
             migration_number = migration_yaml.get("__migrator", {}).get(
                 "migration_number", 1
             )
