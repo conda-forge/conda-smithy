@@ -263,8 +263,131 @@ jobs:
         fi
         echo "status=$STATUS" >> $GITHUB_OUTPUT
 
+    - name: Prepare conda build artifacts
+      continue-on-error: true
+      id: prepare-artifacts
+      shell: bash
+      # we do not want to trigger artefact creation if the build was cancelled
+      if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' }}{% endraw %}
+      env:
+        CI: github_actions
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
+        CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
+        CONFIG_SHORT: {% raw %}${{ matrix.CONFIG_SHORT }}{% endraw %}
+        JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
+        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
+        OS: {% raw %}${{ matrix.os }}{% endraw %}
+        STORE_BUILD_ARTIFACTS: {% raw %}${{ matrix.STORE_BUILD_ARTIFACTS }}{% endraw %}
+      run: |
+        export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
+        export CI_RUN_ID=$GITHUB_RUN_ID
+        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
+        export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
+        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
+        # Archive everything in CONDA_BLD_PATH except environments
+        # Archive the CONDA_BLD_PATH environments only when the job fails
+        # Use different prefix for successful and failed build artifacts
+        # so random failures don't prevent rebuilds from creating artifacts.
+        if [ $JOB_STATUS == "failure" ]; then
+          if [[ ${STORE_BUILD_ARTIFACTS} == True ]]; then
+            export BLD_ARTIFACT_PREFIX="conda_pkgs_failed"
+            export ENV_ARTIFACT_PREFIX="conda_envs"
+            export WRK_ARTIFACT_PREFIX="conda_work"
+          else
+            exit 0
+          fi
+        else
+          export BLD_ARTIFACT_PREFIX="conda_pkgs"
+        fi
+        if [ $OS == "windows" ]; then
+          pwsh -Command ". '.scripts/create_conda_build_artifacts.bat'"
+        else
+          ./.scripts/create_conda_build_artifacts.sh
+        fi
+
+    - name: Store conda build artifacts
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH != '' }}{% endraw %}
+      with:
+        name: {% raw %}${{ github.run_id }}_${{ github.run_number }}_packages_${{ matrix.CONFIG }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH }}{% endraw %}
+        retention-days: {{ github_actions.artifact_retention_days }}
+        #archive: false
+      continue-on-error: true
+
+{%- if vars.store_build_artifacts %}
+    - name: Store conda work directory artifacts
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.WRK_ARTIFACT_PATH != '' }}{% endraw %}
+      with:
+        name: {% raw %}${{ steps.prepare-artifacts.outputs.WRK_ARTIFACT_NAME }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.WRK_ARTIFACT_PATH }}{% endraw %}
+        retention-days: {{ github_actions.artifact_retention_days }}
+        archive: false
+      continue-on-error: true
+
+    - name: Store conda build environment artifacts
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      # only relevant if build failed, see above
+      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH != '' }}{% endraw %}
+      with:
+        name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}
+        path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
+        retention-days: {{ github_actions.artifact_retention_days }}
+        archive: false
+      continue-on-error: true
+{%- endif %}
+
+  upload:
+    name: {% raw %}${{ matrix.CONFIG }}-upload{% endraw %}
+    needs: build
+    runs-on: {% raw %}${{ matrix.runs_on }}{% endraw %}
+    timeout-minutes: {{ github_actions.timeout_minutes }}
+    strategy:
+      fail-fast: false
+      {%- if github_actions.max_parallel %}
+      max-parallel: {{ github_actions.max_parallel }}
+      {%- endif %}
+      matrix:
+        include:
+        {%- for data in configs %}
+          - CONFIG: {{ data.config_name }}
+        {%- if data.store_build_artifacts %}
+            CONFIG_SHORT: {{ data.config_name_short }}
+        {%- endif %}
+        {%- if data.build_platform.startswith("linux") %}
+            DOCKER_IMAGE: {{ data.config["docker_image"][-1] }}
+        {%- endif %}
+            STORE_BUILD_ARTIFACTS: {{ data.store_build_artifacts is true }}
+            UPLOAD_PACKAGES: {{ data.upload }}
+        {%- if data.build_platform.startswith("win") %}
+            build_platform: {{ data.build_platform }}
+        {%- endif %}
+            build_workspace_dir: {{ data.build_workspace_dir }}
+            docker_run_args: {{ data.docker_run_args }}
+            free_disk_space: {{ data.free_disk_space }}
+            os: {{ data.gha_os }}
+            pagefile_size: {{ data.pagefile_size }}
+            resize_partitions: {{ data.resize_partitions }}
+            runs_on: {{ data.gha_runs_on }}
+            tools_install_dir: {{ data.tools_install_dir }}
+        {%- endfor %}
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+{%- if clone_depth is not none %}
+      with:
+        fetch-depth: {{ clone_depth }}
+{%- endif %}
+
+    - name: Download conda build artifacts
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: {% raw %}${{ github.run_id }}_${{ github.run_number }}_packages_${{ matrix.CONFIG }}{% endraw %}
+
     - name: Upload packages
-      if: {% raw %}${{ always() && steps.determine-status.outputs.status == 'success' && matrix.UPLOAD_PACKAGES && github.event_name != 'pull_request' }}{% endraw %}
+      if: {% raw %}${{ matrix.UPLOAD_PACKAGES && github.event_name != 'pull_request' }}{% endraw %}
       shell: bash
       env:
         CI: github_actions
@@ -288,73 +411,3 @@ jobs:
         export remote_url="https://github.com/$GITHUB_REPOSITORY"
         export sha="$GITHUB_SHA"
         ./.scripts/run_docker_build.sh upload.sh
-
-{%- if vars.store_build_artifacts %}
-    - name: Prepare conda build artifacts
-      continue-on-error: true
-      id: prepare-artifacts
-      shell: bash
-      # we do not want to trigger artefact creation if the build was cancelled
-      if: {% raw %}${{ always() && steps.determine-status.outputs.status != 'cancelled' && matrix.STORE_BUILD_ARTIFACTS }}{% endraw %}
-      env:
-        CI: github_actions
-        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
-        CONFIG: {% raw %}${{ matrix.CONFIG }}{% endraw %}
-        CONFIG_SHORT: {% raw %}${{ matrix.CONFIG_SHORT }}{% endraw %}
-        JOB_STATUS: {% raw %}${{ steps.determine-status.outputs.status }}{% endraw %}
-        MINIFORGE_HOME: {% raw %}${{ matrix.tools_install_dir }}{% endraw %}
-        OS: {% raw %}${{ matrix.os }}{% endraw %}
-      run: |
-        export ARTIFACT_STAGING_DIR="$GITHUB_WORKSPACE"
-        export CI_RUN_ID=$GITHUB_RUN_ID
-        export CONDA_BLD_PATH="${CONDA_BLD_PATH/#~/${HOME}}"
-        export FEEDSTOCK_NAME="$(basename $GITHUB_REPOSITORY)"
-        export MINIFORGE_HOME="${MINIFORGE_HOME/#~/${HOME}}"
-        # Archive everything in CONDA_BLD_PATH except environments
-        # Archive the CONDA_BLD_PATH environments only when the job fails
-        # Use different prefix for successful and failed build artifacts
-        # so random failures don't prevent rebuilds from creating artifacts.
-        if [ $JOB_STATUS == "failure" ]; then
-          export BLD_ARTIFACT_PREFIX="conda_pkgs_failed"
-          export ENV_ARTIFACT_PREFIX="conda_envs"
-          export WRK_ARTIFACT_PREFIX="conda_work"
-        else
-          export BLD_ARTIFACT_PREFIX="conda_pkgs"
-        fi
-        if [ $OS == "windows" ]; then
-          pwsh -Command ". '.scripts/create_conda_build_artifacts.bat'"
-        else
-          ./.scripts/create_conda_build_artifacts.sh
-        fi
-
-    - name: Store conda build artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH != '' }}{% endraw %}
-      with:
-        name: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_NAME }}{% endraw %}
-        path: {% raw %}${{ steps.prepare-artifacts.outputs.BLD_ARTIFACT_PATH }}{% endraw %}
-        retention-days: {{ github_actions.artifact_retention_days }}
-        archive: false
-      continue-on-error: true
-
-    - name: Store conda work directory artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.WRK_ARTIFACT_PATH != '' }}{% endraw %}
-      with:
-        name: {% raw %}${{ steps.prepare-artifacts.outputs.WRK_ARTIFACT_NAME }}{% endraw %}
-        path: {% raw %}${{ steps.prepare-artifacts.outputs.WRK_ARTIFACT_PATH }}{% endraw %}
-        retention-days: {{ github_actions.artifact_retention_days }}
-        archive: false
-      continue-on-error: true
-
-    - name: Store conda build environment artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      # only relevant if build failed, see above
-      if: {% raw %}${{ always() && steps.prepare-artifacts.outcome == 'success' && steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH != '' }}{% endraw %}
-      with:
-        name: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_NAME }}{% endraw %}
-        path: {% raw %}${{ steps.prepare-artifacts.outputs.ENV_ARTIFACT_PATH }}{% endraw %}
-        retention-days: {{ github_actions.artifact_retention_days }}
-        archive: false
-      continue-on-error: true
-{%- endif %}
