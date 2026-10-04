@@ -871,3 +871,18 @@ def test_parse_variant_iso_migrator_ts():
     """))
     assert variant["migrator_ts"] == 1790912420.0
     assert variant["foo"] == ["1.10"]
+
+
+def test_parse_migrator_ts_mixed_formats():
+    # migrations are ordered by timestamp, whichever way each one is written
+    epoch = parse_migrator_ts("1790912420")
+    one_hour_later = parse_migrator_ts("2026-10-02T04:40:20Z")
+    half_hour_later = parse_migrator_ts("2026-10-02T00:10:20-04:00")
+
+    assert one_hour_later - epoch == 3600
+    assert half_hour_later - epoch == 1800
+    assert sorted([one_hour_later, epoch, half_hour_later]) == [
+        epoch,
+        half_hour_later,
+        one_hour_later,
+    ]
