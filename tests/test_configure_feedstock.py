@@ -3723,3 +3723,48 @@ def test_namespace_pagefile_label(py_recipe, jinja_env):
         "namespace-profile-8cpu-on-linux-64;container.privileged=true;container.mount-scratch=true"
         in labels
     )
+
+
+def test_channel_priority_passed_to_rattler_build_only(py_recipe, jinja_env):
+    """channel_priority reaches ``rattler-build build`` verbatim, and only there.
+
+    rattler-build uses its own resolver and does not read conda's condarc, so the
+    ``conda config --env --set channel_priority`` translation conda-build relies on
+    (in conda-forge-ci-setup) has no effect on a v1 recipe. conda-smithy must pass the
+    value explicitly as ``--channel-priority`` on the ``rattler-build build`` command.
+
+    Two invariants are locked in here:
+
+    * The value is passed **as-is**, not remapped. ``flexible`` is used precisely
+      because rattler-build does not (yet) accept it: conda-smithy should forward it
+      faithfully and let rattler-build decide, rather than silently rewriting it to
+      ``disabled`` (which would become a latent bug the day rattler-build gains a
+      flexible mode).
+    * The flag is emitted **only** for rattler-build. conda-build already consumes
+      ``channel_priority`` from conda-forge.yml via conda-forge-ci-setup, so a
+      ``--channel-priority`` argument there would be redundant (and conda-build does
+      not accept it).
+    """
+    config = copy.deepcopy(py_recipe.config)
+    config["channel_priority"] = "flexible"
+    config["provider"]["linux_64"] = "github_actions"
+
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=py_recipe.recipe,
+    )
+
+    build_steps = Path(py_recipe.recipe, ".scripts", "build_steps.sh").read_text()
+
+    if config.get("conda_build_tool") == "rattler-build":
+        assert "rattler-build build" in build_steps
+        assert "--channel-priority flexible" in build_steps, (
+            "the rattler-build invocation must carry channel_priority from "
+            "conda-forge.yml, passed through verbatim"
+        )
+    else:
+        assert "--channel-priority" not in build_steps, (
+            "conda-build reads channel_priority from conda-forge.yml itself; "
+            "conda-smithy must not add a redundant --channel-priority flag"
+        )
