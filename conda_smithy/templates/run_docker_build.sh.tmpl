@@ -86,6 +86,7 @@ VOLUME_SUFFIX=",z"
 if [ "${DOCKER_EXECUTABLE}" = "podman" ]; then
     # Fix file permissions for rootless podman builds
     podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${ARTIFACTS}"
+    podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${FEEDSTOCK_ROOT}"
     podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${RECIPE_ROOT}"
 
     # Add SELinux label only if enforcing
