@@ -760,22 +760,21 @@ choco:
     )
 
 
-@pytest.fixture(scope="function")
-def cuda_enabled_recipe(config_yaml: ConfigYAML):
+def _gpu_enabled_recipe(config_yaml: ConfigYAML, recipes_subdir: str):
     with open(
         os.path.join(config_yaml.workdir, "recipe", config_yaml.recipe_name),
         "w",
     ) as fh:
-        cuda_recipe_path = os.path.abspath(
+        recipe_path = os.path.abspath(
             os.path.join(
                 __file__,
                 "../",
                 "recipes",
-                "cuda_recipes",
+                recipes_subdir,
                 config_yaml.recipe_name,
             )
         )
-        content = Path(cuda_recipe_path).read_text()
+        content = Path(recipe_path).read_text()
         fh.write(content)
 
     return RecipeConfigPair(
@@ -787,6 +786,21 @@ def cuda_enabled_recipe(config_yaml: ConfigYAML):
             ),
         ),
     )
+
+
+@pytest.fixture(
+    scope="function",
+    params=[
+        ("cuda_recipes", "CF_CUDA_ENABLED"),
+        ("hip_recipes", "CF_HIP_ENABLED"),
+    ],
+    ids=["cuda", "hip"],
+)
+def gpu_enabled_recipe(config_yaml: ConfigYAML, request):
+    """A recipe using a GPU compiler, together with the environment variable
+    that conda-smithy is expected to set for it."""
+    recipes_subdir, env_var = request.param
+    return _gpu_enabled_recipe(config_yaml, recipes_subdir), env_var
 
 
 @pytest.fixture(scope="function")

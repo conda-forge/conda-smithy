@@ -1151,37 +1151,38 @@ def test_cos7_env_render(py_recipe, jinja_env):
                 del os.environ["DEFAULT_LINUX_VERSION"]
 
 
-def test_cuda_enabled_render(cuda_enabled_recipe, jinja_env):
-    forge_config = copy.deepcopy(cuda_enabled_recipe.config)
-    old_val = os.environ.get("CF_CUDA_ENABLED")
+def test_gpu_compiler_enabled_render(gpu_enabled_recipe, jinja_env):
+    gpu_enabled_recipe, env_var = gpu_enabled_recipe
+    forge_config = copy.deepcopy(gpu_enabled_recipe.config)
+    old_val = os.environ.get(env_var)
     if old_val is not None:
-        del os.environ["CF_CUDA_ENABLED"]
+        del os.environ[env_var]
 
     try:
-        assert "CF_CUDA_ENABLED" not in os.environ
+        assert env_var not in os.environ
         default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
         for provider in default_providers:
             render_func = getattr(configure_feedstock, f"render_{provider}")
             render_func(
                 jinja_env=jinja_env,
                 forge_config=forge_config,
-                forge_dir=cuda_enabled_recipe.recipe,
+                forge_dir=gpu_enabled_recipe.recipe,
             )
-            assert os.environ["CF_CUDA_ENABLED"] == "True"
+            assert os.environ[env_var] == "True"
 
             # this configuration should be run
             assert forge_config[provider]["enabled"]
-        matrix_dir = os.path.join(cuda_enabled_recipe.recipe, ".ci_support")
+        matrix_dir = os.path.join(gpu_enabled_recipe.recipe, ".ci_support")
         assert os.path.isdir(matrix_dir)
         # single matrix entry - readme is generated later in main function
         assert len(os.listdir(matrix_dir)) == 6
 
     finally:
         if old_val is not None:
-            os.environ["CF_CUDA_ENABLED"] = old_val
+            os.environ[env_var] = old_val
         else:
-            if "CF_CUDA_ENABLED" in os.environ:
-                del os.environ["CF_CUDA_ENABLED"]
+            if env_var in os.environ:
+                del os.environ[env_var]
 
 
 def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
