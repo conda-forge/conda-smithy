@@ -77,6 +77,7 @@ from conda_smithy.linter.lints import (
     lint_recipe_maintainers,
     lint_recipe_name,
     lint_recipe_v1_noarch_and_runtime_dependencies,
+    lint_redundant_platform_definitions,
     lint_require_lower_bound_on_python_version,
     lint_rust_licenses_are_bundled,
     lint_section_order,
@@ -934,6 +935,9 @@ def run_conda_forge_specific(
 
     # 19: Check for missing feedstock-name (if necessary).
     lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
+
+    # 20: Lint redundant platform definitions
+    lint_redundant_platform_definitions(feedstock_config, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):
