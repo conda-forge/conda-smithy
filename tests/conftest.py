@@ -540,6 +540,21 @@ zlib:
 
 
 @pytest.fixture(scope="function")
+def recipe_migration_with_channel_sources(py_recipe):
+    migrations_dir = Path(py_recipe.recipe) / ".ci_support" / "migrations"
+    migrations_dir.mkdir(parents=True)
+    migration_file = migrations_dir / "channel_sources.yaml"
+    migration_file.write_text(
+        "migrator_ts: 1\n"
+        "channel_sources:\n"
+        "    - conda-forge\n"
+        "    - conda-forge/label/python_rc\n"
+    )
+
+    return py_recipe
+
+
+@pytest.fixture(scope="function")
 def recipe_migration_cfep9_downgrade(config_yaml: ConfigYAML, recipe_migration_cfep9):
     # write a downgrade migrator that lives next to the current migrator.
     # Only this, more recent migrator should apply.
