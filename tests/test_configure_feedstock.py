@@ -360,6 +360,139 @@ def test_no_python_min_if_not_present(py_recipe, jinja_env, caplog, request):
         assert all(not re.match(r"^python_min:.*", x) for x in lines)
 
 
+def _render_v1_recipe_ci_support(config_yaml, jinja_env, recipe_text, variant_config):
+    """Render a v1 recipe and return the content of its .ci_support files"""
+    recipe_dir = os.path.join(config_yaml.workdir, "recipe")
+    with open(os.path.join(recipe_dir, config_yaml.recipe_name), "w") as f:
+        f.write(textwrap.dedent(recipe_text))
+    config_file = os.path.join(recipe_dir, "default_config.yaml")
+    with open(config_file, "a") as f:
+        yaml.dump(variant_config, f, default_flow_style=False)
+
+    render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
+    render_func(
+        jinja_env=jinja_env,
+        forge_config=configure_feedstock._load_forge_config(
+            config_yaml.workdir, exclusive_config_file=config_file
+        ),
+        forge_dir=config_yaml.workdir,
+    )
+    matrix_dir = os.path.join(config_yaml.workdir, ".ci_support")
+    ci_support = {}
+    for file in os.listdir(matrix_dir):
+        with open(os.path.join(matrix_dir, file)) as f:
+            ci_support[file] = yaml.safe_load(f)
+    assert ci_support
+    return ci_support
+
+
+@pytest.mark.parametrize("ignore_keys", [True, False])
+def test_ignore_keys_kept_in_ci_support(config_yaml, jinja_env, ignore_keys):
+    if config_yaml.type != "rattler-build":
+        pytest.skip("build.variant.ignore_keys only exists for v1 recipes")
+    # rattler-build removes ignored keys from the variant of the rendered recipe,
+    # but they are still needed to render the recipe at build time
+    build_section = """\
+        build:
+          variant:
+            ignore_keys:
+              - cran_mirror
+              - not_in_variant_config
+    """
+    recipe_text = f"""\
+        package:
+          name: ignore-keys-test
+          version: 1.0.0
+        source:
+          url: ${{{{ cran_mirror }}}}/src/contrib/ignore-keys-test_1.0.0.tar.gz
+          sha256: 0000000000000000000000000000000000000000000000000000000000000000
+{build_section if ignore_keys else ""}
+        requirements:
+          host:
+            - python
+          run:
+            - python
+    """
+    ci_support = _render_v1_recipe_ci_support(
+        config_yaml,
+        jinja_env,
+        recipe_text,
+        {"cran_mirror": ["https://cloud.r-project.org"]},
+    )
+    for config in ci_support.values():
+        assert config["cran_mirror"] == ["https://cloud.r-project.org"]
+        assert "not_in_variant_config" not in config
+
+
+def test_ignore_keys_multiple_values(config_yaml, jinja_env):
+    if config_yaml.type != "rattler-build":
+        pytest.skip("build.variant.ignore_keys only exists for v1 recipes")
+    recipe_text = """\
+        package:
+          name: ignore-keys-test
+          version: 1.0.0
+        source:
+          url: ${{ cran_mirror }}/src/contrib/ignore-keys-test_1.0.0.tar.gz
+          sha256: 0000000000000000000000000000000000000000000000000000000000000000
+        build:
+          variant:
+            ignore_keys:
+              - cran_mirror
+        requirements:
+          host:
+            - python
+          run:
+            - python
+    """
+    ci_support = _render_v1_recipe_ci_support(
+        config_yaml,
+        jinja_env,
+        recipe_text,
+        {"cran_mirror": ["https://cloud.r-project.org", "https://cran.r-project.org"]},
+    )
+    # an ignored key must not multiply the CI matrix, which is one job per python
+    # for each of linux and win
+    assert len(ci_support) == 4
+    for config in ci_support.values():
+        # rattler-build also only uses the first value of an ignored key
+        assert config["cran_mirror"] == ["https://cloud.r-project.org"]
+
+
+def test_ignore_keys_in_one_output(config_yaml, jinja_env):
+    if config_yaml.type != "rattler-build":
+        pytest.skip("build.variant.ignore_keys only exists for v1 recipes")
+    recipe_text = """\
+        recipe:
+          name: ignore-keys-test
+          version: 1.0.0
+        outputs:
+          - package:
+              name: ignore-keys-test-source
+            source:
+              url: ${{ cran_mirror }}/src/contrib/ignore-keys-test_1.0.0.tar.gz
+              sha256: 0000000000000000000000000000000000000000000000000000000000000000
+            build:
+              variant:
+                ignore_keys:
+                  - cran_mirror
+          - package:
+              name: ignore-keys-test-python
+            requirements:
+              host:
+                - python
+              run:
+                - python
+    """
+    ci_support = _render_v1_recipe_ci_support(
+        config_yaml,
+        jinja_env,
+        recipe_text,
+        {"cran_mirror": ["https://cloud.r-project.org"]},
+    )
+    for config in ci_support.values():
+        assert config["cran_mirror"] == ["https://cloud.r-project.org"]
+
+
 def test_abi3_bools(py_abi3_recipe, jinja_env, caplog, request):
     with caplog.at_level(logging.WARNING):
         render_func = getattr(configure_feedstock, f"render_{DEFAULT_PROVIDER}")
