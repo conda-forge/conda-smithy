@@ -87,6 +87,7 @@ from conda_smithy.linter.lints import (
     lint_stdlib,
     lint_subheaders,
     lint_usage_of_legacy_patterns,
+    lint_v1_malformed_sections,
 )
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
@@ -305,6 +306,10 @@ def lintify_meta_yaml(
             package_section,
             lints,
         )
+
+    # 13b: Report v1 sections that had to be skipped for their shape
+    if recipe_version == 1:
+        lint_v1_malformed_sections(meta, lints)
 
     # 14: Run conda-forge specific lints
     if conda_forge:
@@ -733,6 +738,9 @@ def run_conda_forge_specific(
         all_reqs = flatten_v1_if_else(all_reqs)
 
     for rq in all_reqs:
+        # A malformed conditional can flatten to None or to a mapping.
+        if not isinstance(rq, str):
+            continue
         dep = rq.split(" ")[0].strip()
         dep_hint = specific_hints.get(dep)
         if dep_hint:

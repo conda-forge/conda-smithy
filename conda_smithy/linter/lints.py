@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal, Optional
 from urllib.parse import urlsplit
 
@@ -929,6 +929,53 @@ def lint_stdlib(
     to_check = all_run_reqs_flat + all_contraints_flat
     if any(req.startswith("__osx >") for req in to_check):
         msg.r.StdlibMacOS(recipe_version=recipe_version).append_if_absent(lints)
+
+
+def lint_v1_malformed_sections(meta: dict[str, Any], lints: list[str]) -> None:
+    """Report v1 sections the linter had to skip because of their shape.
+
+    The guards in `flatten_v1_if_else` and `get_all_test_requirements` stop these
+    from raising, which would otherwise lose every other lint for the recipe. This
+    reports what was skipped so the author still learns what is wrong, since
+    rattler-build will not read those sections either.
+    """
+    tests = meta.get("tests")
+    if tests is not None:
+        if not isinstance(tests, list):
+            msg.r.MalformedSectionV1(
+                section="tests",
+                detail="expected a list of test elements",
+            ).append_if_absent(lints)
+        else:
+            for element in tests:
+                if not isinstance(element, Mapping):
+                    msg.r.MalformedSectionV1(
+                        section="tests",
+                        detail=f"`{element}` is not a test element mapping",
+                    ).append_if_absent(lints)
+                    break
+
+    requirements = meta.get("requirements")
+    if isinstance(requirements, Mapping):
+        for name, entries in requirements.items():
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if not isinstance(entry, Mapping):
+                    continue
+                if "if" in entry and "then" not in entry:
+                    msg.r.MalformedSectionV1(
+                        section=f"requirements.{name}",
+                        detail="an `if` has no `then`",
+                    ).append_if_absent(lints)
+                    break
+                if "if" not in entry:
+                    key = next(iter(entry), "?")
+                    msg.r.MalformedSectionV1(
+                        section=f"requirements.{name}",
+                        detail=f"`{key}` is a mapping but not an `if`/`then` conditional",
+                    ).append_if_absent(lints)
+                    break
 
 
 def lint_recipe_is_parsable(
