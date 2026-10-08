@@ -733,12 +733,13 @@ def _collapse_subpackage_variants(
         # future MPI variants have to be added here
         if "mpi" in all_used_vars:
             all_used_vars.update(["mpich", "openmpi", "msmpi", "mpi_serial", "impi"])
-        # rattler-build removes the keys listed under `build.variant.ignore_keys` of a
-        # v1 recipe from the variant of the rendered recipe, so they are not reported by
-        # `get_used_vars`, but they are still needed to render the recipe at build time
-        all_used_vars.update(
-            meta.get_section("build").get("variant", {}).get("ignore_keys", [])
-        )
+        # keys that a recipe excludes from the hash of the build string are not reported
+        # by `get_used_vars`, but they are still needed to render the recipe at build
+        # time; these are `build.force_ignore_keys` for conda-build recipes and
+        # `build.variant.ignore_keys` for rattler-build recipes
+        build_section = meta.get_section("build")
+        all_used_vars.update(build_section.get("force_ignore_keys", []))
+        all_used_vars.update(build_section.get("variant", {}).get("ignore_keys", []))
         all_variants.update(HashableDict(v) for v in meta.config.variants)
 
         all_variants.add(HashableDict(meta.config.variant))
