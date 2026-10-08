@@ -322,6 +322,7 @@ def lint_recipe_v1_noarch_and_runtime_dependencies(
     noarch_platforms: bool,
     lints: list[str],
     meta: Optional[dict[str, Any]] = None,
+    conda_build_config_keys: Optional[set[str]] = None,
 ) -> None:
     # Only run this test if noarch_value is a literal
     # Skip if it's a jinja conditional as it's expected to be not noarch depending on the context
@@ -332,6 +333,7 @@ def lint_recipe_v1_noarch_and_runtime_dependencies(
             build_section,
             noarch_platforms,
             lints,
+            conda_build_config_keys,
         )
 
 
