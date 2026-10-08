@@ -4177,6 +4177,69 @@ def test_lint_recipe_parses_ok():
         ), hints
 
 
+def test_v0_empty_fields_lint_instead_of_raising():
+    """A field written with no value must lint rather than raise.
+
+    `dict.get(key, default)` only applies the default when the key is absent. A
+    field written with nothing after the colon is present and None, and reaches a
+    string method. The raise loses every other lint for the recipe.
+    """
+    base = """
+        package:
+          name: foo
+          version: "1.0"
+        build:
+          number: 0
+        test:
+          imports:
+            - foo
+        about:
+          home: https://example.com
+          license: MIT
+          license_file: LICENSE
+          summary: s
+        extra:
+          recipe-maintainers:
+            - a
+        """
+    cases = {
+        "empty package name": ("  name: foo", "  name:"),
+        "empty license": ("  license: MIT", "  license:"),
+    }
+
+    for name, (old, new) in cases.items():
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+                f.write(textwrap.dedent(base).replace(old, new))
+            with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+                f.write("MIT\n")
+            lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+            assert lints, (name, "expected a lint, got none")
+
+    for section in ("about", "extra"):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            body = textwrap.dedent(base)
+            head, _, _ = body.partition(f"{section}:")
+            with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+                f.write(head + f"{section}:\n")
+            with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+                f.write("MIT\n")
+            lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+            assert any("expected to be a dictionary" in lint for lint in lints), (
+                section,
+                lints,
+            )
+
+    # A well formed recipe still draws nothing.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
+            f.write(textwrap.dedent(base))
+        with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+            f.write("MIT\n")
+        lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not lints, lints
+
+
 def test_lint_recipe_parses_forblock():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
