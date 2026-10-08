@@ -1908,10 +1908,13 @@ def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
 
 
 def _get_workflow_support_files(data, platform):
-    support_files = []
     script_suffix = ".bat" if platform == "win" else ".sh"
-    if data["store_build_artifacts"]:
-        support_files.append(f".scripts/create_conda_build_artifacts{script_suffix}")
+    support_files = [
+        f".scripts/create_conda_build_artifacts{script_suffix}",
+        # TODO: Windows
+        ".scripts/build_common.sh",
+        ".scripts/upload.sh",
+    ]
     if data["pagefile_size"] != 0 and platform in ("linux", "win"):
         support_files.append(f".scripts/create_pagefile{script_suffix}")
         if platform == "win":
@@ -3162,6 +3165,8 @@ def clear_scripts(forge_dir):
             "create_pagefile.sh",
             "SetPageFileSize.ps1",
             "free_disk_space.sh",
+            "build_common.sh",
+            "upload.sh",
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 
