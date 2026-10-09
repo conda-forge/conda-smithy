@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Mark all files except ``recipe/`` and ``conda-forge.yml`` as ``linguist-generated`` in the feedstock's ``.gitattributes``. (#XXXX)
+* Mark all files except ``recipe/`` and ``conda-forge.yml`` as ``linguist-generated`` in the feedstock's ``.gitattributes``. (#2718)
 
 **Deprecated:**
 
