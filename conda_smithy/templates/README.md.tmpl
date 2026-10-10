@@ -48,7 +48,6 @@ Documentation: {{ about.doc_url }}
 {% endfor %}
 Current build status
 ====================
-{%- set appveyor_url_name = github.repo_name.replace('_', '-').replace('.', '-') %}
 {%- set shield = "https://img.shields.io/" %}
 {#  Due to github's markdown rendering within tables being a bit shaky, we have to fall back to an HTML table here since we wish
   to use a <details> tag.  Markdown rendering within html tables is weird and only works if you make EVERYTHING a paragraph which
@@ -57,16 +56,7 @@ Current build status
 
 <table>
 {%- if noarch_python -%}
-  {%- if circle.enabled -%}
-  <tr>
-    <td>All platforms:</td>
-    <td>
-      <a href="https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}">
-        <img src="{{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=noarch">
-      </a>
-    </td>
-  </tr>
-  {%- elif github_actions.enabled -%}
+  {%- if github_actions.enabled -%}
   <tr>
     <td>All platforms:</td>
     <td>
@@ -97,46 +87,6 @@ Current build status
   </tr>
   {%- endif -%}
 {%- else -%}
-  {%- if circle.enabled -%}
-  <tr>
-    <td>CircleCI</td>
-    <td>
-      <a href="https://circleci.com/gh/{{ github.user_or_org }}/{{ github.repo_name }}">
-        <img alt="{{ circle.platforms }}" src="{{ shield }}circleci/project/github/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label={{ circle.platforms }}">
-      </a>
-    </td>
-  </tr>
-  {%- endif -%}
-  {%- if travis.enabled -%}
-  <tr>
-    <td>Travis</td>
-    <td>
-      <a href="https://app.travis-ci.com/{{ github.user_or_org }}/{{ github.repo_name }}">
-        <img alt="linux" src="{{ shield }}travis/com/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=Linux">
-      </a>
-    </td>
-  </tr>
-  {%- endif -%}
-  {%- if drone.enabled -%}
-  <tr>
-    <td>Drone</td>
-    <td>
-      <a href="https://cloud.drone.io/{{ github.user_or_org }}/{{ github.repo_name }}">
-        <img alt="linux" src="{{ shield }}drone/build/{{ github.user_or_org }}/{{ github.repo_name }}/{{ github.branch_name }}.svg?label=Linux">
-      </a>
-    </td>
-  </tr>
-  {%- endif -%}
-  {%- if appveyor.enabled -%}
-  <tr>
-    <td>Appveyor</td>
-    <td>
-      <a href="https://ci.appveyor.com/project/{{ github.user_or_org }}/{{ appveyor_url_name }}/branch/{{ github.branch_name }}">
-        <img alt="windows" src="{{ shield }}appveyor/ci/{{ github.user_or_org }}/{{ appveyor_url_name }}/{{ github.branch_name }}.svg?label=Windows">
-      </a>
-    </td>
-  </tr>
-  {%- endif -%}
   {%- if github_actions.enabled -%}
   <tr>
     <td>GitHub Actions</td>
@@ -334,9 +284,7 @@ for each of the installable packages. Such a repository is known as a *feedstock
 A feedstock is made up of a conda recipe (the instructions on what and how to build
 the package) and the necessary configurations for automatic building using freely
 available continuous integration services. Thanks to the awesome service provided by
-[Azure](https://azure.microsoft.com/en-us/services/devops/), [GitHub](https://github.com/),
-[CircleCI](https://circleci.com/), [AppVeyor](https://www.appveyor.com/),
-[Drone](https://cloud.drone.io/welcome), and [TravisCI](https://travis-ci.com/)
+[Azure](https://azure.microsoft.com/en-us/services/devops/) and [GitHub](https://github.com/)
 it is possible to build and upload installable packages to the
 [conda-forge](https://anaconda.org/conda-forge) [anaconda.org](https://anaconda.org/)
 channel for Linux, Windows and OSX respectively.

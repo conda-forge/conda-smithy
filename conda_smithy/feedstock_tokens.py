@@ -34,11 +34,9 @@ from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
 
 import pygit2
-import requests
 import scrypt
 from conda_build.utils import create_file_with_permissions
 
-from conda_smithy.deprecations import deprecated
 from conda_smithy.utils import file_permissions
 
 
@@ -462,13 +460,9 @@ def register_feedstock_token_with_providers(
     user,
     project,
     *,
-    drone=True,
-    circle=True,
-    travis=True,
     azure=True,
     github_actions=True,
     clobber=True,
-    drone_endpoints=(),
     unique_token_per_provider=False,
 ):
     """Register the feedstock token with provider CI services.
@@ -485,9 +479,7 @@ def register_feedstock_token_with_providers(
     """
     # we are swallong all of the logs below, so we do a test import here
     # to generate the proper errors for missing tokens
-    from .ci_register import travis_endpoint  # noqa
     from .azure_ci_utils import default_config  # noqa
-    from conda_smithy.ci_register import drone_default_endpoint
 
     def _register_token(user, project, clobber, provider, func, args=None):
         args = args or tuple()
@@ -519,39 +511,9 @@ def register_feedstock_token_with_providers(
     # capture stdout, stderr and suppress all exceptions so we don't
     # spill tokens
     failed = False
-    drone_endpoints = drone_endpoints or [drone_default_endpoint]
 
     with _secure_io():
         try:
-            if circle:
-                _register_token(
-                    user,
-                    project,
-                    clobber,
-                    "circle",
-                    add_feedstock_token_to_circle,
-                )
-
-            if drone:
-                for drone_endpoint in drone_endpoints:
-                    _register_token(
-                        user,
-                        project,
-                        clobber,
-                        "drone",
-                        add_feedstock_token_to_drone,
-                        args=(drone_endpoint,),
-                    )
-
-            if travis:
-                _register_token(
-                    user,
-                    project,
-                    clobber,
-                    "travis",
-                    add_feedstock_token_to_travis,
-                )
-
             if azure:
                 _register_token(
                     user,
@@ -582,147 +544,6 @@ def register_feedstock_token_with_providers(
             " Try the command locally with DEBUG_FEEDSTOCK_TOKENS"
             " defined in the environment to investigate!"
         )
-
-
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="CircleCI is deprecated, see #2627",
-)
-def add_feedstock_token_to_circle(user, project, feedstock_token, clobber):
-    from conda_smithy.ci_register import circle_token
-
-    url_template = (
-        "https://circleci.com/api/v1.1/project/github/{user}/{project}/envvar{extra}?"
-        "circle-token={token}"
-    )
-
-    r = requests.get(
-        url_template.format(token=circle_token, user=user, project=project, extra="")
-    )
-    if r.status_code != 200:
-        r.raise_for_status()
-
-    have_feedstock_token = False
-    for evar in r.json():
-        if evar["name"] == "FEEDSTOCK_TOKEN":
-            have_feedstock_token = True
-
-    if have_feedstock_token and clobber:
-        r = requests.delete(
-            url_template.format(
-                token=circle_token,
-                user=user,
-                project=project,
-                extra="/FEEDSTOCK_TOKEN",
-            )
-        )
-        if r.status_code != 200:
-            r.raise_for_status()
-
-    if not have_feedstock_token or (have_feedstock_token and clobber):
-        data = {"name": "FEEDSTOCK_TOKEN", "value": feedstock_token}
-        response = requests.post(
-            url_template.format(
-                token=circle_token, user=user, project=project, extra=""
-            ),
-            data,
-        )
-        if response.status_code != 201:
-            raise ValueError(response)
-
-
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="Drone is deprecated, see #2627",
-)
-def add_feedstock_token_to_drone(
-    user, project, feedstock_token, clobber, drone_endpoint
-):
-    from conda_smithy.ci_register import drone_session
-
-    session = drone_session(drone_endpoint)
-
-    r = session.get(f"/api/repos/{user}/{project}/secrets")
-    r.raise_for_status()
-    have_feedstock_token = False
-    for secret in r.json():
-        if "FEEDSTOCK_TOKEN" == secret["name"]:
-            have_feedstock_token = True
-
-    if have_feedstock_token and clobber:
-        r = session.patch(
-            f"/api/repos/{user}/{project}/secrets/FEEDSTOCK_TOKEN",
-            json={"data": feedstock_token, "pull_request": False},
-        )
-        r.raise_for_status()
-    elif not have_feedstock_token:
-        response = session.post(
-            f"/api/repos/{user}/{project}/secrets",
-            json={
-                "name": "FEEDSTOCK_TOKEN",
-                "data": feedstock_token,
-                "pull_request": False,
-            },
-        )
-        if response.status_code != 200:
-            response.raise_for_status()
-
-
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="Travis is deprecated, see #2627",
-)
-def add_feedstock_token_to_travis(user, project, feedstock_token, clobber):
-    """Add the FEEDSTOCK_TOKEN to travis."""
-    from conda_smithy.ci_register import (
-        travis_endpoint,
-        travis_get_repo_info,
-        travis_headers,
-    )
-
-    headers = travis_headers()
-
-    repo_info = travis_get_repo_info(user, project)
-    repo_id = repo_info["id"]
-
-    r = requests.get(
-        f"{travis_endpoint}/repo/{repo_id}/env_vars",
-        headers=headers,
-    )
-    if r.status_code != 200:
-        r.raise_for_status()
-
-    have_feedstock_token = False
-    ev_id = None
-    for ev in r.json()["env_vars"]:
-        if ev["name"] == "FEEDSTOCK_TOKEN":
-            have_feedstock_token = True
-            ev_id = ev["id"]
-
-    data = {
-        "env_var.name": "FEEDSTOCK_TOKEN",
-        "env_var.value": feedstock_token,
-        "env_var.public": "false",
-    }
-
-    if have_feedstock_token and clobber:
-        r = requests.patch(
-            f"{travis_endpoint}/repo/{repo_id}/env_var/{ev_id}",
-            headers=headers,
-            json=data,
-        )
-        r.raise_for_status()
-    elif not have_feedstock_token:
-        r = requests.post(
-            f"{travis_endpoint}/repo/{repo_id}/env_vars",
-            headers=headers,
-            json=data,
-        )
-        if r.status_code != 201:
-            r.raise_for_status()
 
 
 def add_feedstock_token_to_azure(user, project, feedstock_token, clobber):

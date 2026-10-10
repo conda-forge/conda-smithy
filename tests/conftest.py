@@ -89,13 +89,6 @@ def config_yaml(testing_workdir, recipe_dirname, request):
         # need selectors, so write these more manually
         f.write(config_text)
 
-    # dummy file that needs to be present for circle ci.  This is created by the init function
-    os.makedirs(os.path.join(testing_workdir, ".circleci"))
-    with open(
-        os.path.join(testing_workdir, ".circleci", "checkout_merge_commit.sh"),
-        "w",
-    ) as f:
-        f.write("echo dummy file")
     with open(
         os.path.join(testing_workdir, recipe_dirname, "short_config.yaml"), "w"
     ) as f:
