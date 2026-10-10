@@ -4,7 +4,6 @@ import os
 import subprocess
 import sys
 import tempfile
-import time
 from textwrap import dedent
 from typing import Optional, Union
 
@@ -21,7 +20,6 @@ from conda_smithy.configure_feedstock import (
     _load_forge_config,
     get_cached_cfp_file_path,
 )
-from conda_smithy.deprecations import deprecated
 from conda_smithy.utils import (
     CONDA_BUILD,
     RATTLER_BUILD,
@@ -220,13 +218,8 @@ class RegisterCI(Subcommand):
     subcommand = "register-ci"
     ci_names = (
         "Azure",
-        "Travis",
-        "Circle",
-        "Appveyor",
-        "Drone",
         "Webservice",
         "Cirun",
-        "Cirrus-Runners",
         "Blacksmith",
         "Namespace",
         "Depot",
@@ -287,11 +280,6 @@ class RegisterCI(Subcommand):
             dest="anaconda_token",
             action="store_false",
             help="If set, no anaconda token will be registered with the CI providers.",
-        )
-        scp.add_argument(
-            "--drone-endpoints",
-            action="append",
-            help="drone server URL to register this repo. multiple values allowed",
         )
         scp.add_argument(
             "--cirun-teams",
@@ -362,9 +350,6 @@ class RegisterCI(Subcommand):
         if args.remove and any(
             [
                 args.azure,
-                args.circle,
-                args.appveyor,
-                args.drone,
                 args.webservice,
                 args.anaconda_token,
             ]
@@ -378,31 +363,6 @@ class RegisterCI(Subcommand):
                 "`upload_packages: False` per provider field in"
                 "conda-forge.yml to disable package uploads."
             )
-        if args.travis:
-            deprecated.topic(
-                "2026.8", "2026.10", addendum="Travis CI is deprecated. See #2627."
-            )
-            # Assume that the user has enabled travis-ci.com service
-            # user-wide or org-wide for all repos
-            # ci_register.add_project_to_travis(owner, repo)
-            time.sleep(1)
-            ci_register.travis_configure(owner, repo)
-            if args.anaconda_token:
-                ci_register.add_token_to_travis(owner, repo)
-            # Assume that the user has enabled travis-ci.com service
-            # user-wide or org-wide for all repos
-            # ci_register.travis_cleanup(owner, repo)
-        else:
-            print("Travis registration disabled.")
-        if args.circle:
-            deprecated.topic(
-                "2026.8", "2026.10", addendum="Circle CI is deprecated. See #2627."
-            )
-            ci_register.add_project_to_circle(owner, repo)
-            if args.anaconda_token:
-                ci_register.add_token_to_circle(owner, repo)
-        else:
-            print("Circle registration disabled.")
         if args.azure:
             from conda_smithy import azure_ci_utils
 
@@ -415,38 +375,6 @@ class RegisterCI(Subcommand):
             ci_register.add_project_to_azure(owner, repo)
         else:
             print("Azure registration disabled.")
-        if args.appveyor:
-            deprecated.topic(
-                "2026.8", "2026.10", addendum="Appveyor CI is deprecated. See #2627."
-            )
-            ci_register.add_project_to_appveyor(owner, repo)
-            if args.anaconda_token:
-                ci_register.appveyor_encrypt_binstar_token(
-                    args.feedstock_config, owner, repo
-                )
-            ci_register.appveyor_configure(owner, repo)
-        else:
-            print("Appveyor registration disabled.")
-
-        if args.drone:
-            deprecated.topic(
-                "2026.8", "2026.10", addendum="Drone CI is deprecated. See #2627."
-            )
-            from conda_smithy.ci_register import drone_default_endpoint
-
-            drone_endpoints = args.drone_endpoints
-            if drone_endpoints is None:
-                drone_endpoints = [drone_default_endpoint]
-            for drone_endpoint in drone_endpoints:
-                ci_register.add_project_to_drone(
-                    owner, repo, drone_endpoint=drone_endpoint
-                )
-                if args.anaconda_token:
-                    ci_register.add_token_to_drone(
-                        owner, repo, drone_endpoint=drone_endpoint
-                    )
-        else:
-            print("Drone registration disabled.")
 
         if args.cirun:
             print("Cirun Registration")
@@ -475,13 +403,6 @@ class RegisterCI(Subcommand):
                 )
         else:
             print("Cirun registration disabled.")
-
-        if args.cirrus_runners:
-            deprecated.topic(
-                "2026.8",
-                "2026.10",
-                addendum="Cirrus Runners CI is deprecated. See #2627.",
-            )
 
         if args.blacksmith:
             if args.remove:
@@ -807,9 +728,6 @@ class GenerateFeedstockToken(Subcommand):
     subcommand = "generate-feedstock-token"
     ci_names = (
         "Azure",
-        "Travis",
-        "Circle",
-        "Drone",
         "Github-Actions",
     )
 
@@ -868,9 +786,6 @@ class RegisterFeedstockToken(Subcommand):
     subcommand = "register-feedstock-token"
     ci_names = (
         "Azure",
-        "Travis",
-        "Circle",
-        "Drone",
         "Github-Actions",
     )
 
@@ -946,22 +861,11 @@ class RegisterFeedstockToken(Subcommand):
             help="If set, none of the CI providers are registered and need to be enabled individually.",
         )
 
-        scp.add_argument(
-            "--drone-endpoints",
-            action="append",
-            help="drone server URL to register this repo. multiple values allowed",
-        )
-
     def __call__(self, args):
-        from conda_smithy.ci_register import drone_default_endpoint
         from conda_smithy.feedstock_tokens import (
             register_feedstock_token,
             register_feedstock_token_with_providers,
         )
-
-        drone_endpoints = args.drone_endpoints
-        if drone_endpoints is None:
-            drone_endpoints = [drone_default_endpoint]
 
         owner = args.user or args.organization
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
@@ -984,12 +888,8 @@ class RegisterFeedstockToken(Subcommand):
         register_feedstock_token_with_providers(
             owner,
             repo,
-            drone=args.drone,
-            circle=args.circle,
-            travis=args.travis,
             azure=args.azure,
             github_actions=args.github_actions,
-            drone_endpoints=drone_endpoints,
             unique_token_per_provider=args.unique_token_per_provider,
         )
 
@@ -1030,10 +930,6 @@ class UpdateAnacondaToken(Subcommand):
     ]
     ci_names = (
         "Azure",
-        "Travis",
-        "Circle",
-        "Drone",
-        "Appveyor",
         "Github-Actions",
     )
 
@@ -1093,11 +989,6 @@ class UpdateAnacondaToken(Subcommand):
             action="store_false",
             help="If set, none of the CI providers are registered and need to be enabled individually.",
         )
-        scp.add_argument(
-            "--drone-endpoints",
-            action="append",
-            help="drone server URL to register this repo. multiple values allowed",
-        )
 
     def __call__(self, args):
         from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
@@ -1111,11 +1002,6 @@ class UpdateAnacondaToken(Subcommand):
             )
 
         print("Updating the anaconda/binstar token. Can take up to ~30 seconds.")
-        from conda_smithy.ci_register import drone_default_endpoint
-
-        drone_endpoints = args.drone_endpoints
-        if drone_endpoints is None:
-            drone_endpoints = [drone_default_endpoint]
 
         for ci in self.ci_names:
             if getattr(args, ci.lower().replace("-", "_")) is None:
@@ -1126,28 +1012,15 @@ class UpdateAnacondaToken(Subcommand):
             owner,
             repo,
             args.feedstock_config,
-            drone=args.drone,
-            circle=args.circle,
-            travis=args.travis,
             azure=args.azure,
-            appveyor=args.appveyor,
             github_actions=args.github_actions,
             token_name=args.token_name,
-            drone_endpoints=drone_endpoints,
         )
 
         print(
             f"Successfully updated the anaconda/binstar token for "
             f"{args.feedstock_directory}!"
         )
-        if args.appveyor:
-            deprecated.topic(
-                "2026.8", "2026.10", addendum="Travis CI is deprecated. See #2627."
-            )
-            print(
-                "Appveyor tokens are stored in the repo so you must commit the "
-                "local changes and push them before the new token will be used!"
-            )
 
 
 if __name__ == "__main__":

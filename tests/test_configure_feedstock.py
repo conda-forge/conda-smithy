@@ -35,49 +35,8 @@ def test_platforms_populated():
     all_platforms = configure_feedstock.ALL_PLATFORMS
     assert sorted(all_platforms) == sorted(configure_feedstock.FANCY_PLATFORM_NAMES)
     assert sorted(all_platforms) == sorted(configure_feedstock.DEFAULT_PROVIDERS)
-    assert sorted(all_platforms) == sorted(configure_feedstock.NATIVE_CI_PROVIDER)
+    assert set(configure_feedstock.NATIVE_CI_PROVIDER).issubset(all_platforms)
     assert set(configure_feedstock.DEFAULT_PLATFORMS).issubset(all_platforms)
-
-
-def test_noarch_skips_appveyor(noarch_recipe, jinja_env):
-    noarch_recipe.config["provider"]["win"] = "appveyor"
-    configure_feedstock.render_appveyor(
-        jinja_env=jinja_env,
-        forge_config=noarch_recipe.config,
-        forge_dir=noarch_recipe.recipe,
-    )
-    # this configuration should be skipped
-    assert not noarch_recipe.config["appveyor"]["enabled"]
-    assert not os.path.isdir(os.path.join(noarch_recipe.recipe, ".ci_support"))
-
-
-def test_noarch_skips_travis(noarch_recipe, jinja_env):
-    configure_feedstock.render_travis(
-        jinja_env=jinja_env,
-        forge_config=noarch_recipe.config,
-        forge_dir=noarch_recipe.recipe,
-    )
-    # this configuration should be skipped
-    assert not noarch_recipe.config["travis"]["enabled"]
-    assert not os.path.isdir(os.path.join(noarch_recipe.recipe, ".ci_support"))
-
-
-@pytest.mark.legacy_circle
-def test_noarch_runs_on_circle(noarch_recipe, jinja_env):
-    noarch_recipe.config["provider"]["linux"] = "circle"
-
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env,
-        forge_config=noarch_recipe.config,
-        forge_dir=noarch_recipe.recipe,
-    )
-
-    # this configuration should be run
-    assert noarch_recipe.config["circle"]["enabled"]
-    matrix_dir = os.path.join(noarch_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
-    # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 1
 
 
 @pytest.mark.parametrize("recipe_dirname", ["recipe", "custom_recipe_dir"])
@@ -100,52 +59,6 @@ def test_noarch_runs_on_default(noarch_recipe, jinja_env):
     assert len(os.listdir(matrix_dir)) == 1
 
 
-def test_r_skips_appveyor(r_recipe, jinja_env):
-    r_recipe.config["provider"]["win"] = "appveyor"
-    configure_feedstock.render_appveyor(
-        jinja_env=jinja_env,
-        forge_config=r_recipe.config,
-        forge_dir=r_recipe.recipe,
-    )
-    # this configuration should be skipped
-    assert not r_recipe.config["appveyor"]["enabled"]
-    assert not os.path.isdir(os.path.join(r_recipe.recipe, ".ci_support"))
-
-
-@pytest.mark.legacy_travis
-def test_r_matrix_travis(r_recipe, jinja_env):
-    r_recipe.config["provider"]["osx"] = "travis"
-
-    configure_feedstock.render_travis(
-        jinja_env=jinja_env,
-        forge_config=r_recipe.config,
-        forge_dir=r_recipe.recipe,
-    )
-    # this configuration should be run
-    assert r_recipe.config["travis"]["enabled"]
-    matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
-    # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
-
-
-@pytest.mark.legacy_circle
-def test_r_matrix_on_circle(r_recipe, jinja_env):
-    r_recipe.config["provider"]["linux"] = "circle"
-
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env,
-        forge_config=r_recipe.config,
-        forge_dir=r_recipe.recipe,
-    )
-    # this configuration should be run
-    assert r_recipe.config["circle"]["enabled"]
-    matrix_dir = os.path.join(r_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
-    # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
-
-
 def test_r_matrix_default(r_recipe, jinja_env):
     default_providers = sorted({prov for _, prov in DEFAULT_PROVIDERS.items()})
     for provider in default_providers:
@@ -161,56 +74,6 @@ def test_r_matrix_default(r_recipe, jinja_env):
     assert os.path.isdir(matrix_dir)
     # single matrix entry - readme is generated later in main function
     assert len(os.listdir(matrix_dir)) == 4
-
-
-def test_py_matrix_appveyor(py_recipe, jinja_env):
-    py_recipe.config["provider"]["win"] = "appveyor"
-    configure_feedstock.render_appveyor(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    # this configuration should be skipped
-    assert py_recipe.config["appveyor"]["enabled"]
-    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
-    # 2 python versions. Recipe uses c_compiler, but this is a zipped key
-    #     and shouldn't add extra configurations
-    assert len(os.listdir(matrix_dir)) == 2
-
-
-@pytest.mark.legacy_travis
-def test_py_matrix_travis(py_recipe, jinja_env):
-    py_recipe.config["provider"]["osx"] = "travis"
-
-    configure_feedstock.render_travis(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    # this configuration should be run
-    assert py_recipe.config["travis"]["enabled"]
-    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
-    # two matrix enties - one per py ver
-    assert len(os.listdir(matrix_dir)) == 2
-
-
-@pytest.mark.legacy_circle
-def test_py_matrix_on_circle(py_recipe, jinja_env):
-    py_recipe.config["provider"]["linux"] = "circle"
-
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-    # this configuration should be run
-    assert py_recipe.config["circle"]["enabled"]
-    matrix_dir = os.path.join(py_recipe.recipe, ".ci_support")
-    assert os.path.isdir(matrix_dir)
-    # single matrix entry - readme is generated later in main function
-    assert len(os.listdir(matrix_dir)) == 2
 
 
 def test_py_matrix_on_github(py_recipe, jinja_env):
@@ -499,52 +362,6 @@ def test_upload_on_branch_github_actions(upload_on_branch_recipe, jinja_env):
     assert r"%GITHUB_REF_NAME%" in build_script_win
 
 
-def test_upload_on_branch_appveyor(upload_on_branch_recipe, jinja_env):
-    upload_on_branch_recipe.config["provider"]["win"] = "appveyor"
-    configure_feedstock.render_appveyor(
-        jinja_env=jinja_env,
-        forge_config=upload_on_branch_recipe.config,
-        forge_dir=upload_on_branch_recipe.recipe,
-    )
-    # Check that the parameter is in the configuration.
-    assert "upload_on_branch" in upload_on_branch_recipe.config
-    assert upload_on_branch_recipe.config["upload_on_branch"] == "foo-branch"
-
-    # Check that the parameter is in the generated file.
-    with open(os.path.join(upload_on_branch_recipe.recipe, ".appveyor.yml")) as fp:
-        content = yaml.safe_load(fp)
-    assert "%APPVEYOR_REPO_BRANCH%" in content["deploy_script"][0]
-    assert "UPLOAD_ON_BRANCH=foo-branch" in content["deploy_script"][-2]
-
-
-def test_circle_with_yum_reqs(py_recipe, jinja_env):
-    with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
-    ) as f:
-        f.write("nano\n")
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-
-
-@pytest.mark.legacy_circle
-def test_circle_with_empty_yum_reqs_raises(py_recipe, jinja_env):
-    py_recipe.config["provider"]["linux"] = "circle"
-
-    with open(
-        os.path.join(py_recipe.recipe, "recipe", "yum_requirements.txt"), "w"
-    ) as f:
-        f.write("# effectively empty")
-    with pytest.raises(ValueError):
-        configure_feedstock.render_circle(
-            jinja_env=jinja_env,
-            forge_config=py_recipe.config,
-            forge_dir=py_recipe.recipe,
-        )
-
-
 def test_azure_with_empty_yum_reqs_raises(py_recipe, jinja_env):
     py_recipe.config["provider"]["linux"] = "azure"
     with open(
@@ -573,85 +390,6 @@ def test_github_actions_with_empty_yum_reqs_raises(py_recipe, jinja_env):
         )
 
 
-@pytest.mark.legacy_circle
-@pytest.mark.legacy_travis
-def test_circle_osx(py_recipe, jinja_env):
-    # Set legacy providers
-    py_recipe.config["provider"]["osx"] = "travis"
-    py_recipe.config["provider"]["linux"] = "circle"
-
-    forge_dir = py_recipe.recipe
-    travis_yml_file = os.path.join(forge_dir, ".travis.yml")
-    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
-    circle_linux_file = os.path.join(forge_dir, ".scripts", "run_docker_build.sh")
-    circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
-
-    configure_feedstock.clear_scripts(forge_dir)
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=forge_dir
-    )
-    assert not os.path.exists(circle_osx_file)
-    assert os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
-    configure_feedstock.render_travis(
-        jinja_env=jinja_env, forge_config=py_recipe.config, forge_dir=forge_dir
-    )
-    assert os.path.exists(travis_yml_file)
-
-    configure_feedstock.clear_scripts(forge_dir)
-    config = copy.deepcopy(py_recipe.config)
-    config["provider"]["osx"] = "circle"
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
-    )
-    assert os.path.exists(circle_osx_file)
-    assert os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
-    configure_feedstock.render_travis(
-        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
-    )
-    assert not os.path.exists(travis_yml_file)
-
-    configure_feedstock.clear_scripts(forge_dir)
-    config = copy.deepcopy(py_recipe.config)
-    config["provider"]["linux"] = "dummy"
-    config["provider"]["osx"] = "circle"
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
-    )
-    assert os.path.exists(circle_osx_file)
-    assert not os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
-
-
-def test_circle_skipped(linux_skipped_recipe, jinja_env):
-    forge_dir = linux_skipped_recipe.recipe
-    circle_osx_file = os.path.join(forge_dir, ".scripts", "run_osx_build.sh")
-    circle_linux_file = os.path.join(forge_dir, ".scripts", "run_docker_build.sh")
-    circle_config_file = os.path.join(forge_dir, ".circleci", "config.yml")
-
-    config = copy.deepcopy(linux_skipped_recipe.config)
-    configure_feedstock.copy_feedstock_content(config, forge_dir)
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env,
-        forge_config=linux_skipped_recipe.config,
-        forge_dir=forge_dir,
-    )
-    assert not os.path.exists(circle_osx_file)
-    assert not os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
-
-    config["provider"]["osx"] = "circle"
-
-    configure_feedstock.copy_feedstock_content(config, forge_dir)
-    configure_feedstock.render_circle(
-        jinja_env=jinja_env, forge_config=config, forge_dir=forge_dir
-    )
-    assert os.path.exists(circle_osx_file)
-    assert not os.path.exists(circle_linux_file)
-    assert os.path.exists(circle_config_file)
-
-
 def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
     configure_feedstock.render_readme(
         jinja_env=jinja_env,
@@ -663,25 +401,6 @@ def test_render_with_all_skipped_generates_readme(skipped_recipe, jinja_env):
     with open(readme_path, "rb") as readme_file:
         content = readme_file.read()
     assert b"skip-test-meta" in content
-
-
-def test_render_windows_with_skipped_python(python_skipped_recipe, jinja_env):
-    config = python_skipped_recipe.config
-    config["provider"]["win"] = "appveyor"
-    config["exclusive_config_file"] = os.path.join(
-        python_skipped_recipe.recipe, "recipe", "long_config.yaml"
-    )
-    configure_feedstock.render_appveyor(
-        jinja_env=jinja_env,
-        forge_config=config,
-        forge_dir=python_skipped_recipe.recipe,
-    )
-    # this configuration should be enabled
-    assert python_skipped_recipe.config["appveyor"]["enabled"]
-
-    matrix_dir = os.path.join(python_skipped_recipe.recipe, ".ci_support")
-    # matrix has 2.7, 3.5, 3.6, but 3.6 is skipped.  Should be 2 entries.
-    assert len(os.listdir(matrix_dir)) == 2
 
 
 def test_readme_has_terminating_newline(noarch_recipe, jinja_env):
@@ -747,36 +466,18 @@ def test_secrets(py_recipe, jinja_env):
                 for step in config["steps"]
             )
 
-    py_recipe.config["provider"]["linux_aarch64"] = "drone"
-    configure_feedstock.render_drone(
-        jinja_env=jinja_env,
-        forge_config=py_recipe.config,
-        forge_dir=py_recipe.recipe,
-    )
-
-    with open(os.path.join(py_recipe.recipe, ".drone.yml")) as fo:
-        config = list(yaml.safe_load_all(fo))[-1]
-        assert any(
-            step.get("environment", {})
-            .get("BINSTAR_TOKEN", {})
-            .get("from_secret", None)
-            == "BINSTAR_TOKEN"
-            for step in config["steps"]
-        )
-
 
 @pytest.mark.parametrize("store_artifacts", ["false", "true"])
-@pytest.mark.parametrize("provider", ["azure", "github_actions", "drone", "travis"])
+@pytest.mark.parametrize("provider", ["azure", "github_actions"])
 def test_exec_bits_and_content(py_recipe, jinja_env, provider, store_artifacts):
     recipe_dir = py_recipe.recipe
     forge_yml = Path(recipe_dir, "conda-forge.yml")
     with open(forge_yml, "a") as f:
         f.write(textwrap.dedent(f"""\
             provider:
-              # travis intentionally not allowed for linux_64
               linux_aarch64: {provider}
-              osx_64: {provider if provider not in ["drone", "travis"] else "default"}
-              win_64: {provider if provider not in ["drone", "travis"] else "default"}
+              osx_64: {provider}
+              win_64: {provider}
             workflow_settings:
               store_build_artifacts: {store_artifacts}
         """))
