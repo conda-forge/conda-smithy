@@ -759,7 +759,7 @@
       "kind": "hint",
       "added_in": "<3.56",
       "deprecated_in": "",
-      "documentation": "The `license` field must be a valid SPDX identifier.\n\nSee list at [`licenses.txt`](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/licenses.txt).",
+      "documentation": "The `license` field must be a valid SPDX identifier.\n\nSee the [SPDX License List](https://spdx.org/licenses/), as shipped by the\n`spdx-license-list-data` conda package.",
       "message": "License is not an SPDX identifier (or a custom LicenseRef) nor an SPDX license expression.\n\nDocumentation on acceptable licenses can be found [conda-forge.org > Docs > Maintainer Documentation > Contributing packages > SPDX Identifiers and Expressions](https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions).",
       "examples": [],
       "path": "recipe/(meta|recipe).yaml"
@@ -771,7 +771,7 @@
       "kind": "hint",
       "added_in": "<3.56",
       "deprecated_in": "",
-      "documentation": "The `license` field may accept some SPDX exception expressions, as controlled\nin [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/license_exceptions.txt)",
+      "documentation": "The `license` field may accept some SPDX exception expressions, as controlled\nby the [SPDX exceptions list](https://spdx.org/licenses/exceptions-index.html),\nas shipped by the `spdx-license-list-data` conda package.",
       "message": "License exception is not an SPDX exception.\n\nDocumentation on acceptable licenses can be found [conda-forge.org > Docs > Maintainer Documentation > Contributing packages > SPDX Identifiers and Expressions](https://conda-forge.org/docs/maintainer/adding_pkgs.html#spdx-identifiers-and-expressions).",
       "examples": [],
       "path": "recipe/(meta|recipe).yaml"

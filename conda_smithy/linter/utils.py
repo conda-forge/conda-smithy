@@ -74,6 +74,7 @@ VALID_PYTHON_BUILD_BACKENDS = [
     "jupyter_packaging",
     "whey",
     "uv-build",
+    "pbr",
 ]
 
 

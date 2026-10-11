@@ -2514,6 +2514,23 @@ def test_github_actions_labels(py_recipe, jinja_env, label):
         raise AssertionError("Bad label? Check test parameters.")
 
 
+def test_native_provider_unavailable_raises(py_recipe, monkeypatch):
+    forge_dir = py_recipe.recipe
+    with open(Path(forge_dir, "conda-forge.yml"), "a") as f:
+        f.write("provider:\n  linux_riscv64: native\n")
+
+    # resolves normally while a native provider exists ...
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    assert config["provider"]["linux_riscv64"] == ["github_actions"]
+
+    # ... and errors out clearly when there is none
+    monkeypatch.setitem(configure_feedstock.NATIVE_CI_PROVIDER, "linux_riscv64", None)
+    with pytest.raises(RuntimeError, match="No native CI provider"):
+        configure_feedstock._load_forge_config(forge_dir, "recipe/default_config.yaml")
+
+
 @pytest.mark.parametrize("path", ["github_actions", "workflow_settings"])
 @pytest.mark.parametrize("value", [False, True])
 @pytest.mark.parametrize("add_old", [False, True])
@@ -3706,3 +3723,21 @@ def test_namespace_pagefile_label(py_recipe, jinja_env):
         "namespace-profile-8cpu-on-linux-64;container.privileged=true;container.mount-scratch=true"
         in labels
     )
+
+
+def test_get_migrations_in_dir_timestamp_formats(tmp_path):
+    """The same instant is the same migration, however it is written."""
+    for name, ts in [
+        ("epoch", "1790912420"),
+        ("zulu", "2026-10-02T03:40:20Z"),
+        ("offset", "2026-10-01T23:40:20-04:00"),
+    ]:
+        d = tmp_path / name
+        d.mkdir()
+        (d / "zlib.yaml").write_text(f"migrator_ts: {ts}\nzlib:\n  - 1001\n")
+
+    keys = [
+        set(configure_feedstock.get_migrations_in_dir(str(tmp_path / name)))
+        for name in ("epoch", "zulu", "offset")
+    ]
+    assert keys[0] == keys[1] == keys[2] == {("zlib.yaml", 1790912420.0)}
