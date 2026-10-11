@@ -1048,6 +1048,11 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
 
         config_name_short = config_name
         conf_hash = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:8]
+        # provide a shortened config name for convenience
+        # the choice of 50 was related to the limit on historically supported drone provider,
+        # see https://github.com/conda-forge/conda-smithy/issues/1188
+        if len(config_name_short) >= 49:
+            config_name_short = config_name[:40] + "_h" + conf_hash
         # we need to shorten long variant files to avoid hitting maximum path limits on win.
         # GHA is pretty much the worst offender here, as it will waste a lot of characters by
         # duplicating the repo name in a way that cannot be overridden (see #2476), e.g.
