@@ -6679,5 +6679,43 @@ def test_invalid_type_lint_message():
     )
 
 
+def test_redundant_build_platform_and_provider(tmp_path):
+    cfyml = tmp_path / "conda-forge.yml"
+    recipe_dir = tmp_path / "recipe"
+    recipe_dir.mkdir()
+    (recipe_dir / "meta.yaml").write_text(textwrap.dedent("""
+        package:
+          name: foo
+        """))
+
+    cfyml.write_text(textwrap.dedent(r"""
+        build_platform:
+          linux_64: linux_64
+          linux_aarch64: linux_64
+          osx_arm64: osx_64
+          win_arm64: win_64
+        provider:
+          linux_64: default
+          linux_aarch64: default
+          osx_arm64: github_actions
+          win_64: azure
+        """))
+
+    lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
+
+    expected = {
+        "Platform linux_64 specifies redundant build_platform=linux_64. Please "
+        "remove the unnecessary entry.",
+        "Platform linux_aarch64 specifies both build_platform=linux_64 and "
+        "provider=default. Use the former for cross-compilation or the latter "
+        "for native build.",
+        "Platform osx_arm64 specifies both build_platform=osx_64 and "
+        "provider=github_actions. Use the former for cross-compilation or the "
+        "latter for native build.",
+    }
+
+    assert {x for x in lints if x.startswith("Platform")} == expected
+
+
 if __name__ == "__main__":
     unittest.main()
