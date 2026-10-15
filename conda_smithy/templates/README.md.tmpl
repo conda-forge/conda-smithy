@@ -319,7 +319,25 @@ mamba repoquery depends {{ outputs[0] }} --channel {{ channel_with_label }}
 
 </details>
 
+{% if extras %}
+Optional Dependencies
+---------------------
+
+`{{ package_name }}-feedstock` defines the following [CEP-44] optional
+dependency groups:
+
+| Install | Optional Dependencies |
+| --- | --- |
+{%- for spec, deps in extras.items() | sort -%}
+{%- set spec_code = "`" ~ spec ~ "`" %}
+| `{{ spec }}` |{%- for ex in deps | unique | sort %} `{{ ex }}`{% endfor %} |
+{%- endfor %}
+
+[CEP-44]: https://github.com/conda/ceps/blob/main/cep-0044.md
+{% endif -%}
+
 {% if channel_name == 'conda-forge' %}
+
 About conda-forge
 =================
 
