@@ -13,6 +13,7 @@ https://github.com/conda-forge/conda-forge-enhancement-proposals/pull/13
 
 """
 
+from datetime import datetime
 from functools import partial
 from typing import Any, Optional, Union
 
@@ -22,6 +23,23 @@ import yaml
 from conda.exports import VersionOrder
 from conda_build.config import Config
 from conda_build.utils import ensure_list
+
+
+def parse_migrator_ts(value: Union[str, int, float]) -> float:
+    """Convert a ``migrator_ts`` value to seconds since the Unix epoch.
+
+    Accepts either a number of seconds since the epoch (``1790912420.569922``)
+    or an ISO 8601 date and time with an explicit UTC offset
+    (``2026-10-02T03:40:20Z``, ``2026-10-01T23:40:20-04:00``).
+    """
+    try:
+        return float(value)
+    except ValueError:
+        ts = datetime.fromisoformat(value)
+    if ts.tzinfo is None:
+        # would otherwise be read in the local timezone of whoever rerenders
+        raise ValueError(f"migrator_ts {value!r} must include a UTC offset")
+    return ts.timestamp()
 
 
 def parse_variant(variant_file_content: str, config: Optional[Config] = None) -> dict[
@@ -52,7 +70,7 @@ def parse_variant(variant_file_content: str, config: Optional[Config] = None) ->
     content = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
     variants.trim_empty_keys(content)
     # TODO: Base this default on mtime or something
-    content["migrator_ts"] = float(content.get("migrator_ts", -1.0))
+    content["migrator_ts"] = parse_migrator_ts(content.get("migrator_ts", -1.0))
     return content
 
 

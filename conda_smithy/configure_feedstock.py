@@ -2442,6 +2442,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             )
         )
     )
+    forge_config["extras"] = _get_unversioned_extras(metas)
 
     maintainers = sorted(
         set(
@@ -2490,6 +2491,31 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             fh.write(line)
     else:
         remove_file_or_dir(code_owners_file)
+
+
+def _get_unversioned_extras(metas):
+    extras = {}
+    for m in metas:
+        recipe = m.meta.get("recipe") if hasattr(m, "meta") else None
+        package = recipe.get("package") if recipe else None
+        if not (recipe and package):
+            continue
+        pkg_extras = recipe.get("requirements", {}).get("extras", {})
+        if not pkg_extras:
+            continue
+        pkg_name = package["name"]
+        for name, deps in pkg_extras.items():
+            spec = f"""{pkg_name}[extras={name}]"""
+            for dep in deps:
+                match = rattler.MatchSpec(dep)
+                dep_spec = f"{match.name.normalized}"
+                if match.extras:
+                    denorm_extra = ",".join(sorted(match.extras))
+                    if len(match.extras) > 1:
+                        denorm_extra = f"[{denorm_extra}]"
+                    dep_spec += f"""[extras={denorm_extra}]"""
+                extras.setdefault(spec, set()).add(dep_spec)
+    return extras
 
 
 def _get_skip_files(forge_config):
@@ -3183,13 +3209,19 @@ def get_migrations_in_dir(migrations_root):
     Given a directory, return the migrations as a mapping
     from the (filename, timestamp) to (full_path, migration_number, use_local)
     """
+    from conda_smithy.variant_algebra import parse_migrator_ts
+
     res = {}
     for full_path in glob.glob(os.path.join(migrations_root, "*.yaml")):
         with open(full_path, encoding="utf-8") as f:
             contents = f.read()
             migration_yaml = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
-            # Use a object as timestamp to not delete it
-            ts = migration_yaml.get("migrator_ts", object())
+            if "migrator_ts" in migration_yaml:
+                # Normalize, so that the same instant matches across formats
+                ts = parse_migrator_ts(migration_yaml["migrator_ts"])
+            else:
+                # Use a object as timestamp to not delete it
+                ts = object()
             migration_number = migration_yaml.get("__migrator", {}).get(
                 "migration_number", 1
             )
