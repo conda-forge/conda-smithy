@@ -129,8 +129,10 @@ EXCLUDE_FROM_WORK=(
 # Make the build artifact archive
 if [[ ! -z ${BLD_ARTIFACT_PREFIX} && -n ${ARTIFACT_PATHS} ]]; then
     echo "Creating build artifact archive ..."
-    export BLD_ARTIFACT_NAME="${BLD_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
-    export BLD_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${BLD_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
+    # Note: because of https://github.com/actions/upload-artifact/issues/785,
+    # *_ARTIFACT_NAME should be the filename of *_ARTIFACT_PATH
+    export BLD_ARTIFACT_NAME="${FEEDSTOCK_NAME}_${BLD_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
+    export BLD_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${BLD_ARTIFACT_NAME}"
 
     # All our CI services have either GNU tar or bsdtar, and zstd.
     # Keep the command compatible with both!
@@ -139,7 +141,7 @@ if [[ ! -z ${BLD_ARTIFACT_PREFIX} && -n ${ARTIFACT_PATHS} ]]; then
     then
         # If tar failed but produced a (partial?) file, upload it as "broken".
         mv -v "${BLD_ARTIFACT_PATH}" "${BLD_ARTIFACT_PATH/%.tar.zst/-broken&}"
-        BLD_ARTIFACT_NAME+=-broken
+        BLD_ARTIFACT_NAME=${BLD_ARTIFACT_NAME/%.tar.zst/-broken&}
         BLD_ARTIFACT_PATH=${BLD_ARTIFACT_PATH/%.tar.zst/-broken&}
     fi
 
@@ -165,8 +167,8 @@ echo
 # Make the workdir artifact archive
 if [[ ! -z ${WRK_ARTIFACT_PREFIX} ]]; then
     echo "Creating work directory archive ..."
-    export WRK_ARTIFACT_NAME="${WRK_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
-    export WRK_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${WRK_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
+    export WRK_ARTIFACT_NAME="${FEEDSTOCK_NAME}_${WRK_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
+    export WRK_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${WRK_ARTIFACT_NAME}"
 
     # All our CI services have either GNU tar or bsdtar, and zstd.
     # Keep the command compatible with both!
@@ -176,7 +178,7 @@ if [[ ! -z ${WRK_ARTIFACT_PREFIX} ]]; then
     then
         # If tar failed but produced a (partial?) file, upload it as "broken".
         mv -v "${WRK_ARTIFACT_PATH}" "${WRK_ARTIFACT_PATH/%.tar.zst/-broken&}"
-        WRK_ARTIFACT_NAME+=-broken
+        WRK_ARTIFACT_NAME=${WRK_ARTIFACT_NAME/%.tar.zst/-broken&}
         WRK_ARTIFACT_PATH=${WRK_ARTIFACT_PATH/%.tar.zst/-broken&}
     fi
 
@@ -202,15 +204,15 @@ echo
 # Make the environments artifact archive
 if [[ ! -z ${ENV_ARTIFACT_PREFIX} && -n ${ENVIRONMENT_PATHS[@]} ]]; then
     echo "Creating build environment artifact archive ..."
-    export ENV_ARTIFACT_NAME="${ENV_ARTIFACT_PREFIX}_${ARTIFACT_UNIQUE_ID}"
-    export ENV_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${FEEDSTOCK_NAME}_${ENV_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
+    export ENV_ARTIFACT_NAME="${FEEDSTOCK_NAME}_${ENV_ARTIFACT_PREFIX}_${ARCHIVE_UNIQUE_ID}.tar.zst"
+    export ENV_ARTIFACT_PATH="${ARTIFACT_STAGING_DIR}/${ENV_ARTIFACT_NAME}"
 
     if ! tar -c -f "${ENV_ARTIFACT_PATH}" "${ZSTD}" "${ENVIRONMENT_PATHS[@]}" &&
         [[ -s ${ENV_ARTIFACT_PATH} ]]
     then
         # If tar failed but produced a (partial?) file, upload it as "broken".
         mv -v "${ENV_ARTIFACT_PATH}" "${ENV_ARTIFACT_PATH/%.tar.zst/-broken&}"
-        ENV_ARTIFACT_NAME+=-broken
+        ENV_ARTIFACT_NAME=${ENV_ARTIFACT_NAME/%.tar.zst/-broken&}
         ENV_ARTIFACT_PATH=${ENV_ARTIFACT_PATH/%.tar.zst/-broken&}
     fi
 
