@@ -1,0 +1,37 @@
+schema_version: 1
+
+recipe:
+  name: multiple-outputs-extras
+  version: 0.0.0
+
+outputs:
+  - package:
+      name: a-simple-package
+  - package:
+      name: b-has-extras
+    requirements:
+      extras:
+        simple:
+          - a-simple-package
+  - package:
+      name: c-has-nested-extras
+    requirements:
+      extras:
+        simple:
+          - b-has-extras[extras=simple]
+        complex:
+          # intentionally unsorted
+          - d-something-else
+          - a-simple-package
+  - package:
+      name: e-has-more-nested-extras
+    requirements:
+      extras:
+        simple:
+          - b-has-extras[extras=simple]
+        extra-complex:
+          - c-has-nested-extras[extras=[simple,complex]] # intentionally unsorted
+          - a-simple-package
+
+extra:
+  feedstock-name: multiple-outputs-extras
