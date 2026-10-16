@@ -124,11 +124,9 @@ ${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
            -e GIT_BRANCH \
            -e GITHUB_ACTIONS \
            -e HOST_USER_ID \
-           -e IS_PR_BUILD \
            -e RATTLER_BUILD_COLOR \
            -e RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION \
            -e UPLOAD_ON_BRANCH \
-           -e UPLOAD_PACKAGES \
            -e flow_run_id \
            -e remote_url \
            -e sha \
@@ -137,10 +135,10 @@ ${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
 {%- endfor %}
            "${DOCKER_IMAGE}" \
            {{ docker.command }} \
-           "/home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh"
+           "/home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh" "$@"
 
 # verify that the end of the script was reached
 test -f "$DONE_CANARY"
 
 # This closes the last group opened in `build_steps.sh`
-( endgroup "Final checks" ) 2> /dev/null
+( endgroup "Leaving the Docker container" ) 2> /dev/null
