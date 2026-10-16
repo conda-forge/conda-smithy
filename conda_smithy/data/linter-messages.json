@@ -1071,6 +1071,18 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
+      "name": "MalformedSectionV1",
+      "identifier": "R1-009",
+      "category": "R1",
+      "kind": "lint",
+      "added_in": "<3.56",
+      "deprecated_in": "",
+      "documentation": "A section has a shape the linter cannot read, so it was skipped.",
+      "message": "The `${section}` section is malformed: ${detail}. It was skipped, so the rest of the recipe was still linted, but rattler-build will not read it either.",
+      "examples": [],
+      "path": "recipe/recipe.yaml"
+    },
+    {
       "name": "MacOSDeploymentTargetRename",
       "identifier": "RC-000",
       "category": "RC",

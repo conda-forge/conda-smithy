@@ -293,18 +293,26 @@ def get_global_pinning_python_min() -> Optional[str]:
 def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     flattened_requirements = []
     for req in requirements:
-        if isinstance(req, dict):
+        if isinstance(req, Mapping):
+            # A mapping that is not an `if`/`then` conditional, or one whose `then`
+            # is missing, is malformed. Skip it so the rest of the recipe still gets
+            # linted; raising here loses every other lint for the whole recipe.
+            if "then" not in req:
+                continue
+            then = req["then"]
             flattened_requirements.extend(
-                flatten_v1_if_else(req["then"])
-                if isinstance(req["then"], list)
-                else [req["then"]]
+                flatten_v1_if_else(then) if isinstance(then, list) else [then]
             )
+            otherwise = req.get("else", [])
             flattened_requirements.extend(
-                flatten_v1_if_else(req.get("else", []))
-                if isinstance(req.get("else", []), list)
-                else [req["else"]]
+                flatten_v1_if_else(otherwise)
+                if isinstance(otherwise, list)
+                else [otherwise]
             )
-        else:
+        elif req is not None:
+            # A conditional that resolves to nothing (an `if` with no `then`) is
+            # rendered as None. The declared return type is list[str], so drop it
+            # here rather than letting every consumer guard against None.
             flattened_requirements.append(req)
     return flattened_requirements
 
@@ -316,10 +324,15 @@ def get_all_test_requirements(
         test_section = get_section(meta, "tests", lints, recipe_version)
         test_reqs = []
         for test_element in test_section:
+            # `tests` written as a mapping, or an entry written as a bare string,
+            # both iterate to something without `.get`. Skip rather than raise.
+            if not isinstance(test_element, Mapping):
+                continue
             test_reqs += (test_element.get("requirements") or {}).get("run") or []
 
-            if "python" in test_element:
-                py_version = test_element["python"].get("python_version")
+            python_element = test_element.get("python")
+            if isinstance(python_element, Mapping):
+                py_version = python_element.get("python_version")
 
                 if isinstance(py_version, str):
                     py_version = [py_version]
