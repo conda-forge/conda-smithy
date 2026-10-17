@@ -170,9 +170,8 @@ def lint_usage_of_selectors_for_noarch(
     lints: list[str],
     conda_build_config_keys: Optional[set[str]] = None,
 ):
-    # Keys from conda_build_config.yaml are variants, not platform selectors, so a
-    # conditional on one does not make the package platform specific. The v0 path
-    # has allowed them since gh-1843; v1 never received them.
+    # cbc keys select a variant, not a platform, so allow them too. v0 has done
+    # this since gh-1843. See gh-2337.
     allowed_nouns = ({"win", "linux", "osx", "unix"} if noarch_platforms else set()) | (
         conda_build_config_keys or set()
     )
