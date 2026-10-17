@@ -15,8 +15,10 @@ export CONDA_BLD_PATH="${CONDA_BLD_PATH:-${MINIFORGE_HOME}/conda-bld}"
 ( startgroup "Provisioning base env with micromamba" ) 2> /dev/null
 MICROMAMBA_VERSION="2.9.0-0"
 if [[ "$(uname -m)" == "arm64" ]]; then
+  micromamba_sha256="ec2a072f028e1a7cf20f3e2e74d5a8127cf5a5f27636375b5359811565f4e5be"
   osx_arch="osx-arm64"
 else
+  micromamba_sha256="1e71054bb3ac9a076e21f7ec48acfef536f9b3f1408f371a942784bf5ef83d8a"
   osx_arch="osx-64"
 fi
 MICROMAMBA_URL="https://github.com/mamba-org/micromamba-releases/releases/download/${MICROMAMBA_VERSION}/micromamba-${osx_arch}"
@@ -24,6 +26,7 @@ MAMBA_ROOT_PREFIX="${MINIFORGE_HOME}-micromamba-$(date +%s)"
 echo "Downloading micromamba ${MICROMAMBA_VERSION}"
 micromamba_exe="$(mktemp -d)/micromamba"
 curl -L -o "${micromamba_exe}" "${MICROMAMBA_URL}"
+echo "${micromamba_sha256} *${micromamba_exe}" | shasum -a 256 -c
 chmod +x "${micromamba_exe}"
 echo "Creating environment"
 "${micromamba_exe}" create --yes --root-prefix "${MAMBA_ROOT_PREFIX}" --prefix "${MINIFORGE_HOME}" \
