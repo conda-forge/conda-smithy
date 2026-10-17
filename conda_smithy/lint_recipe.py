@@ -280,7 +280,10 @@ def lintify_meta_yaml(
     # 12: License family must be valid (conda-build checks for that)
     # we skip it for v1 builds as it will validate it
     # See more: https://prefix-dev.github.io/rattler-build/latest/reference/recipe_file/#about-section
-    if recipe_version == 0:
+    # `about_section` is empty when `about` is missing or not a mapping, which
+    # `get_section` has already linted. conda-build subscripts `meta["about"]`
+    # guarded only by `KeyError`, so passing it an empty section raises instead.
+    if recipe_version == 0 and about_section:
         try:
             ensure_valid_license_family(meta)
         except RuntimeError:
@@ -292,7 +295,7 @@ def lintify_meta_yaml(
             )
 
     # 12a: License family must be valid (conda-build checks for that)
-    license = about_section.get("license", "").lower()
+    license = (about_section.get("license") or "").lower()
     lint_license_family_should_be_valid(
         about_section, license, NEEDED_FAMILIES, lints, recipe_version
     )
@@ -672,7 +675,7 @@ def run_conda_forge_specific(
     if recipe_version == 1:
         recipe_name = conda_recipe_v1_linter.get_recipe_name(meta)
     else:
-        recipe_name = package_section.get("name", "").strip()
+        recipe_name = (package_section.get("name") or "").strip()
     is_staged_recipes = recipe_dirname != "recipe"
 
     # 1: Check that the recipe does not exist in conda-forge or bioconda

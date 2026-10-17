@@ -193,7 +193,7 @@ def _spdx_license_list_data() -> tuple[set[str], set[str]]:
 def hint_check_spdx(about_section, hints):
     import license_expression
 
-    license = about_section.get("license", "")
+    license = about_section.get("license") or ""
     licensing = license_expression.Licensing()
     parsed_exceptions = []
     try:
