@@ -224,6 +224,13 @@ class RegisterCI(Subcommand):
         "Namespace",
         "Depot",
     )
+    removed_ci_names = (
+        "Travis",
+        "Circle",
+        "Appveyor",
+        "Drone",
+        "Cirrus-Runners",
+    )
 
     def __init__(self, parser):
         # conda-smithy register-ci ./
@@ -314,6 +321,18 @@ class RegisterCI(Subcommand):
             action="store_true",
             help="Revoke access to the configured CI services. "
             "Only available for Cirun, Namespace and Blacksmith for now",
+        )
+
+        depr = scp.add_argument_group("Unused flags kept for backwards compatibility")
+        for ci in self.removed_ci_names:
+            depr.add_argument(
+                f"--without-{ci.lower()}",
+                action="store_const",
+                const=False,
+            )
+        depr.add_argument(
+            "--drone-endpoints",
+            action="append",
         )
 
     def __call__(self, args):
@@ -788,6 +807,11 @@ class RegisterFeedstockToken(Subcommand):
         "Azure",
         "Github-Actions",
     )
+    removed_ci_names = (
+        "Travis",
+        "Circle",
+        "Drone",
+    )
 
     def __init__(self, parser):
         # conda-smithy register-feedstock-token ./
@@ -861,6 +885,18 @@ class RegisterFeedstockToken(Subcommand):
             help="If set, none of the CI providers are registered and need to be enabled individually.",
         )
 
+        depr = scp.add_argument_group("Unused flags kept for backwards compatibility")
+        for ci in self.removed_ci_names:
+            depr.add_argument(
+                f"--without-{ci.lower()}",
+                action="store_const",
+                const=False,
+            )
+        depr.add_argument(
+            "--drone-endpoints",
+            action="append",
+        )
+
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
             register_feedstock_token,
@@ -932,6 +968,12 @@ class UpdateAnacondaToken(Subcommand):
         "Azure",
         "Github-Actions",
     )
+    removed_ci_names = (
+        "Travis",
+        "Circle",
+        "Drone",
+        "Appveyor",
+    )
 
     def __init__(self, parser):
         super().__init__(
@@ -988,6 +1030,18 @@ class UpdateAnacondaToken(Subcommand):
             dest="enable_ci",
             action="store_false",
             help="If set, none of the CI providers are registered and need to be enabled individually.",
+        )
+
+        depr = scp.add_argument_group("Unused flags kept for backwards compatibility")
+        for ci in self.removed_ci_names:
+            depr.add_argument(
+                f"--without-{ci.lower()}",
+                action="store_const",
+                const=False,
+            )
+        depr.add_argument(
+            "--drone-endpoints",
+            action="append",
         )
 
     def __call__(self, args):
