@@ -370,6 +370,38 @@ MACOSX_SDK_VERSION:             # [osx]
 
 
 @pytest.fixture(scope="function")
+def stdlib_multiple_deployment_targets_recipe(
+    config_yaml: ConfigYAML, stdlib_recipe
+):
+    # overwrite the osx-64 part of stdlib_config.yaml from stdlib_recipe so that
+    # osx-64 is built for two deployment targets side by side
+    with open(
+        os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "w"
+    ) as f:
+        f.write("""\
+c_stdlib:
+  - sysroot                     # [linux]
+  - macosx_deployment_target    # [osx]
+  - vs                          # [win]
+c_stdlib_version:               # [unix]
+  - 2.12                        # [linux64]
+  - 2.17                        # [aarch64 or ppc64le]
+  - 10.13                       # [osx and x86_64]
+  - 10.15                       # [osx and x86_64]
+  - 11.0                        # [osx and arm64]
+""")
+    return RecipeConfigPair(
+        str(config_yaml.workdir),
+        _load_forge_config(
+            config_yaml.workdir,
+            exclusive_config_file=os.path.join(
+                config_yaml.workdir, "recipe", "stdlib_config.yaml"
+            ),
+        ),
+    )
+
+
+@pytest.fixture(scope="function")
 def mixed_python_min_recipe(config_yaml: ConfigYAML):
     # check that we can render recipe that has a mix of noarch and non-noarch outputs
     with open(os.path.join(config_yaml.workdir, "recipe", "meta.yaml"), "w") as fh:
