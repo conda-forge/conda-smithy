@@ -163,5 +163,4 @@ class LinterMessage:
 
         if any(test(item, self) for item in iterable):
             return
-        # FIXME: Remove this once we remove as_string
-        iterable.append(self.as_string())
+        iterable.append(self)
