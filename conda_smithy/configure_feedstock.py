@@ -2818,15 +2818,6 @@ def _iter_all_templates(forge_dir):
         yield os.path.join(forge_dir, file)
 
 
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "get_common_scripts",
-    _iter_all_templates,
-    addendum="Raise an issue if you need this function",
-)
-
-
 def clear_scripts(forge_dir):
     for folder in [
         ".azure-pipelines",

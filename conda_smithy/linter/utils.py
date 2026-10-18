@@ -257,25 +257,6 @@ def load_linter_toml_metadata():
     return tomllib.loads(hints_toml_str)
 
 
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="Use `load_linter_toml_metadata` instead.",
-)
-def load_linter_toml_metdata_internal(time_salt=None):
-    return load_linter_toml_metadata()
-
-
-# BW compat for the (misspelled) public alias
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "load_linter_toml_metdata",
-    load_linter_toml_metadata,
-    addendum="Use `load_linter_toml_metadata` instead.",
-)
-
-
 def get_global_pinning_python_min() -> Optional[str]:
     """The default `python_min` from conda-forge's global pinning, as a
     string, or None if it cannot be fetched."""

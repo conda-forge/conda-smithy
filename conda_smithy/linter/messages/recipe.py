@@ -1089,15 +1089,6 @@ class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
     )
 
 
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "UsePyPIOrg",
-    LegacyPyPIURL,
-    addendum="Use LegacyPyPIURL instead",
-)
-
-
 @dataclass(kw_only=True)
 class DuplicateRecipes(LinterMessage, _AnyRecipeMessage):
     """
