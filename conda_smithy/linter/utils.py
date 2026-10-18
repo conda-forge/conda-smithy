@@ -19,7 +19,6 @@ from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
 from requests.exceptions import Timeout
 
-from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
 from conda_smithy.utils import get_yaml
 

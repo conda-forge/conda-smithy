@@ -10,7 +10,6 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
-from conda.deprecations import deprecated
 from conda.models.version import VersionOrder
 
 from conda_smithy.linter import conda_recipe_v1_linter

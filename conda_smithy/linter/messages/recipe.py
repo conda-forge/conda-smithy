@@ -5,7 +5,6 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 from dataclasses import asdict, dataclass
 from typing import Any, ClassVar, Literal, Self, TypeAlias
 
-from conda.deprecations import deprecated
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 
 from conda_smithy.linter.messages.base import LinterMessage

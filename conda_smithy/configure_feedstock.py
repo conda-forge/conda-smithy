@@ -47,7 +47,6 @@ from rattler_build_conda_compat.loader import parse_recipe_config_file
 from rattler_build_conda_compat.render import render as rattler_render
 
 from conda_smithy import __version__
-from conda_smithy.deprecations import deprecated
 from conda_smithy.feedstock_io import (
     copy_file,
     remove_file,
