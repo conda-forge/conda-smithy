@@ -4,6 +4,19 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.10.19
+====================
+
+**Removed:**
+
+* Removed deprecated functions `get_common_scripts`, `load_linter_toml_metadata_internal` and the misspelled `load_linter_toml_metdata`, as well as `hint_sources_should_not_mention_pypi_io_but_pypi_org` and the linter class `UsePyPIOrg`. (#2723)
+
+**Authors:**
+
+* H. Vetinari
+
+
+
 v2026.10.18
 ====================
 
