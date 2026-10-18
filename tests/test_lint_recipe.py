@@ -4249,6 +4249,47 @@ def test_lint_v1_malformed_structures_do_not_crash_the_linter():
         assert not any("is malformed" in lint for lint in lints), lints
 
 
+def test_lint_v1_conditional_build_requirement():
+    """An `if`/`then` in `requirements.build` is valid v1 and must not raise.
+
+    `hint_noarch_usage` read the section raw and called `startswith` on the
+    mapping. Flattening the conditionals first is what the rest of the linter
+    already does with requirements.
+    """
+    recipe = """
+        package:
+          name: foo
+          version: "1.0"
+        build:
+          number: 0
+        requirements:
+          build:
+            - if: unix
+              then: make
+            - pip
+          host:
+            - python
+          run:
+            - python
+        about:
+          homepage: https://example.com
+          license: MIT
+          license_file: LICENSE
+          summary: s
+        extra:
+          recipe-maintainers:
+            - a
+        """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(textwrap.dedent(recipe))
+        with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+            f.write("MIT\n")
+        lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+    # the conditional is legal, so nothing here is malformed
+    assert not any("is malformed" in lint for lint in lints), lints
+
+
 def test_lint_recipe_parses_forblock():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:
