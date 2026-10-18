@@ -47,7 +47,6 @@ from rattler_build_conda_compat.loader import parse_recipe_config_file
 from rattler_build_conda_compat.render import render as rattler_render
 
 from conda_smithy import __version__
-from conda_smithy.deprecations import deprecated
 from conda_smithy.feedstock_io import (
     copy_file,
     remove_file,
@@ -2816,15 +2815,6 @@ def clear_variants(forge_dir):
 def _iter_all_templates(forge_dir):
     for file in EXECUTABLE_TEMPLATES + NON_EXECUTABLE_TEMPLATES:
         yield os.path.join(forge_dir, file)
-
-
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "get_common_scripts",
-    _iter_all_templates,
-    addendum="Raise an issue if you need this function",
-)
 
 
 def clear_scripts(forge_dir):

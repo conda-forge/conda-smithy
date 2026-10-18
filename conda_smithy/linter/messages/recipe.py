@@ -5,7 +5,6 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 from dataclasses import asdict, dataclass
 from typing import Any, ClassVar, Literal, Self, TypeAlias
 
-from conda.deprecations import deprecated
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 
 from conda_smithy.linter.messages.base import LinterMessage
@@ -1087,15 +1086,6 @@ class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
         "PyPI default URL is now files.pythonhosted.org, and not pypi.io."
         " You may want to update the default source url."
     )
-
-
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "UsePyPIOrg",
-    LegacyPyPIURL,
-    addendum="Use LegacyPyPIURL instead",
-)
 
 
 @dataclass(kw_only=True)
