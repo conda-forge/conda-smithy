@@ -2236,6 +2236,90 @@ def test_github_actions_labels(py_recipe, jinja_env, label):
         raise AssertionError("Bad label? Check test parameters.")
 
 
+def test_github_actions_osx_sdk_dir(stdlib_recipe, jinja_env, request):
+    if request.node.callspec.params["config_yaml"] == "rattler-build":
+        # stdlib_recipe only provides a meta.yaml
+        pytest.skip("stdlib_recipe has no rattler-build recipe")
+    forge_dir = stdlib_recipe.recipe
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    sdks = "/Applications/Xcode_{}.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs"
+    # one osx-arm64 job per SDK tier, each on the runner whose Xcode provides it
+    Path(forge_dir, "recipe", "stdlib_config.yaml").write_text(
+        textwrap.dedent(f"""\
+        c_stdlib:
+          - sysroot                     # [linux]
+          - macosx_deployment_target    # [osx]
+        c_stdlib_version:
+          - 2.17                        # [linux]
+          - 10.13                       # [osx and x86_64]
+          - 11.0                        # [osx and arm64]
+          - 26.0                        # [osx and arm64]
+        MACOSX_SDK_VERSION:             # [osx and arm64]
+          - 11.0                        # [osx and arm64]
+          - 26.4                        # [osx and arm64]
+        github_actions_labels:          # [osx and arm64]
+          - macos-15                    # [osx and arm64]
+          - macos-26                    # [osx and arm64]
+        OSX_SDK_DIR:                    # [osx and arm64]
+          - {sdks.format("16.4")}       # [osx and arm64]
+          - {sdks.format("26.4")}       # [osx and arm64]
+        zip_keys:                       # [osx and arm64]
+          -                             # [osx and arm64]
+            - c_stdlib_version          # [osx and arm64]
+            - MACOSX_SDK_VERSION        # [osx and arm64]
+            - github_actions_labels     # [osx and arm64]
+            - OSX_SDK_DIR               # [osx and arm64]
+        """)
+    )
+    config = configure_feedstock._load_forge_config(
+        forge_dir, os.path.join(forge_dir, "recipe", "stdlib_config.yaml")
+    )
+    config["provider"]["linux_64"] = "github_actions"
+    config["provider"]["osx"] = "github_actions"
+    config["provider"]["osx_arm64"] = "github_actions"
+    config["provider"]["win"] = "azure"
+
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+
+    # each arm64 job gets the SDK directory zipped with its runner; others get none
+    arm64 = {
+        tuple(entry["runs_on"]): entry.get("OSX_SDK_DIR")
+        for entry in matrix
+        if entry["CONFIG"].startswith("osx_arm64")
+    }
+    assert arm64 == {
+        ("macos-15",): sdks.format("16.4"),
+        ("macos-26",): sdks.format("26.4"),
+    }
+    assert all(
+        "OSX_SDK_DIR" not in entry
+        for entry in matrix
+        if not entry["CONFIG"].startswith("osx_arm64")
+    )
+    steps = {step["name"]: step for step in workflow["jobs"]["build"]["steps"]}
+    assert steps["Build on macOS"]["env"]["OSX_SDK_DIR"] == "${{ matrix.OSX_SDK_DIR }}"
+    assert "OSX_SDK_DIR" not in steps["Build on Linux"]["env"]
+
+    # it is set for the CI job, not passed to the build
+    ci_supports = list(Path(forge_dir, ".ci_support").glob("osx_arm64_*.yaml"))
+    assert len(ci_supports) == 2
+    for ci_support in ci_supports:
+        variant = yaml.safe_load(ci_support.read_text())
+        assert "OSX_SDK_DIR" not in variant
+        assert ["c_stdlib_version", "MACOSX_SDK_VERSION", "github_actions_labels"] in [
+            sorted(z, key=["c_stdlib_version", "MACOSX_SDK_VERSION", "github_actions_labels"].index)
+            for z in variant["zip_keys"]
+        ]
+
+
 def test_native_provider_unavailable_raises(py_recipe, monkeypatch):
     forge_dir = py_recipe.recipe
     with open(Path(forge_dir, "conda-forge.yml"), "a") as f:

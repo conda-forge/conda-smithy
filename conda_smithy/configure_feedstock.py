@@ -819,6 +819,8 @@ def _collapse_subpackage_variants(
 
     if forge_config["github_actions"].get("enabled"):
         always_keep_keys.add("github_actions_labels")
+        # moved from the variant config into the workflow by dump_subspace_config_files
+        always_keep_keys.add("OSX_SDK_DIR")
 
     all_used_vars.update(always_keep_keys)
     all_used_vars.update(top_level_vars)
@@ -1007,6 +1009,27 @@ def finalize_config(config, platform, arch, forge_config):
     return config
 
 
+def _pop_osx_sdk_dir(config):
+    """Take OSX_SDK_DIR out of a variant config.
+
+    It tells conda-forge-ci-setup where to find a macOS SDK that it cannot
+    download (e.g. a particular Xcode's SDKs directory on the CI image), so it
+    belongs to the CI job running that variant rather than to the build: it is
+    set as an environment variable in the GitHub Actions workflow instead of
+    being written to the .ci_support file.
+    """
+    osx_sdk_dir = config.pop("OSX_SDK_DIR", [None])[0]
+    if "zip_keys" in config:
+        zip_keys = [
+            [key for key in ziplist if key != "OSX_SDK_DIR"]
+            for ziplist in config["zip_keys"]
+        ]
+        config["zip_keys"] = [ziplist for ziplist in zip_keys if len(ziplist) > 1]
+        if not config["zip_keys"]:
+            del config["zip_keys"]
+    return osx_sdk_dir
+
+
 def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_config):
     """With conda-build 3, it handles the build matrix.  We take what it spits out, and write a
     config.yaml file for each matrix entry that it spits out.  References to a specific file
@@ -1071,6 +1094,7 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
             os.makedirs(out_folder)
 
         config = finalize_config(config, platform, arch, forge_config)
+        osx_sdk_dir = _pop_osx_sdk_dir(config)
         logger.debug("finalized config file: %s", pprint.pformat(config))
 
         with write_file(out_path) as f:
@@ -1084,6 +1108,7 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
                 "upload": upload,
                 "config": config,
                 "config_name_short": config_name_short,
+                "osx_sdk_dir": osx_sdk_dir,
                 "build_platform": forge_config["build_platform"][
                     f"{platform}_{arch}"
                 ].replace("_", "-"),
