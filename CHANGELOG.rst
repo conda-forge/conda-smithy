@@ -4,6 +4,44 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.10.18
+====================
+
+**Added:**
+
+* Document all CEP-44 ``extras`` in a rendered v1 feedstock's ``README.md``. (#2687)
+* ``migrator_ts`` in migration files may now be an ISO 8601 date and time with an explicit UTC offset (e.g. ``2026-10-02T03:40:20Z``), in addition to seconds since the Unix epoch.
+  Do not rewrite the ``migrator_ts`` of an existing migration, even into the other format, unless the migration is meant to restart: ISO 8601 timestamps are limited to microseconds, so the value may not survive the conversion, and a changed ``migrator_ts`` is a different migration.
+
+**Changed:**
+
+* When ``workflow_settings.store_build_artifacts`` is used, the uploaded artifact names are their respective filenames. (#2720)
+* The micromamba version used for osx & win builds has been updated to 2.9.0 (#2701).
+* Builds with `provider: {win_arm64: default}` now use a fully native build setup (#2701).
+* Widen `py-rattler` constraint to allow v0.27. (#2713)
+* Reduced the divergence between Linux and macOS build scripts. (#2695)
+
+**Removed:**
+
+* Support for deprecated Appveyor, CircleCI, Cirrus Runners, Drone, Travis and Woodpecker CI services. (#2719)
+
+**Fixed:**
+
+* Avoid including ``channel_sources`` in ``.ci_support`` filenames for v1 recipes (#2681).
+* Register QEMU binfmt handlers on linux-aarch64 GitHub Actions runners, using the emulators from the build image.
+
+**Authors:**
+
+* Michał Górny
+* H. Vetinari
+* Mark Harfouche
+* Nicholas Bollweg
+* Daniel Ching
+* Memento "RC" Mori
+* Benjamin Bertrand
+
+
+
 v2026.9.23
 ====================
 
