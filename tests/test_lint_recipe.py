@@ -4190,6 +4190,11 @@ def test_v0_empty_fields_lint_instead_of_raising():
           version: "1.0"
         build:
           number: 0
+        requirements:
+          host:
+            - python
+          run:
+            - python
         test:
           imports:
             - foo
@@ -4205,6 +4210,13 @@ def test_v0_empty_fields_lint_instead_of_raising():
     cases = {
         "empty package name": ("  name: foo", "  name:"),
         "empty license": ("  license: MIT", "  license:"),
+        # An empty requirements or build section is the same bug one level up:
+        # `"run" in top_level["requirements"]` on None raises before any lint.
+        "empty requirements": (
+            "requirements:\n  host:\n    - python\n  run:\n    - python\n",
+            "requirements:\n",
+        ),
+        "empty build": ("build:\n  number: 0\n", "build:\n"),
     }
 
     for name, (old, new) in cases.items():

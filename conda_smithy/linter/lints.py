@@ -637,20 +637,26 @@ def lint_pin_subpackages(
                     ).as_string()
                 )
 
+    def _mapping(container, key):
+        # A section written with no value is present and None, so `in` on it raises.
+        section = container.get(key) or {}
+        return section if isinstance(section, Mapping) else {}
+
     def check_pins_build_and_requirements(top_level):
+        if not isinstance(top_level, Mapping):
+            return
+        requirements_section = _mapping(top_level, "requirements")
         if recipe_version == 0:
-            if "build" in top_level and "run_exports" in top_level["build"]:
-                check_pins(top_level["build"]["run_exports"])
-            if "requirements" in top_level and "run" in top_level["requirements"]:
-                check_pins(top_level["requirements"]["run"])
-            if "requirements" in top_level and "host" in top_level["requirements"]:
-                check_pins(top_level["requirements"]["host"])
+            build = _mapping(top_level, "build")
+            if "run_exports" in build:
+                check_pins(build["run_exports"])
+            if "run" in requirements_section:
+                check_pins(requirements_section["run"])
+            if "host" in requirements_section:
+                check_pins(requirements_section["host"])
         else:
-            if (
-                "requirements" in top_level
-                and "run_exports" in top_level["requirements"]
-            ):
-                run_export_section = top_level["requirements"]["run_exports"]
+            if "run_exports" in requirements_section:
+                run_export_section = requirements_section["run_exports"]
                 # the dictionary might have strong / weak / noarch etc. keys
                 if isinstance(run_export_section, dict):
                     for key in run_export_section:
