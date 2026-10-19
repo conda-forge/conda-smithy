@@ -908,7 +908,7 @@ class RegisterFeedstockToken(Subcommand):
 
         if args.token_repo is None:
             token_repo = (
-                f"https://${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
+                f"https://x-access-token:${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
             )
         else:
             token_repo = args.token_repo
