@@ -4,6 +4,21 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.10.20
+====================
+
+**Fixed:**
+
+* Fixed regression in respecting ``NO_TEST`` in osx builds. (#2725)
+* Fixed conda-forge/admin-requests#2422 Bare-token Github URL failed to clone
+
+**Authors:**
+
+* Michał Górny
+* Jirawat Iamsamang
+
+
+
 v2026.10.19
 ====================
 
