@@ -907,9 +907,7 @@ class RegisterFeedstockToken(Subcommand):
         repo = os.path.basename(os.path.abspath(args.feedstock_directory))
 
         if args.token_repo is None:
-            token_repo = (
-                f"https://x-access-token:${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
-            )
+            token_repo = f"https://x-access-token:${{GITHUB_TOKEN}}@github.com/{owner}/feedstock-tokens"
         else:
             token_repo = args.token_repo
 
