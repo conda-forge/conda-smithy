@@ -89,13 +89,6 @@ def config_yaml(testing_workdir, recipe_dirname, request):
         # need selectors, so write these more manually
         f.write(config_text)
 
-    # dummy file that needs to be present for circle ci.  This is created by the init function
-    os.makedirs(os.path.join(testing_workdir, ".circleci"))
-    with open(
-        os.path.join(testing_workdir, ".circleci", "checkout_merge_commit.sh"),
-        "w",
-    ) as f:
-        f.write("echo dummy file")
     with open(
         os.path.join(testing_workdir, recipe_dirname, "short_config.yaml"), "w"
     ) as f:
@@ -537,6 +530,21 @@ zlib:
             ),
         ),
     )
+
+
+@pytest.fixture(scope="function")
+def recipe_migration_with_channel_sources(py_recipe):
+    migrations_dir = Path(py_recipe.recipe) / ".ci_support" / "migrations"
+    migrations_dir.mkdir(parents=True)
+    migration_file = migrations_dir / "channel_sources.yaml"
+    migration_file.write_text(
+        "migrator_ts: 1\n"
+        "channel_sources:\n"
+        "    - conda-forge\n"
+        "    - conda-forge/label/python_rc\n"
+    )
+
+    return py_recipe
 
 
 @pytest.fixture(scope="function")

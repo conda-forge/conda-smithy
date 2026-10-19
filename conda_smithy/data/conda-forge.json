@@ -451,22 +451,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "$ref": "#/$defs/Nullable"
@@ -539,22 +529,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "$ref": "#/$defs/Nullable"
@@ -627,22 +607,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "$ref": "#/$defs/Nullable"
@@ -672,18 +642,6 @@
         "native_and_emulated"
       ],
       "title": "DefaultTestPlatforms",
-      "type": "string"
-    },
-    "DeprecatedCIservices": {
-      "description": "These are deprecated as of 2026.8 and will be removed in 2026.10. See #2627.",
-      "enum": [
-        "circle",
-        "travis",
-        "appveyor",
-        "drone",
-        "woodpecker"
-      ],
-      "title": "DeprecatedCIservices",
       "type": "string"
     },
     "GitHubTrustedPublisher": {
@@ -1116,22 +1074,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "$ref": "#/$defs/Nullable"
@@ -1751,22 +1699,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1785,22 +1723,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1819,22 +1747,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1853,22 +1771,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1887,22 +1795,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1921,22 +1819,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1955,22 +1843,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -1989,22 +1867,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2023,22 +1891,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2057,22 +1915,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2091,22 +1939,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2125,22 +1963,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2159,22 +1987,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2193,22 +2011,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2227,22 +2035,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2261,22 +2059,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2295,22 +2083,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2329,22 +2107,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2363,22 +2131,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2397,22 +2155,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2431,22 +2179,12 @@
           "anyOf": [
             {
               "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/CIservices"
-                  },
-                  {
-                    "$ref": "#/$defs/DeprecatedCIservices"
-                  }
-                ]
+                "$ref": "#/$defs/CIservices"
               },
               "type": "array"
             },
             {
               "$ref": "#/$defs/CIservices"
-            },
-            {
-              "$ref": "#/$defs/DeprecatedCIservices"
             },
             {
               "type": "boolean"
@@ -2682,7 +2420,7 @@
           "type": "null"
         }
       ],
-      "description": "The `provider` field is a mapping from build platform (not target platform)\nto CI service. It determines which service handles each build platform.\nIf a desired build platform is not available with a selected provider\n(either natively or with emulation), the build will be disabled.\nUse the `build_platform` field to manually specify cross-compilation when\nno providers offer a desired build platform.\n\nThe following are available as supported build platforms:\n\n* `linux_64`\n* `osx_64`\n* `osx_arm64`\n* `win_64`\n* `win_arm64`\n* `linux_aarch64`\n* `linux_ppc64le`\n* `linux_riscv64`\n* `linux_s390x`\n* `linux_armv7l`\n\nThe following CI services are recognized:\n\n* `azure`\n* `github_actions`\n* `circle` (deprecated)\n* `travis` (deprecated)\n* `appveyor` (deprecated)\n* `None` or `False` to disable a build platform.\n* `default` to choose an appropriate CI (only if available)\n* `native` to choose an appropriate CI for native compiling (only if available)\n* `emulated` to choose an appropriate CI for compiling inside an emulation\n  of the target platform (only if available)\n\nFor example, making explicit that linux_64 builds on github actions, osx_64 builds on azure,\nand switching win_64 to Appveyor:\n\n```yaml\nprovider:\n    linux_64: github_actions\n    osx_64: azure\n    win_64: appveyor\n```\n\nCurrently, x86_64 platforms are enabled, but other build platforms are\ndisabled by default. i.e. an empty provider entry is equivalent to the\nfollowing:\n\n```yaml\nprovider:\n    linux_64: github_actions\n    osx_64: azure\n    win_64: github_actions\n    linux_ppc64le: None\n    linux_aarch64: None\n    osx_arm64: None\n    win_arm64: None\n```\n\nTo enable `linux_ppc64le` and `linux_aarch64` add the following:\n\n```yaml\nprovider:\n    linux_ppc64le: default\n    linux_aarch64: default\n```"
+      "description": "The `provider` field is a mapping from build platform (not target platform)\nto CI service. It determines which service handles each build platform.\nIf a desired build platform is not available with a selected provider\n(either natively or with emulation), the build will be disabled.\nUse the `build_platform` field to manually specify cross-compilation when\nno providers offer a desired build platform.\n\nThe following are available as supported build platforms:\n\n* `linux_64`\n* `osx_64`\n* `osx_arm64`\n* `win_64`\n* `win_arm64`\n* `linux_aarch64`\n* `linux_ppc64le`\n* `linux_riscv64`\n* `linux_s390x`\n* `linux_armv7l`\n\nThe following CI services are recognized:\n\n* `azure`\n* `github_actions`\n* `None` or `False` to disable a build platform.\n* `default` to choose an appropriate CI (only if available)\n* `native` to choose an appropriate CI for native compiling (only if available)\n* `emulated` to choose an appropriate CI for compiling inside an emulation\n  of the target platform (only if available)\n\nFor example, making explicit that linux_64 and win_64 builds on github actions\nand switching osx_64 to Azure:\n\n```yaml\nprovider:\n    linux_64: github_actions\n    osx_64: azure\n    win_64: github_actions\n```\n\nCurrently, x86_64 platforms are enabled, but other build platforms are\ndisabled by default. i.e. an empty provider entry is equivalent to the\nfollowing:\n\n```yaml\nprovider:\n    linux_64: github_actions\n    osx_64: azure\n    win_64: github_actions\n    linux_ppc64le: None\n    linux_aarch64: None\n    osx_arm64: None\n    win_arm64: None\n```\n\nTo enable `linux_ppc64le` and `linux_aarch64` add the following:\n\n```yaml\nprovider:\n    linux_ppc64le: default\n    linux_aarch64: default\n```"
     },
     "package": {
       "anyOf": [
