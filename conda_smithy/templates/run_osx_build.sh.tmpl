@@ -192,6 +192,12 @@ echo Running build setup
 {{ build_setup }}
 {%- endif %}
 
+{% if test in ["native", "native_and_emulated"] -%}
+if [[ "${HOST_PLATFORM}" != "${BUILD_PLATFORM}" ]] && [[ "${BUILD_WITH_CONDA_DEBUG:-0}" != 1 ]]; then
+    EXTRA_CB_OPTIONS="${EXTRA_CB_OPTIONS:-} {{ NO_TEST_FLAG }}"
+fi
+{% endif %}
+
 ( endgroup "Configuring conda" ) 2> /dev/null
 
 if [[ -f "${FEEDSTOCK_ROOT}/LICENSE.txt" ]]; then
