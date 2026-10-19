@@ -160,3 +160,4 @@ Authors are sorted by number of commits.
 * Ben Williams
 * Scott Wang
 * Sophia Castellarin
+* Jirawat Iamsamang
