@@ -84,9 +84,8 @@ VOLUME_SUFFIX=",z"
 
 # Podman-specific handling
 if [ "${DOCKER_EXECUTABLE}" = "podman" ]; then
-    # Fix file permissions for rootless podman builds. We need access
-    # to /home/conda/feedstock_root/${PROVIDER_DIR}/build_steps.sh in
-    # the container.
+    # Fix file permissions for rootless podman builds. In addition to `recipe/`
+    # and `build_artifacts`, `.scripts` also needs to be available in the container.
     podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${FEEDSTOCK_ROOT}"
 
     # Add SELinux label only if enforcing
