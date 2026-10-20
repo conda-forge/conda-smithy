@@ -62,7 +62,7 @@ class MacosSdkBelowStdlib(LinterMessage, _ConfigFileMessage):
     """
 
     kind = "lint"
-    identifier = "RC-003"
+    identifier = "RC-002"
     message = (
         "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
         "in conda_build_config.yaml which is not possible! Please ensure "
@@ -83,7 +83,7 @@ class MoreThanOneConfigFile(LinterMessage, _ConfigFileMessage):
     """
 
     kind = "lint"
-    identifier = "RC-002"
+    identifier = "RC-003"
     message = (
         "Found two recipe configuration files, but you may only use one! "
         "You may use `conda_build_config.yaml` for both v0 and v1 recipes, "
