@@ -84,9 +84,9 @@ VOLUME_SUFFIX=",z"
 
 # Podman-specific handling
 if [ "${DOCKER_EXECUTABLE}" = "podman" ]; then
-    # Fix file permissions for rootless podman builds
-    podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${ARTIFACTS}"
-    podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${RECIPE_ROOT}"
+    # Fix file permissions for rootless podman builds. In addition to `recipe/`
+    # and `build_artifacts`, `.scripts` also needs to be available in the container.
+    podman unshare chown -R ${HOST_USER_ID}:${HOST_USER_ID} "${FEEDSTOCK_ROOT}"
 
     # Add SELinux label only if enforcing
     if command -v getenforce &>/dev/null && [ "$(getenforce)" = "Enforcing" ]; then
