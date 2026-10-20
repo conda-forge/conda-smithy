@@ -814,7 +814,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
     if "c_stdlib_version" in cbc_osx.keys():
         # only warn if version is below baseline
         outdated_lint = msg.rv.MacosStdlibBelowPinning(
-            baseline_version=baseline_version[0]
+            baseline=baseline_version[0]
         ).as_string()
         if len(v_stdlib) == len(baseline_version):
             # if length matches, compare individually
