@@ -10,18 +10,6 @@
   },
   "messages": [
     {
-      "name": "MacOSDeploymentTargetConflict",
-      "identifier": "CBC-000",
-      "category": "CBC",
-      "kind": "lint",
-      "added_in": "<3.56",
-      "deprecated_in": "3.56.0",
-      "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
-      "message": "Conflicting specification for minimum macOS deployment target!\nIf your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, please change the name of that key to `c_stdlib_version`!\nContinuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`.",
-      "examples": [],
-      "path": "recipe/conda_build_config.yaml"
-    },
-    {
       "name": "MacOSDeploymentTargetBelowStdlib",
       "identifier": "CBC-001",
       "category": "CBC",
