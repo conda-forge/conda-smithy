@@ -293,19 +293,19 @@ def test_recipe_v1_osx_noarch_hint():
         (["11.0", "11.0"], None, None),
         (["11.1"], None, None),
         # only stdlib, but outdated -> warn
-        (["10.9", "11.0"], None, "You are"),
-        (["10.9"], None, "You are"),
+        (["10.9", "11.0"], None, "below the current"),
+        (["10.9"], None, "below the current"),
         # sdk below stdlib -> warn
-        (["11.0", "12.0"], ["10.12"], "You are"),
-        (["11.0", "12.0"], ["10.12", "12.0"], "You are"),
+        (["11.0", "12.0"], ["10.12"], "below `c_stdlib_version`"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "below `c_stdlib_version`"),
         # sdk above stdlib -> no warning
         (["11.0", "12.0"], ["12.0", "12.0"], None),
         # only sdk -> no warning
         (None, ["11.0"], None),
         (None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
-        (None, ["10.12"], "You are"),
-        (None, ["10.12", "11.0"], "You are"),
+        (None, ["10.12"], "below `c_stdlib_version`"),
+        (None, ["10.12", "11.0"], "below `c_stdlib_version`"),
     ],
 )
 def test_cbc_osx_lints(
@@ -358,12 +358,13 @@ MACOSX_SDK_VERSION:         # [osx]
         if exp_lint is None:
             for slug in [
                 "Conflicting spec",
-                "You are",
+                "below the current",
+                "below `c_stdlib_version`",
                 "In your conda_build_config.yaml",
             ]:
-                assert not any(lint.startswith(slug) for lint in lints)
+                assert not any(slug in lint for lint in lints)
         else:
-            assert any(lint.startswith(exp_lint) for lint in lints)
+            assert any(exp_lint in lint for lint in lints)
 
 
 @pytest.mark.parametrize(
@@ -384,19 +385,19 @@ MACOSX_SDK_VERSION:         # [osx]
         (["11.0", "11.0"], None, None),
         (["11.1"], None, None),
         # only stdlib, but outdated -> warn
-        (["10.9", "11.0"], None, "You are"),
-        (["10.9"], None, "You are"),
+        (["10.9", "11.0"], None, "below the current"),
+        (["10.9"], None, "below the current"),
         # sdk below stdlib -> warn
-        (["11.0", "12.0"], ["10.12"], "You are"),
-        (["11.0", "12.0"], ["10.12", "12.0"], "You are"),
+        (["11.0", "12.0"], ["10.12"], "below `c_stdlib_version`"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "below `c_stdlib_version`"),
         # sdk above stdlib -> no warning
         (["11.0", "12.0"], ["12.0", "12.0"], None),
         # only sdk -> no warning
         (None, ["11.0"], None),
         (None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
-        (None, ["10.12"], "You are"),
-        (None, ["10.12", "11.0"], "You are"),
+        (None, ["10.12"], "below `c_stdlib_version`"),
+        (None, ["10.12", "11.0"], "below `c_stdlib_version`"),
     ],
 )
 def test_cbc_osx_lints_variants(std_selector, reverse_arch, v_std, sdk, exp_lint):
@@ -442,12 +443,13 @@ MACOSX_SDK_VERSION:
         if exp_lint is None:
             for slug in [
                 "Conflicting spec",
-                "You are",
+                "below the current",
+                "below `c_stdlib_version`",
                 "In your conda_build_config.yaml",
             ]:
-                assert not any(lint.startswith(slug) for lint in lints)
+                assert not any(slug in lint for lint in lints)
         else:
-            assert any(lint.startswith(exp_lint) for lint in lints)
+            assert any(exp_lint in lint for lint in lints)
 
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
