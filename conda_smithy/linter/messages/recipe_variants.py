@@ -19,7 +19,7 @@ CATEGORIES = {
 @dataclass(kw_only=True)
 class _ConfigFileMessage:
     """
-    A message concerning conda-forge.yml files
+    A message concerning recipe/{conda_build_config,variants}.yaml files
     """
 
     path: str = "recipe/(conda_build_config|variants).yaml"
@@ -41,7 +41,7 @@ class MacOSDeploymentTargetRename(LinterMessage, _ConfigFileMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetBelow(LinterMessage, _ConfigFileMessage):
+class MacosStdlibBelowPinning(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -75,7 +75,7 @@ class MoreThanOneConfigFile(LinterMessage, _ConfigFileMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetBelowStdlib(LinterMessage):
+class MacosSdkBelowStdlib(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """

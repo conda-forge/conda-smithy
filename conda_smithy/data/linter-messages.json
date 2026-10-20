@@ -10,7 +10,7 @@
   },
   "messages": [
     {
-      "name": "MacOSDeploymentTargetBelowStdlib",
+      "name": "MacosSdkBelowStdlib",
       "identifier": "CBC-001",
       "category": "CBC",
       "kind": "lint",
@@ -1071,7 +1071,7 @@
       "path": "recipe/(conda_build_config|variants).yaml"
     },
     {
-      "name": "MacOSDeploymentTargetBelow",
+      "name": "MacosStdlibBelowPinning",
       "identifier": "RC-001",
       "category": "RC",
       "kind": "lint",
