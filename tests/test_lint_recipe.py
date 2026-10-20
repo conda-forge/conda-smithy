@@ -366,6 +366,90 @@ MACOSX_SDK_VERSION:         # [osx]
             assert any(lint.startswith(exp_lint) for lint in lints)
 
 
+@pytest.mark.parametrize(
+    "std_selector",
+    ["unix", "linux or (osx and x86_64)"],
+    ids=["plain", "or-conjunction"],
+)
+@pytest.mark.parametrize(
+    "reverse_arch",
+    # we reverse x64/arm64 separately per deployment target, stdlib & sdk
+    [(False, False, False), (True, True, True), (False, True, False)],
+    ids=["False", "True", "mixed"],
+)
+@pytest.mark.parametrize(
+    "v_std,sdk,exp_lint",
+    [
+        # only stdlib -> no warning
+        (["11.0", "11.0"], None, None),
+        (["11.1"], None, None),
+        # only stdlib, but outdated -> warn
+        (["10.9", "11.0"], None, "You are"),
+        (["10.9"], None, "You are"),
+        # sdk below stdlib -> warn
+        (["11.0", "12.0"], ["10.12"], "You are"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "You are"),
+        # sdk above stdlib -> no warning
+        (["11.0", "12.0"], ["12.0", "12.0"], None),
+        # only sdk -> no warning
+        (None, ["11.0"], None),
+        (None, ["11.1", "12.0"], None),
+        # only sdk, but below global baseline -> warning
+        (None, ["10.12"], "You are"),
+        (None, ["10.12", "11.0"], "You are"),
+    ],
+)
+def test_cbc_osx_lints_variants(std_selector, reverse_arch, v_std, sdk, exp_lint):
+    with tmp_directory() as rdir:
+        rdir = Path(rdir)
+        rdir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
+        rdir.joinpath("conda-forge.yml").write_text("conda_build_tool: rattler-build")
+
+        with open(os.path.join(rdir, "variants.yaml"), "a") as fh:
+            if v_std is not None:
+                arch1 = "arm64" if reverse_arch[1] else "x86_64"
+                arch2 = "x86_64" if reverse_arch[1] else "arm64"
+                fh.write("c_stdlib_version:")
+                if v_std is not None:
+                    fh.write(f"\n  - if: osx and {arch1}")
+                    fh.write(f"\n    then: {v_std[0]}")
+                if v_std is not None and len(v_std) > 1:
+                    fh.write(f"\n  - if: osx and {arch2}")
+                    fh.write(f"\n    then: {v_std[1]}")
+            if sdk is not None:
+                # often SDK is set uniformly for osx; test this as well
+                fh.write(
+                    f"""
+MACOSX_SDK_VERSION:
+  - if: osx and {"arm64" if reverse_arch[2] else "x86_64"}
+    then: {sdk[0]}
+  - if: osx and {"x86_64" if reverse_arch[2] else "arm64"}
+    then: {sdk[1]}
+"""
+                    if len(sdk) == 2
+                    else f"""
+MACOSX_SDK_VERSION:
+  - {sdk[0]}
+"""
+                )
+        # run the linter
+        lints = linter.main(rdir, conda_forge=True)
+        # show CBC/hints for debugging
+        with open(os.path.join(rdir, "variants.yaml")) as fh:
+            print("".join(fh.readlines()))
+            print(lints)
+        # validate against expectations
+        if exp_lint is None:
+            for slug in [
+                "Conflicting spec",
+                "You are",
+                "In your conda_build_config.yaml",
+            ]:
+                assert not any(lint.startswith(slug) for lint in lints)
+        else:
+            assert any(lint.startswith(exp_lint) for lint in lints)
+
+
 @pytest.mark.parametrize("recipe_version", [0, 1])
 def test_license_file_required(recipe_version: int):
     meta = {
