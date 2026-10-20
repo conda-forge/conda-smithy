@@ -54,6 +54,9 @@ from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
 )
+
+# reuse message that the linter emits for the same problem
+from conda_smithy.linter import messages as linter_msg
 from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
@@ -649,14 +652,7 @@ def _validate_deployment_target(container_of_dicts):
 
         if sdk_lt_stdlib:
             sdk = v_stdlib
-            msg = (
-                "Conflicting specification for minimum macOS SDK version!\n"
-                "If your conda_build_config.yaml sets `MACOSX_SDK_VERSION`, "
-                "it must be larger or equal than `c_stdlib_version` "
-                "(which is also influenced by the global pinning)!\n"
-                f"Using {sdk}=max(c_stdlib_version, MACOSX_SDK_VERSION)."
-            )
-            warn_once(msg)
+            warn_once(linter_msg.rv.MacosSdkBelowStdlib(baseline=v_stdlib).as_string())
 
         # use new dictionary to avoid mutating existing var_dict in place
         new_dict = HashableDict(
