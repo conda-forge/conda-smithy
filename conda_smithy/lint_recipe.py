@@ -917,7 +917,7 @@ def run_conda_forge_specific(
         len(gha_workflows) > 1 or gha_workflows[0].name != "conda-build.yml"
     ):
         lints.append(
-            msg.cf.NoCustomGHAWorkflows(path=f"{gha_workflows}/*.yaml").as_string()
+            msg.cf.NoCustomGhaWorkflows(path=f"{gha_workflows}/*.yaml").as_string()
         )
 
     # 16: Check for requirements overriding dependency pins

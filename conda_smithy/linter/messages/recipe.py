@@ -711,7 +711,7 @@ class StdlibSysroot(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class StdlibMacOS(LinterMessage, _AnyRecipeMessage):
+class StdlibMacos(LinterMessage, _AnyRecipeMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -934,7 +934,7 @@ class ScriptShellcheckFailure(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class LicenseSPDX(LinterMessage, _AnyRecipeMessage):
+class LicenseSpdx(LinterMessage, _AnyRecipeMessage):
     """
     The `license` field must be a valid SPDX identifier.
 
@@ -1072,7 +1072,7 @@ class UsePip(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
+class LegacyPypiUrl(LinterMessage, _AnyRecipeMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
     but the canonical URL is now files.pythonhosted.org.
@@ -1469,7 +1469,7 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
 
 
 @dataclass(kw_only=True)
-class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
+class RattlerSpdir(LinterMessage, _RecipeYamlMessage):
     """
     rattler-build defines `$SP_DIR` (the environment's site-packages
     directory, `%SP_DIR%` on Windows), so recipes no longer need to set it

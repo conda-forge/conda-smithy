@@ -26,7 +26,7 @@ class _ConfigFileMessage:
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetRename(LinterMessage, _ConfigFileMessage):
+class MacosDeploymentTargetRename(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """

@@ -793,7 +793,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
 
     if "MACOSX_DEPLOYMENT_TARGET" in cbc_osx:
         lints.append(
-            msg.rv.MacOSDeploymentTargetRename(
+            msg.rv.MacosDeploymentTargetRename(
                 recipe_config_file=recipe_config_file
             ).as_string()
         )
@@ -926,7 +926,7 @@ def lint_stdlib(
 
     to_check = all_run_reqs_flat + all_contraints_flat
     if any(req.startswith("__osx >") for req in to_check):
-        msg.r.StdlibMacOS(recipe_version=recipe_version).append_if_absent(lints)
+        msg.r.StdlibMacos(recipe_version=recipe_version).append_if_absent(lints)
 
 
 def lint_recipe_is_parsable(
@@ -1094,7 +1094,7 @@ def lint_invalid_workflow_settings(
                 oses_from_platforms = {x.split("_")[0] for x in platforms}
                 if oses_from_platforms != set(oses):
                     lints.append(
-                        msg.cf.WorkflowSettingsPlatformOSMismatch(
+                        msg.cf.WorkflowSettingsPlatformOsMismatch(
                             setting=key,
                             index=index,
                             os=oses,
