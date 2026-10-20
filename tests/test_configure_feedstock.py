@@ -165,8 +165,6 @@ def test_stdlib_on_default(stdlib_recipe, jinja_env, request):
         osx_content = "".join(osx_lines)
     assert re.match(r"(?s).*c_stdlib:\s*- macosx_deployment_target", osx_content)
     assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?10\.9", osx_content)
-    # ensure MACOSX_DEPLOYMENT_TARGET _also_ gets set to the same value
-    assert re.match(r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.9", osx_content)
     with open(os.path.join(matrix_dir, "win_64_.yaml")) as f:
         win_lines = f.readlines()
         win_content = "".join(win_lines)
@@ -198,10 +196,8 @@ def test_stdlib_deployment_target(
     with open(os.path.join(matrix_dir, "osx_64_.yaml")) as f:
         lines = f.readlines()
         content = "".join(lines)
-    # ensure both MACOSX_DEPLOYMENT_TARGET and c_stdlib_version match
-    # the maximum of either, c.f. stdlib_deployment_target_recipe fixture
+    # ensure c_stdlib_version matches config from stdlib_deployment_target_recipe fixture
     assert re.match(r"(?s).*c_stdlib_version:\s*- ['\"]?10\.14", content)
-    assert re.match(r"(?s).*MACOSX_DEPLOYMENT_TARGET:\s*- ['\"]?10\.14", content)
     # MACOSX_SDK_VERSION gets updated as well if it's below the other two
     assert re.match(r"(?s).*MACOSX_SDK_VERSION:\s*- ['\"]?10\.14", content)
 

@@ -344,7 +344,7 @@ def stdlib_deployment_target_recipe(config_yaml: ConfigYAML, stdlib_recipe):
         os.path.join(config_yaml.workdir, "recipe", "stdlib_config.yaml"), "a"
     ) as f:
         f.write("""\
-MACOSX_DEPLOYMENT_TARGET:       # [osx]
+c_stdlib_version:               # [osx]
   - 10.14                       # [osx and x86_64]
   - 12.0                        # [osx and arm64]
 MACOSX_SDK_VERSION:             # [osx]

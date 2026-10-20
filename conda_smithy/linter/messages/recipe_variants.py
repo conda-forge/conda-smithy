@@ -75,24 +75,6 @@ class MoreThanOneConfigFile(LinterMessage, _ConfigFileMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetConflict(LinterMessage):
-    """
-    https://github.com/conda-forge/conda-forge.github.io/issues/2102
-    """
-
-    kind = "lint"
-    identifier = "CBC-000"
-    deprecated_in = "3.56.0"
-    message = (
-        "Conflicting specification for minimum macOS deployment target!\n"
-        "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
-        "please change the name of that key to `c_stdlib_version`!\n"
-        "Continuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`."
-    )
-    path: str = "recipe/conda_build_config.yaml"
-
-
-@dataclass(kw_only=True)
 class MacOSDeploymentTargetBelowStdlib(LinterMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
@@ -108,7 +90,7 @@ class MacOSDeploymentTargetBelowStdlib(LinterMessage):
         "If you are not setting `c_stdlib_version` yourself, this means "
         "you are requesting a version below the current global baseline in "
         "conda-forge (${baseline}). If this is the intention, you also need to "
-        "override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally."
+        "override `c_stdlib_version` locally."
     )
     baseline: str
     deprecated_in = "3.56.0"
