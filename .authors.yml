@@ -393,7 +393,7 @@
   github: shadowwalkersb
 - name: Matthew R. Becker
   email: becker.mr@gmail.com
-  num_commits: 582
+  num_commits: 584
   first_commit: 2020-01-07 17:44:33
   github: beckermr
   alternate_emails:
@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 200
+  num_commits: 211
   first_commit: 2021-11-14 02:53:10
   github: h-vetinari
 - name: Benjamin Tovar
@@ -840,3 +840,7 @@
   email: nodtem66@gmail.com
   num_commits: 1
   first_commit: 2026-10-19 12:06:17
+- name: Lionel GUEZ
+  email: guez@lmd.ipsl.fr
+  num_commits: 1
+  first_commit: 2026-10-21 09:52:42

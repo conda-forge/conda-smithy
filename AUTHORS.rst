@@ -4,8 +4,8 @@ Authors are sorted by number of commits.
 * Isuru Fernando
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
-* Michał Górny
 * H. Vetinari
+* Michał Górny
 * nichmor
 * Christopher J. Wright
 * Anthony Scopatz
@@ -161,3 +161,4 @@ Authors are sorted by number of commits.
 * Scott Wang
 * Sophia Castellarin
 * Jirawat Iamsamang
+* Lionel GUEZ
