@@ -8,7 +8,7 @@ from conda_smithy.linter.messages.base import LinterMessage
 
 CATEGORIES = {
     "RC": "All recipe variants files",
-    "CBC": "Recipe variants in `conda_build_config.yaml`",
+    # "CBC": "Recipe variants in `conda_build_config.yaml`",
     # None yet, but let's reserve the VC- prefix:
     # "VC": "Recipe variants in `variants.yaml`",
 }
@@ -19,14 +19,14 @@ CATEGORIES = {
 @dataclass(kw_only=True)
 class _ConfigFileMessage:
     """
-    A message concerning conda-forge.yml files
+    A message concerning recipe/{conda_build_config,variants}.yaml files
     """
 
     path: str = "recipe/(conda_build_config|variants).yaml"
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetRename(LinterMessage, _ConfigFileMessage):
+class MacosDeploymentTargetRename(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -41,7 +41,7 @@ class MacOSDeploymentTargetRename(LinterMessage, _ConfigFileMessage):
 
 
 @dataclass(kw_only=True)
-class MacOSDeploymentTargetBelow(LinterMessage, _ConfigFileMessage):
+class MacosStdlibBelowPinning(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -50,38 +50,19 @@ class MacOSDeploymentTargetBelow(LinterMessage, _ConfigFileMessage):
     identifier = "RC-001"
     message = (
         "You are setting `c_stdlib_version` on macOS below the current global "
-        "baseline in conda-forge (${baseline_version})."
+        "baseline in conda-forge (${baseline})."
     )
-    baseline_version: str
+    baseline: str
 
 
 @dataclass(kw_only=True)
-class MoreThanOneConfigFile(LinterMessage, _ConfigFileMessage):
-    """
-    Only one recipe variants file must be used in a feedstock.
-    """
-
-    kind = "lint"
-    identifier = "RC-002"
-    message = (
-        "Found two recipe configuration files, but you may only use one! "
-        "You may use `conda_build_config.yaml` for both v0 and v1 recipes, "
-        "while `variants.yaml` may only be used with v1 recipes."
-    )
-
-
-# endregion
-# region CBC
-
-
-@dataclass(kw_only=True)
-class MacOSDeploymentTargetBelowStdlib(LinterMessage):
+class MacosSdkBelowStdlib(LinterMessage, _ConfigFileMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
 
     kind = "lint"
-    identifier = "CBC-001"
+    identifier = "RC-002"
     message = (
         "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, "
         "in conda_build_config.yaml which is not possible! Please ensure "
@@ -93,8 +74,21 @@ class MacOSDeploymentTargetBelowStdlib(LinterMessage):
         "override `c_stdlib_version` locally."
     )
     baseline: str
-    deprecated_in = "3.56.0"
-    path: str = "recipe/conda_build_config.yaml"
+
+
+@dataclass(kw_only=True)
+class MoreThanOneConfigFile(LinterMessage, _ConfigFileMessage):
+    """
+    Only one recipe variants file must be used in a feedstock.
+    """
+
+    kind = "lint"
+    identifier = "RC-003"
+    message = (
+        "Found two recipe configuration files, but you may only use one! "
+        "You may use `conda_build_config.yaml` for both v0 and v1 recipes, "
+        "while `variants.yaml` may only be used with v1 recipes."
+    )
 
 
 # endregion
