@@ -47,7 +47,6 @@ from rattler_build_conda_compat.loader import parse_recipe_config_file
 from rattler_build_conda_compat.render import render as rattler_render
 
 from conda_smithy import __version__
-from conda_smithy.deprecations import deprecated
 from conda_smithy.feedstock_io import (
     copy_file,
     remove_file,
@@ -55,6 +54,9 @@ from conda_smithy.feedstock_io import (
     set_exe_file,
     write_file,
 )
+
+# reuse message that the linter emits for the same problem
+from conda_smithy.linter import messages as linter_msg
 from conda_smithy.utils import (
     RATTLER_BUILD,
     HashableDict,
@@ -126,6 +128,7 @@ ALL_PLATFORMS = (
     "linux_64",
     "linux_aarch64",
     "linux_ppc64le",
+    "linux_riscv64",
     "linux_s390x",
     "osx_64",
     "osx_arm64",
@@ -144,6 +147,7 @@ DEFAULT_PROVIDERS = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
     "linux_ppc64le": "github_actions",  # emulated
+    "linux_riscv64": "github_actions",
     "linux_s390x": "github_actions",  # emulated
     "osx_64": "azure",
     "osx_arm64": "azure",
@@ -154,8 +158,7 @@ DEFAULT_PROVIDERS = {
 NATIVE_CI_PROVIDER = {
     "linux_64": "github_actions",
     "linux_aarch64": "github_actions",
-    "linux_ppc64le": "travis",
-    "linux_s390x": "travis",
+    "linux_riscv64": "github_actions",
     "osx_64": "azure",
     "osx_arm64": "azure",
     "win_64": "github_actions",
@@ -166,6 +169,7 @@ FANCY_PLATFORM_NAMES = {
     "linux_64": "Linux",
     "linux_aarch64": "Arm64",
     "linux_ppc64le": "PowerPC64",
+    "linux_riscv64": "RISCV64",
     "linux_s390x": "S390X",
     "osx_64": "OSX",
     "osx_arm64": "OSXARM",
@@ -200,6 +204,13 @@ GITHUB_ACTIONS_RUNS_ON = {
         "hosted_labels": ("ubuntu-latest",),
         "self_hosted_labels": ("linux",),
     },
+    "linux-riscv64": {
+        "os": "ubuntu",
+        # RISC-V hardware provided by the RISE GitHub App,
+        # see https://riscv-runners.riseproject.dev/
+        "hosted_labels": ("ubuntu-24.04-riscv",),
+        "self_hosted_labels": ("linux",),
+    },
     "win-64": {
         "os": "windows",
         "hosted_labels": ("windows-2022",),
@@ -217,14 +228,9 @@ NON_EXECUTABLE_TEMPLATES = [
     ".azure-pipelines/azure-pipelines-linux.yml",
     ".azure-pipelines/azure-pipelines-osx.yml",
     ".azure-pipelines/azure-pipelines-win.yml",
-    ".circleci/config.yml",
-    ".drone.yml",
     ".github/workflows/conda-build.yml",
-    ".travis.yml",
     "README.md",
-    "appveyor.yml",
     "azure-pipelines.yml",
-    "circle.yml",
     "github-actions.yml",
     "pixi.toml",
 ]
@@ -245,8 +251,6 @@ EXECUTABLE_TEMPLATES = [
 
 
 ALL_EXECUTABLE_FILES = EXECUTABLE_TEMPLATES + [
-    ".circleci/checkout_merge_commit.sh",
-    ".circleci/fast_finish_ci_pr_build.sh",
     ".scripts/logging_utils.sh",
     "build-locally.py",
 ]
@@ -618,16 +622,12 @@ def _get_used_key_values_by_input_order(
     return used_key_values, zipped_keys
 
 
-def _merge_deployment_target(container_of_dicts, has_macdt):
+def _validate_deployment_target(container_of_dicts):
     """
-    For a collection of variant dictionaries, merge deployment target specs.
+    For a collection of variant dictionaries, check deployment target & SDK specs.
 
-    - The "old" way is MACOSX_DEPLOYMENT_TARGET, the new way is c_stdlib_version;
-      For now, take the maximum to populate both.
-    - In any case, populate MACOSX_DEPLOYMENT_TARGET, as that is the key picked
-      up by https://github.com/conda-forge/conda-forge-ci-setup-feedstock
-    - If MACOSX_SDK_VERSION is lower than the merged value from the previous step,
-      update it to match the merged value.
+    - Error if c_stdlib_version/MACOSX_SDK_VERSION contain more than one version.
+    - If MACOSX_SDK_VERSION is lower than c_stdlib_version, warn and use the latter.
     """
     result = []
     for var_dict in container_of_dicts:
@@ -640,53 +640,25 @@ def _merge_deployment_target(container_of_dicts, has_macdt):
             continue
         # case where we need to do processing
         v_stdlib = var_dict["c_stdlib_version"]
-        macdt = var_dict.get("MACOSX_DEPLOYMENT_TARGET", v_stdlib)
         sdk = var_dict.get("MACOSX_SDK_VERSION", v_stdlib)
         # error out if someone puts in a range of versions; we need a single version
         try:
-            stdlib_lt_macdt = VersionOrder(v_stdlib) < VersionOrder(macdt)
             sdk_lt_stdlib = VersionOrder(sdk) < VersionOrder(v_stdlib)
-            sdk_lt_macdt = VersionOrder(sdk) < VersionOrder(macdt)
         except InvalidVersionSpec:
             raise ValueError(
-                "all of c_stdlib_version/MACOSX_DEPLOYMENT_TARGET/"
-                "MACOSX_SDK_VERSION need to be a single version, "
-                "not a version range!"
+                "both c_stdlib_version & MACOSX_SDK_VERSION need to "
+                "be a single version, not a version range!"
             )
-        if v_stdlib != macdt:
-            # determine maximum version and use it to populate both
-            v_stdlib = macdt if stdlib_lt_macdt else v_stdlib
-            msg = (
-                "Conflicting specification for minimum macOS deployment target!\n"
-                "If your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, "
-                "please change the name of that key to `c_stdlib_version`!\n"
-                f"Using {v_stdlib}=max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)."
-            )
-            # we don't want to warn for recipes that do not use MACOSX_DEPLOYMENT_TARGET
-            # in the local CBC, but only inherit it from the global pinning
-            if has_macdt:
-                warn_once(msg)
 
-        if sdk_lt_stdlib or sdk_lt_macdt:
-            sdk_lt_merged = VersionOrder(sdk) < VersionOrder(v_stdlib)
-            sdk = v_stdlib if sdk_lt_merged else sdk
-            msg = (
-                "Conflicting specification for minimum macOS SDK version!\n"
-                "If your conda_build_config.yaml sets `MACOSX_SDK_VERSION`, "
-                "it must be larger or equal than `c_stdlib_version` "
-                "(which is also influenced by the global pinning)!\n"
-                f"Using {sdk}=max(c_stdlib_version, MACOSX_SDK_VERSION)."
-            )
-            warn_once(msg)
+        if sdk_lt_stdlib:
+            sdk = v_stdlib
+            warn_once(linter_msg.rv.MacosSdkBelowStdlib(baseline=v_stdlib).as_string())
 
-        # we set MACOSX_DEPLOYMENT_TARGET to match c_stdlib_version,
-        # for ease of use in conda-forge-ci-setup;
         # use new dictionary to avoid mutating existing var_dict in place
         new_dict = HashableDict(
             {
                 **var_dict,
                 "c_stdlib_version": v_stdlib,
-                "MACOSX_DEPLOYMENT_TARGET": v_stdlib,
                 "MACOSX_SDK_VERSION": sdk,
             }
         )
@@ -728,19 +700,9 @@ def _collapse_subpackage_variants(
         if not meta.noarch:
             is_noarch = False
 
-    # determine if MACOSX_DEPLOYMENT_TARGET appears in recipe-local CBC;
-    # all metas in list_of_metas come from same recipe, so path is identical
-    recipe_dir = list_of_metas[0].path
-    cbc_path = os.path.join(recipe_dir, "conda_build_config.yaml")
-    has_macdt = False
-    if os.path.exists(cbc_path):
-        with open(cbc_path, encoding="utf-8") as f:
-            cbc_text = f.read()
-        if re.match(r"^\s*MACOSX_DEPLOYMENT_TARGET:", cbc_text):
-            has_macdt = True
-
     # check if recipe contains `python_min`; add it to used_vars if so; we cannot use
     # `m.get_recipe_text()`, because noarch outputs may have been skipped already
+    recipe_dir = list_of_metas[0].path
     recipe_path = os.path.join(recipe_dir, "meta.yaml")
     if not os.path.exists(recipe_path):
         recipe_path = os.path.join(recipe_dir, "recipe.yaml")
@@ -751,8 +713,8 @@ def _collapse_subpackage_variants(
     if any(pm_pat.match(x) for x in meta_text.splitlines()):
         all_used_vars.add("python_min")
 
-    # on osx, merge MACOSX_DEPLOYMENT_TARGET & c_stdlib_version to max of either; see #1884
-    all_variants = _merge_deployment_target(all_variants, has_macdt)
+    # on osx, ensure that c_stdlib_version & MACOSX_SDK_VERSION are compatible
+    all_variants = _validate_deployment_target(all_variants)
 
     # we use the intersection of all of the loop vars in the outputs
     # to distribute CI jobs.
@@ -768,6 +730,8 @@ def _collapse_subpackage_variants(
     ]
     top_level_vars = set.intersection(*top_level_vars)
     top_level_loop_vars = set.intersection(*top_level_loop_vars)
+    # Discard channel_sources to not include it in ci_support filenames #2681
+    top_level_loop_vars.discard("channel_sources")
 
     if "target_platform" in all_used_vars:
         top_level_loop_vars.add("target_platform")
@@ -784,7 +748,7 @@ def _collapse_subpackage_variants(
     #     configuration per item, and we want a single dict, with each key representing many values
     squished_input_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(
         # ensure we update the input_variants in the same way as all_variants
-        _merge_deployment_target(list_of_metas[0].config.input_variants, has_macdt)
+        _validate_deployment_target(list_of_metas[0].config.input_variants)
     )
     squished_used_variants = conda_build.variants.list_of_dicts_to_dict_of_lists(
         list(all_variants)
@@ -801,7 +765,6 @@ def _collapse_subpackage_variants(
     always_keep_keys = {
         "zip_keys",
         "pin_run_as_build",
-        "MACOSX_DEPLOYMENT_TARGET",
         "MACOSX_SDK_VERSION",
         "macos_min_version",
         "macos_machine",
@@ -1046,7 +1009,9 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
 
         config_name_short = config_name
         conf_hash = hashlib.sha256(config_name.encode("utf-8")).hexdigest()[:8]
-        # drone has a limit of 50, see https://github.com/conda-forge/conda-smithy/issues/1188
+        # provide a shortened config name for convenience
+        # the choice of 50 was related to the limit on historically supported drone provider,
+        # see https://github.com/conda-forge/conda-smithy/issues/1188
         if len(config_name_short) >= 49:
             config_name_short = config_name[:40] + "_h" + conf_hash
         # we need to shorten long variant files to avoid hitting maximum path limits on win.
@@ -1089,44 +1054,25 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
 
 def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_text):
     get_fast_finish_script = ""
-    fast_finish_script = ""
     tooling_branch = forge_config["github"]["tooling_branch_name"]
 
     cfbs_fpath = os.path.join(
         forge_dir, forge_config["recipe_dir"], "ff_ci_pr_build.py"
     )
-    if provider_name == "appveyor":
-        if os.path.exists(cfbs_fpath):
-            fast_finish_script = "{recipe_dir}\\ff_ci_pr_build".format(
-                recipe_dir=forge_config["recipe_dir"]
-            )
-        else:
-            get_fast_finish_script = '''powershell -Command "(New-Object Net.WebClient).DownloadFile('https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py', 'ff_ci_pr_build.py')"'''  # NOQA
-            fast_finish_script += "ff_ci_pr_build"
-            fast_finish_text += "del {fast_finish_script}.py"
-
-        fast_finish_text = fast_finish_text.format(
-            get_fast_finish_script=get_fast_finish_script.format(branch=tooling_branch),
-            fast_finish_script=fast_finish_script,
+    # If the recipe supplies its own ff_ci_pr_build.py script,
+    # we use it instead of the global one.
+    if os.path.exists(cfbs_fpath):
+        get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(
+            recipe_dir=forge_config["recipe_dir"]
         )
-
-        fast_finish_text = fast_finish_text.strip()
-        fast_finish_text = fast_finish_text.replace("\n", "\n        ")
     else:
-        # If the recipe supplies its own ff_ci_pr_build.py script,
-        # we use it instead of the global one.
-        if os.path.exists(cfbs_fpath):
-            get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(
-                recipe_dir=forge_config["recipe_dir"]
-            )
-        else:
-            get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py"  # NOQA
+        get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py"  # NOQA
 
-        fast_finish_text = fast_finish_text.format(
-            get_fast_finish_script=get_fast_finish_script.format(branch=tooling_branch)
-        )
+    fast_finish_text = fast_finish_text.format(
+        get_fast_finish_script=get_fast_finish_script.format(branch=tooling_branch)
+    )
 
-        fast_finish_text = fast_finish_text.strip()
+    fast_finish_text = fast_finish_text.strip()
     return fast_finish_text
 
 
@@ -1346,35 +1292,6 @@ def _render_ci_provider(
             config,
             forge_config,
         )
-        for channel_target in migrated_combined_variant_spec.get("channel_targets", []):
-            # MRB: Commented this out when github granted us a bigger runner allocation
-            #      Put this back to prevent feedstocks from using GHA
-            # if (
-            #     channel_target.startswith("conda-forge ")
-            #     and provider_name == "github_actions"
-            #     and not (
-            #         (forge_config["github_actions"]["self_hosted"])
-            #         or (os.path.basename(forge_dir) in SERVICE_FEEDSTOCKS)
-            #     )
-            # ):
-            #     raise RuntimeError(
-            #         "Using github_actions as the CI provider inside "
-            #         "conda-forge github org is not allowed in order "
-            #         "to avoid a denial of service for other infrastructure."
-            #     )
-
-            # we skip travis builds for anything but aarch64, ppc64le and s390x
-            # due to their current open-source policies around usage
-            if (
-                channel_target.startswith("conda-forge ")
-                and provider_name == "travis"
-                and (platform != "linux" or arch not in ["aarch64", "ppc64le", "s390x"])
-            ):
-                raise RuntimeError(
-                    "Travis CI can only be used for 'linux_aarch64', "
-                    "'linux_ppc64le' or 'linux_s390x' native builds"
-                    f", not '{platform}_{arch}', to avoid using open-source build minutes!"
-                )
 
         # AFAIK there is no way to get conda build to ignore the CBC yaml
         # in the recipe. This one can mess up migrators applied with local
@@ -1523,12 +1440,7 @@ def _render_ci_provider(
         with write_file(platform_target_path) as fh:
             fh.write(template.render(**forge_config))
 
-    # circleci needs a placeholder file of sorts - always write the output, even if no metas
-    if provider_name == "circle":
-        template = jinja_env.get_template(platform_template_file)
-        with write_file(platform_target_path) as fh:
-            fh.write(template.render(**forge_config))
-    # TODO: azure-pipelines might need the same as circle
+    # TODO: azure-pipelines might need a placeholder file if no metas
     if return_metadata:
         return dict(
             forge_config=forge_config,
@@ -1594,36 +1506,6 @@ def _get_build_setup_line(forge_dir, platform, forge_config):
 
             """)
     return build_setup
-
-
-def _circle_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
-        if yum_build_setup:
-            forge_config["yum_build_setup"] = yum_build_setup
-
-    forge_config["build_setup"] = _get_build_setup_line(
-        forge_dir, platform, forge_config
-    )
-
-    template_files = [".circleci/fast_finish_ci_pr_build.sh"]
-
-    if platform == "linux":
-        template_files.append(".scripts/run_docker_build.sh")
-        template_files.append(".scripts/build_steps.sh")
-    else:
-        template_files.append(".scripts/run_osx_build.sh")
-
-    # all template_files are also executable
-    exe_files = template_files + [".circleci/checkout_merge_commit.sh"]
-
-    _render_template_files(
-        forge_config=forge_config,
-        jinja_env=jinja_env,
-        template_files=template_files,
-        forge_dir=forge_dir,
-    )
-    _add_exec_bit(exe_files=exe_files, forge_dir=forge_dir)
 
 
 def generate_yum_requirements(forge_config, forge_dir):
@@ -1697,77 +1579,6 @@ def _get_platforms_of_provider(provider, forge_config):
     return platforms, archs, keep_noarchs, upload_packages
 
 
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="CircleCI is deprecated, see #2627",
-)
-def render_circle(jinja_env, forge_config, forge_dir, return_metadata=False):
-    target_path = os.path.join(forge_dir, ".circleci", "config.yml")
-    template_filename = "circle.yml.tmpl"
-    fast_finish_text = textwrap.dedent("""\
-            {get_fast_finish_script} | \\
-                 python - -v --ci "circle" "${{CIRCLE_PROJECT_USERNAME}}/${{CIRCLE_PROJECT_REPONAME}}" "${{CIRCLE_BUILD_NUM}}" "${{CIRCLE_PR_NUMBER}}"
-        """)  # noqa
-    extra_platform_files = {
-        "common": [
-            os.path.join(forge_dir, ".circleci", "checkout_merge_commit.sh"),
-            os.path.join(forge_dir, ".circleci", "fast_finish_ci_pr_build.sh"),
-        ],
-    }
-
-    (
-        platforms,
-        archs,
-        keep_noarchs,
-        upload_packages,
-    ) = _get_platforms_of_provider("circle", forge_config)
-
-    return _render_ci_provider(
-        "circle",
-        jinja_env=jinja_env,
-        forge_config=forge_config,
-        forge_dir=forge_dir,
-        platforms=platforms,
-        archs=archs,
-        fast_finish_text=fast_finish_text,
-        platform_target_path=target_path,
-        platform_template_file=template_filename,
-        platform_specific_setup=_circle_specific_setup,
-        keep_noarchs=keep_noarchs,
-        extra_platform_files=extra_platform_files,
-        upload_packages=upload_packages,
-        return_metadata=return_metadata,
-    )
-
-
-def _travis_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
-
-    platform_templates = {
-        "linux": [".scripts/run_docker_build.sh", ".scripts/build_steps.sh"],
-        "osx": [".scripts/run_osx_build.sh"],
-        "win": [],
-    }
-    template_files = platform_templates.get(platform, [])
-
-    if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
-        if yum_build_setup:
-            forge_config["yum_build_setup"] = yum_build_setup
-
-    forge_config["build_setup"] = build_setup
-
-    _render_template_files(
-        forge_config=forge_config,
-        jinja_env=jinja_env,
-        template_files=template_files,
-        forge_dir=forge_dir,
-    )
-    # all template files are also executable
-    _add_exec_bit(exe_files=template_files, forge_dir=forge_dir)
-
-
 def _render_template_files(forge_config, jinja_env, template_files, forge_dir):
     for template_file in template_files:
         template = jinja_env.get_template(os.path.basename(template_file) + ".tmpl")
@@ -1809,91 +1620,6 @@ def _add_exec_bit(exe_files, forge_dir):
         if os.path.exists(target_fname):
             logger.debug("adding exec bit to %s", target_fname)
             set_exe_file(target_fname, True)
-
-
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="Travis is deprecated, see #2627",
-)
-def render_travis(jinja_env, forge_config, forge_dir, return_metadata=False):
-    target_path = os.path.join(forge_dir, ".travis.yml")
-    template_filename = "travis.yml.tmpl"
-    fast_finish_text = ""
-
-    (
-        platforms,
-        archs,
-        keep_noarchs,
-        upload_packages,
-    ) = _get_platforms_of_provider("travis", forge_config)
-
-    return _render_ci_provider(
-        "travis",
-        jinja_env=jinja_env,
-        forge_config=forge_config,
-        forge_dir=forge_dir,
-        platforms=platforms,
-        archs=archs,
-        fast_finish_text=fast_finish_text,
-        platform_target_path=target_path,
-        platform_template_file=template_filename,
-        keep_noarchs=keep_noarchs,
-        platform_specific_setup=_travis_specific_setup,
-        upload_packages=upload_packages,
-        return_metadata=return_metadata,
-    )
-
-
-def _appveyor_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
-    build_setup = build_setup.rstrip()
-    new_build_setup = ""
-    for line in build_setup.split("\n"):
-        if line.startswith("#"):
-            new_build_setup += "    " + line + "\n"
-        else:
-            new_build_setup += "    - cmd: " + line + "\n"
-    build_setup = new_build_setup.strip()
-
-    forge_config["build_setup"] = build_setup
-
-
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="Appveyor is deprecated, see #2627",
-)
-def render_appveyor(jinja_env, forge_config, forge_dir, return_metadata=False):
-    target_path = os.path.join(forge_dir, ".appveyor.yml")
-    fast_finish_text = textwrap.dedent("""\
-            {get_fast_finish_script}
-            "%CONDA_INSTALL_LOCN%\\python.exe" {fast_finish_script}.py -v --ci "appveyor" "%APPVEYOR_ACCOUNT_NAME%/%APPVEYOR_PROJECT_SLUG%" "%APPVEYOR_BUILD_NUMBER%" "%APPVEYOR_PULL_REQUEST_NUMBER%"
-        """)  # noqa
-    template_filename = "appveyor.yml.tmpl"
-
-    (
-        platforms,
-        archs,
-        keep_noarchs,
-        upload_packages,
-    ) = _get_platforms_of_provider("appveyor", forge_config)
-
-    return _render_ci_provider(
-        "appveyor",
-        jinja_env=jinja_env,
-        forge_config=forge_config,
-        forge_dir=forge_dir,
-        platforms=platforms,
-        archs=archs,
-        fast_finish_text=fast_finish_text,
-        platform_target_path=target_path,
-        platform_template_file=template_filename,
-        keep_noarchs=keep_noarchs,
-        platform_specific_setup=_appveyor_specific_setup,
-        upload_packages=upload_packages,
-        return_metadata=return_metadata,
-    )
 
 
 def _get_workflow_support_files(data, platform):
@@ -2191,104 +1917,6 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
     )
 
 
-def _drone_specific_setup(jinja_env, forge_config, forge_dir, platform):
-    platform_templates = {
-        "linux": [".scripts/build_steps.sh"],
-        "osx": [],
-        "win": [],
-    }
-    template_files = platform_templates.get(platform, [])
-
-    build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
-
-    if platform == "linux":
-        yum_build_setup = generate_yum_requirements(forge_config, forge_dir)
-        if yum_build_setup:
-            forge_config["yum_build_setup"] = yum_build_setup
-
-    forge_config["build_setup"] = build_setup
-
-    _render_template_files(
-        forge_config=forge_config,
-        jinja_env=jinja_env,
-        template_files=template_files,
-        forge_dir=forge_dir,
-    )
-    # all template_files are also executable
-    _add_exec_bit(exe_files=template_files, forge_dir=forge_dir)
-
-
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="Drone is deprecated, see #2627",
-)
-def render_drone(jinja_env, forge_config, forge_dir, return_metadata=False):
-    target_path = os.path.join(forge_dir, ".drone.yml")
-    template_filename = "drone.yml.tmpl"
-    fast_finish_text = ""
-
-    (
-        platforms,
-        archs,
-        keep_noarchs,
-        upload_packages,
-    ) = _get_platforms_of_provider("drone", forge_config)
-
-    return _render_ci_provider(
-        "drone",
-        jinja_env=jinja_env,
-        forge_config=forge_config,
-        forge_dir=forge_dir,
-        platforms=platforms,
-        archs=archs,
-        fast_finish_text=fast_finish_text,
-        platform_target_path=target_path,
-        platform_template_file=template_filename,
-        platform_specific_setup=_drone_specific_setup,
-        keep_noarchs=keep_noarchs,
-        upload_packages=upload_packages,
-        return_metadata=return_metadata,
-    )
-
-
-_woodpecker_specific_setup = _drone_specific_setup
-
-
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="Woodpecker is deprecated, see #2627",
-)
-def render_woodpecker(jinja_env, forge_config, forge_dir, return_metadata=False):
-    target_path = os.path.join(forge_dir, ".woodpecker.yml")
-    template_filename = "woodpecker.yml.tmpl"
-    fast_finish_text = ""
-
-    (
-        platforms,
-        archs,
-        keep_noarchs,
-        upload_packages,
-    ) = _get_platforms_of_provider("woodpecker", forge_config)
-
-    return _render_ci_provider(
-        "woodpecker",
-        jinja_env=jinja_env,
-        forge_config=forge_config,
-        forge_dir=forge_dir,
-        platforms=platforms,
-        archs=archs,
-        fast_finish_text=fast_finish_text,
-        platform_target_path=target_path,
-        platform_template_file=template_filename,
-        platform_specific_setup=_woodpecker_specific_setup,
-        keep_noarchs=keep_noarchs,
-        upload_packages=upload_packages,
-        return_metadata=return_metadata,
-    )
-
-
 def azure_build_id_from_token(forge_config):
     """Retrieve Azure `build_id` from a `forge_config` using an Azure token.
     This function allows the `build_id` to be retrieved when the Azure org is private.
@@ -2431,6 +2059,7 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             )
         )
     )
+    forge_config["extras"] = _get_unversioned_extras(metas)
 
     maintainers = sorted(
         set(
@@ -2479,6 +2108,31 @@ def render_readme(jinja_env, forge_config, forge_dir, render_info=None):
             fh.write(line)
     else:
         remove_file_or_dir(code_owners_file)
+
+
+def _get_unversioned_extras(metas):
+    extras = {}
+    for m in metas:
+        recipe = m.meta.get("recipe") if hasattr(m, "meta") else None
+        package = recipe.get("package") if recipe else None
+        if not (recipe and package):
+            continue
+        pkg_extras = recipe.get("requirements", {}).get("extras", {})
+        if not pkg_extras:
+            continue
+        pkg_name = package["name"]
+        for name, deps in pkg_extras.items():
+            spec = f"""{pkg_name}[extras={name}]"""
+            for dep in deps:
+                match = rattler.MatchSpec(dep)
+                dep_spec = f"{match.name.normalized}"
+                if match.extras:
+                    denorm_extra = ",".join(sorted(match.extras))
+                    if len(match.extras) > 1:
+                        denorm_extra = f"[{denorm_extra}]"
+                    dep_spec += f"""[extras={denorm_extra}]"""
+                extras.setdefault(spec, set()).add(dep_spec)
+    return extras
 
 
 def _get_skip_files(forge_config):
@@ -2854,7 +2508,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     )
 
     # NOTE: We are not shell escaping, so no ><! symbols in the version constraints, just =
-    python_version = "3.12"  # make it match latest Miniforge, if possible
+    python_version = "3.14"  # make it match latest Miniforge, if possible
     if config["conda_build_tool"] == "mambabuild":
         config["conda_build_tool_deps"] = f"python={python_version} conda-build boa"
     elif config["conda_build_tool"] == "conda-build+conda-libmamba-solver":
@@ -2898,6 +2552,12 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
 
     for plat, ci in NATIVE_CI_PROVIDER.items():
         if config["provider"][plat] == "native":
+            if ci is None:
+                raise RuntimeError(
+                    f"No native CI provider is available for '{plat}'; "
+                    "use 'default'/'emulated' instead, or cross-compile via "
+                    "'build_platform'."
+                )
             config["provider"][plat] = ci
 
     config["remote_ci_setup"] = _sanitize_remote_ci_setup(config["remote_ci_setup"])
@@ -3117,15 +2777,6 @@ def _iter_all_templates(forge_dir):
         yield os.path.join(forge_dir, file)
 
 
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "get_common_scripts",
-    _iter_all_templates,
-    addendum="Raise an issue if you need this function",
-)
-
-
 def clear_scripts(forge_dir):
     for folder in [
         ".azure-pipelines",
@@ -3166,13 +2817,19 @@ def get_migrations_in_dir(migrations_root):
     Given a directory, return the migrations as a mapping
     from the (filename, timestamp) to (full_path, migration_number, use_local)
     """
+    from conda_smithy.variant_algebra import parse_migrator_ts
+
     res = {}
     for full_path in glob.glob(os.path.join(migrations_root, "*.yaml")):
         with open(full_path, encoding="utf-8") as f:
             contents = f.read()
             migration_yaml = yaml.load(contents, Loader=yaml.loader.BaseLoader) or {}
-            # Use a object as timestamp to not delete it
-            ts = migration_yaml.get("migrator_ts", object())
+            if "migrator_ts" in migration_yaml:
+                # Normalize, so that the same instant matches across formats
+                ts = parse_migrator_ts(migration_yaml["migrator_ts"])
+            else:
+                # Use a object as timestamp to not delete it
+                ts = object()
             migration_number = migration_yaml.get("__migrator", {}).get(
                 "migration_number", 1
             )
@@ -3305,23 +2962,8 @@ def main(
 
     # the order of these calls appears to matter
     render_info = []
-    render_info.append(render_circle(env, config, forge_dir, return_metadata=True))
-    logger.debug("circle rendered")
-
-    render_info.append(render_travis(env, config, forge_dir, return_metadata=True))
-    logger.debug("travis rendered")
-
-    render_info.append(render_appveyor(env, config, forge_dir, return_metadata=True))
-    logger.debug("appveyor rendered")
-
     render_info.append(render_azure(env, config, forge_dir, return_metadata=True))
     logger.debug("azure rendered")
-
-    render_info.append(render_drone(env, config, forge_dir, return_metadata=True))
-    logger.debug("drone rendered")
-
-    render_info.append(render_woodpecker(env, config, forge_dir, return_metadata=True))
-    logger.debug("woodpecker rendered")
 
     render_info.append(
         render_github_actions(env, config, forge_dir, return_metadata=True)

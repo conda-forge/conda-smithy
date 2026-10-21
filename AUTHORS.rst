@@ -4,8 +4,8 @@ Authors are sorted by number of commits.
 * Isuru Fernando
 * Matthew R. Becker
 * Jaime Rodríguez-Guerra
-* Michał Górny
 * H. Vetinari
+* Michał Górny
 * nichmor
 * Christopher J. Wright
 * Anthony Scopatz
@@ -16,25 +16,25 @@ Authors are sorted by number of commits.
 * Filipe Fernandes
 * Min RK
 * John Kirkham
-* Dougal J. Sutherland
 * Mark Harfouche
+* Dougal J. Sutherland
 * Amit Kumar
 * Marcel Bargull
 * Hadrien Mary
 * shadow_walker
 * Michael Sarahan
 * Bastian Zimmermann
+* Chris Burr
 * Leo Fang
 * Ryan Volz
 * Johnny Willemsen
 * Pavel Zwerschke
-* Chris Burr
 * Nicholas Bollweg
+* dependabot[bot]
 * Julian Rüth
 * Yannik Tausch
-* dependabot[bot]
-* Daniel Bast
 * Daniel Ching
+* Daniel Bast
 * Billy K. Poon
 * vinicius douglas cerutti
 * Tim Snyder
@@ -63,6 +63,7 @@ Authors are sorted by number of commits.
 * Carlo
 * Matthew Craig
 * Joshua L. Adelman
+* Memento "RC" Mori
 * Marius van Niekerk
 * Johannes Köster
 * Philippe Blain
@@ -76,6 +77,7 @@ Authors are sorted by number of commits.
 * David Hirschfeld
 * Finn Womack
 * M Bussonnier
+* velonica0
 * Josh Barnes
 * Tobias Megies
 * Jonathan Helmus
@@ -114,6 +116,7 @@ Authors are sorted by number of commits.
 * Lucas Colley
 * Jakov Smolić
 * Niklas Mertsch
+* Benjamin Bertrand
 * lorenz
 * Tom Augspurger
 * Ryan May
@@ -156,5 +159,6 @@ Authors are sorted by number of commits.
 * pb01ka
 * Ben Williams
 * Scott Wang
-* Benjamin Bertrand
 * Sophia Castellarin
+* Jirawat Iamsamang
+* Lionel GUEZ

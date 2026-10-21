@@ -5,7 +5,6 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 from dataclasses import asdict, dataclass
 from typing import Any, ClassVar, Literal, Self, TypeAlias
 
-from conda.deprecations import deprecated
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 
 from conda_smithy.linter.messages.base import LinterMessage
@@ -712,7 +711,7 @@ class StdlibSysroot(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class StdlibMacOS(LinterMessage, _AnyRecipeMessage):
+class StdlibMacos(LinterMessage, _AnyRecipeMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -935,11 +934,12 @@ class ScriptShellcheckFailure(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class LicenseSPDX(LinterMessage, _AnyRecipeMessage):
+class LicenseSpdx(LinterMessage, _AnyRecipeMessage):
     """
     The `license` field must be a valid SPDX identifier.
 
-    See list at [`licenses.txt`](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/licenses.txt).
+    See the [SPDX License List](https://spdx.org/licenses/), as shipped by the
+    `spdx-license-list-data` conda package.
     """
 
     kind = "hint"
@@ -958,7 +958,8 @@ class LicenseSPDX(LinterMessage, _AnyRecipeMessage):
 class InvalidLicenseException(LinterMessage, _AnyRecipeMessage):
     """
     The `license` field may accept some SPDX exception expressions, as controlled
-    in [this file](https://github.com/conda-forge/conda-smithy/blob/main/conda_smithy/linter/license_exceptions.txt)
+    by the [SPDX exceptions list](https://spdx.org/licenses/exceptions-index.html),
+    as shipped by the `spdx-license-list-data` conda package.
     """
 
     kind = "hint"
@@ -1071,7 +1072,7 @@ class UsePip(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
+class LegacyPypiUrl(LinterMessage, _AnyRecipeMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
     but the canonical URL is now files.pythonhosted.org.
@@ -1085,15 +1086,6 @@ class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
         "PyPI default URL is now files.pythonhosted.org, and not pypi.io."
         " You may want to update the default source url."
     )
-
-
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "UsePyPIOrg",
-    LegacyPyPIURL,
-    addendum="Use LegacyPyPIURL instead",
-)
 
 
 @dataclass(kw_only=True)
@@ -1477,7 +1469,7 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
 
 
 @dataclass(kw_only=True)
-class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
+class RattlerSpdir(LinterMessage, _RecipeYamlMessage):
     """
     rattler-build defines `$SP_DIR` (the environment's site-packages
     directory, `%SP_DIR%` on Windows), so recipes no longer need to set it

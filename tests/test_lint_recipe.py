@@ -18,7 +18,7 @@ from unittest import mock
 import pytest
 
 import conda_smithy.lint_recipe as linter
-from conda_smithy.linter import hints, update_licenses_list
+from conda_smithy.linter import hints
 from conda_smithy.linter.conda_recipe_v1_linter import lint_recipe_tests
 from conda_smithy.linter.messages.recipe import SectionHasInvalidType
 from conda_smithy.linter.utils import (
@@ -69,6 +69,7 @@ def tmp_directory():
         "m2w64_fortran",
         "go-cgo",
         "go-nocgo",
+        "ocaml",
     ],
 )
 def test_stdlib_lint(comp_lang):
@@ -124,6 +125,7 @@ def test_m2w64_stdlib_legal():
         "m2w64_fortran",
         "go-cgo",
         "go-nocgo",
+        "ocaml",
     ],
 )
 @pytest.mark.parametrize("quote", ["'", '"'])
@@ -291,19 +293,19 @@ def test_recipe_v1_osx_noarch_hint():
         (["11.0", "11.0"], None, None),
         (["11.1"], None, None),
         # only stdlib, but outdated -> warn
-        (["10.9", "11.0"], None, "You are"),
-        (["10.9"], None, "You are"),
+        (["10.9", "11.0"], None, "below the current"),
+        (["10.9"], None, "below the current"),
         # sdk below stdlib -> warn
-        (["11.0", "12.0"], ["10.12"], "You are"),
-        (["11.0", "12.0"], ["10.12", "12.0"], "You are"),
+        (["11.0", "12.0"], ["10.12"], "below `c_stdlib_version`"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "below `c_stdlib_version`"),
         # sdk above stdlib -> no warning
         (["11.0", "12.0"], ["12.0", "12.0"], None),
         # only sdk -> no warning
         (None, ["11.0"], None),
         (None, ["11.1", "12.0"], None),
         # only sdk, but below global baseline -> warning
-        (None, ["10.12"], "You are"),
-        (None, ["10.12", "11.0"], "You are"),
+        (None, ["10.12"], "below `c_stdlib_version`"),
+        (None, ["10.12", "11.0"], "below `c_stdlib_version`"),
     ],
 )
 def test_cbc_osx_lints(
@@ -356,12 +358,98 @@ MACOSX_SDK_VERSION:         # [osx]
         if exp_lint is None:
             for slug in [
                 "Conflicting spec",
-                "You are",
+                "below the current",
+                "below `c_stdlib_version`",
                 "In your conda_build_config.yaml",
             ]:
-                assert not any(lint.startswith(slug) for lint in lints)
+                assert not any(slug in lint for lint in lints)
         else:
-            assert any(lint.startswith(exp_lint) for lint in lints)
+            assert any(exp_lint in lint for lint in lints)
+
+
+@pytest.mark.parametrize(
+    "std_selector",
+    ["unix", "linux or (osx and x86_64)"],
+    ids=["plain", "or-conjunction"],
+)
+@pytest.mark.parametrize(
+    "reverse_arch",
+    # we reverse x64/arm64 separately per deployment target, stdlib & sdk
+    [(False, False, False), (True, True, True), (False, True, False)],
+    ids=["False", "True", "mixed"],
+)
+@pytest.mark.parametrize(
+    "v_std,sdk,exp_lint",
+    [
+        # only stdlib -> no warning
+        (["11.0", "11.0"], None, None),
+        (["11.1"], None, None),
+        # only stdlib, but outdated -> warn
+        (["10.9", "11.0"], None, "below the current"),
+        (["10.9"], None, "below the current"),
+        # sdk below stdlib -> warn
+        (["11.0", "12.0"], ["10.12"], "below `c_stdlib_version`"),
+        (["11.0", "12.0"], ["10.12", "12.0"], "below `c_stdlib_version`"),
+        # sdk above stdlib -> no warning
+        (["11.0", "12.0"], ["12.0", "12.0"], None),
+        # only sdk -> no warning
+        (None, ["11.0"], None),
+        (None, ["11.1", "12.0"], None),
+        # only sdk, but below global baseline -> warning
+        (None, ["10.12"], "below `c_stdlib_version`"),
+        (None, ["10.12", "11.0"], "below `c_stdlib_version`"),
+    ],
+)
+def test_cbc_osx_lints_variants(std_selector, reverse_arch, v_std, sdk, exp_lint):
+    with tmp_directory() as rdir:
+        rdir = Path(rdir)
+        rdir.joinpath("recipe.yaml").write_text("package:\n  name: foo")
+        rdir.joinpath("conda-forge.yml").write_text("conda_build_tool: rattler-build")
+
+        with open(os.path.join(rdir, "variants.yaml"), "a") as fh:
+            if v_std is not None:
+                arch1 = "arm64" if reverse_arch[1] else "x86_64"
+                arch2 = "x86_64" if reverse_arch[1] else "arm64"
+                fh.write("c_stdlib_version:")
+                if v_std is not None:
+                    fh.write(f"\n  - if: osx and {arch1}")
+                    fh.write(f"\n    then: {v_std[0]}")
+                if v_std is not None and len(v_std) > 1:
+                    fh.write(f"\n  - if: osx and {arch2}")
+                    fh.write(f"\n    then: {v_std[1]}")
+            if sdk is not None:
+                # often SDK is set uniformly for osx; test this as well
+                fh.write(
+                    f"""
+MACOSX_SDK_VERSION:
+  - if: osx and {"arm64" if reverse_arch[2] else "x86_64"}
+    then: {sdk[0]}
+  - if: osx and {"x86_64" if reverse_arch[2] else "arm64"}
+    then: {sdk[1]}
+"""
+                    if len(sdk) == 2
+                    else f"""
+MACOSX_SDK_VERSION:
+  - {sdk[0]}
+"""
+                )
+        # run the linter
+        lints = linter.main(rdir, conda_forge=True)
+        # show CBC/hints for debugging
+        with open(os.path.join(rdir, "variants.yaml")) as fh:
+            print("".join(fh.readlines()))
+            print(lints)
+        # validate against expectations
+        if exp_lint is None:
+            for slug in [
+                "Conflicting spec",
+                "below the current",
+                "below `c_stdlib_version`",
+                "In your conda_build_config.yaml",
+            ]:
+                assert not any(slug in lint for lint in lints)
+        else:
+            assert any(exp_lint in lint for lint in lints)
 
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
@@ -6663,25 +6751,6 @@ extra:
             "Specify `extra.feedstock_name: bar`."
         ]
     )
-
-
-def test_license_files_up_to_date():
-    """
-    If this test fails, run this from an activated conda-smithy environment and commit the result:
-
-    python -m conda_smithy.linter.update_licenses_list
-    """
-    original_licenses = update_licenses_list.LICENSES_TXT_PATH.read_text()
-    original_exceptions = update_licenses_list.LICENSE_EXCEPTIONS_TXT_PATH.read_text()
-
-    assert (
-        update_licenses_list.update_licenses(write=False)
-        == original_licenses.splitlines()
-    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
-    assert (
-        update_licenses_list.update_license_exceptions(write=False)
-        == original_exceptions.splitlines()
-    ), "Run `python -m conda_smithy.linter.update_licenses_list` to sync license database"
 
 
 def test_invalid_type_lint_message():

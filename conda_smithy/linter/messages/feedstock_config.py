@@ -32,7 +32,7 @@ class NoDuplicateKeys(LinterMessage, _CondaForgeYmlMessage):
 
 
 @dataclass(kw_only=True)
-class OSVersionLower(LinterMessage, _CondaForgeYmlMessage):
+class OsVersionLower(LinterMessage, _CondaForgeYmlMessage):
     """
     The feedstock has been configured to use an older `os_version` value in `conda-forge.yml`.
     Usually this is needed for _newer_ versions of the Linux image (e.g. opt-in early for

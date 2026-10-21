@@ -89,6 +89,15 @@ def test_no_duplicate_identifiers():
             seen_class_names[cls.__name__] = cls
 
 
+# we want to avoid mixed capitalization of names in lint classes, even if they contain acronyms;
+# some names (LegacyPyPIURL, MacOSSDKBelowStdlib) become quite unreadable otherwise
+def test_name_capitalization():
+    double_capital_pat = re.compile(r"[A-Z][A-Z]")
+    for module in MESSAGE_MODULES:
+        for cls in _module_classes_in_source_order(module):
+            assert not re.search(double_capital_pat, cls.__name__), cls.__name__
+
+
 @pytest.mark.parametrize("module", MESSAGE_MODULES)
 def test_message_registry_integrity(module):
     """

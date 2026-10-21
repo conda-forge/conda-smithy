@@ -4,6 +4,198 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.10.21
+====================
+
+**Changed:**
+
+* The value of `MACOSX_DEPLOYMENT_TARGET` will be ignored, and isn't being populated anymore in variant configs. (#2721)
+* Lints involving the deployment target have been renamed, e.g. `MacOSDeploymentTargetBelowStdlib` is now called `MacosSdkBelowStdlib`. This lint now also applies to `variant.yaml` recipe configuration. (#2728)
+* Homogenized capitalization of names of lint classes. (#2728)
+
+**Fixed:**
+
+* Change owner to allow local rootless build with podman. (#2714)
+
+**Authors:**
+
+* H. Vetinari
+* Lionel GUEZ
+
+
+
+v2026.10.20
+====================
+
+**Fixed:**
+
+* Fixed regression in respecting ``NO_TEST`` in osx builds. (#2725)
+* Fixed conda-forge/admin-requests#2422 Bare-token Github URL failed to clone
+
+**Authors:**
+
+* Michał Górny
+* Jirawat Iamsamang
+
+
+
+v2026.10.19
+====================
+
+**Removed:**
+
+* Removed deprecated functions `get_common_scripts`, `load_linter_toml_metadata_internal` and the misspelled `load_linter_toml_metdata`, as well as `hint_sources_should_not_mention_pypi_io_but_pypi_org` and the linter class `UsePyPIOrg`. (#2723)
+
+**Authors:**
+
+* H. Vetinari
+
+
+
+v2026.10.18
+====================
+
+**Added:**
+
+* Document all CEP-44 ``extras`` in a rendered v1 feedstock's ``README.md``. (#2687)
+* ``migrator_ts`` in migration files may now be an ISO 8601 date and time with an explicit UTC offset (e.g. ``2026-10-02T03:40:20Z``), in addition to seconds since the Unix epoch.
+  Do not rewrite the ``migrator_ts`` of an existing migration, even into the other format, unless the migration is meant to restart: ISO 8601 timestamps are limited to microseconds, so the value may not survive the conversion, and a changed ``migrator_ts`` is a different migration.
+
+**Changed:**
+
+* When ``workflow_settings.store_build_artifacts`` is used, the uploaded artifact names are their respective filenames. (#2720)
+* The micromamba version used for osx & win builds has been updated to 2.9.0 (#2701).
+* Builds with `provider: {win_arm64: default}` now use a fully native build setup (#2701).
+* Widen `py-rattler` constraint to allow v0.27. (#2713)
+* Reduced the divergence between Linux and macOS build scripts. (#2695)
+
+**Removed:**
+
+* Support for deprecated Appveyor, CircleCI, Cirrus Runners, Drone, Travis and Woodpecker CI services. (#2719)
+
+**Fixed:**
+
+* Avoid including ``channel_sources`` in ``.ci_support`` filenames for v1 recipes (#2681).
+* Register QEMU binfmt handlers on linux-aarch64 GitHub Actions runners, using the emulators from the build image.
+
+**Authors:**
+
+* Michał Górny
+* H. Vetinari
+* Mark Harfouche
+* Nicholas Bollweg
+* Daniel Ching
+* Memento "RC" Mori
+* Benjamin Bertrand
+
+
+
+v2026.9.23
+====================
+
+**Fixed:**
+
+* ``workflow_settings.pagefile_size`` no longer fails the job on runners whose
+  filesystem cannot hold a swap file, such as the containerized (overlayfs)
+  RISE ``ubuntu-24.04-riscv`` runners: the step is skipped with a warning
+  instead (#2698).
+
+**Authors:**
+
+* Matthew R. Becker
+* Michał Górny
+* velonica0
+
+
+
+v2026.9.22
+====================
+
+**Changed:**
+
+* Bump python version of root environment containing build tools (#2697).
+
+**Authors:**
+
+* H. Vetinari
+
+
+
+v2026.9.21
+====================
+
+**Added:**
+
+* Native ``linux_riscv64`` builds can now be rendered on GitHub Actions using
+  the usual interface (``provider: {linux_riscv64: X}`` where ``X`` is
+  ``github_actions``, ``default`` or ``native``) in ``conda-forge.yml``. Jobs run
+  on RISC-V hardware (``ubuntu-24.04-riscv``) provided by the RISE RISC-V
+  runners GitHub App. (#2686)
+
+**Changed:**
+
+* Requesting ``provider: {<platform>: native}`` for a platform without a native
+  CI provider now raises an error instead of being silently ignored. (#2686)
+* Builds of `win-arm64` will now use native toolchains. (#2680)
+
+**Authors:**
+
+* H. Vetinari
+* pre-commit-ci[bot]
+* dependabot[bot]
+* velonica0
+
+
+
+v2026.9.19
+====================
+
+**Added:**
+
+* Added a ``trusted_publishers`` key to ``conda-forge.yml``, listing the CI jobs
+  allowed to ask conda-forge to update a feedstock's version. A job presents the
+  identity token its provider issued it rather than holding a secret. GitHub
+  Actions and GitLab CI/CD are supported, including self-managed GitLab.
+
+**Changed:**
+
+* Lint for missing ``stdlib("c")`` when ``compiler("ocaml")`` is used (#2690)
+* The SPDX license and exception identifiers used to validate the ``about/license``
+  field are now read from the ``spdx-license-list-data`` conda package instead of
+  a vendored, manually-synced copy, so the list stays current automatically.
+
+**Removed:**
+
+* Removed the vendored ``licenses.txt``/``license_exceptions.txt`` files and the
+  ``conda_smithy.linter.update_licenses_list`` sync script.
+
+**Fixed:**
+
+* Synced the SPDX license list, which had picked up ``BSD-Source-alt-GPL``
+  upstream and was failing ``test_license_files_up_to_date``.
+
+**Authors:**
+
+* Isuru Fernando
+* Chris Burr
+* Memento "RC" Mori
+
+
+
+v2026.9.10
+====================
+
+**Fixed:**
+
+* Fixed issue where testing recipe parsing w/ the bot infrastructure no longer worked. (#2676)
+
+**Authors:**
+
+* Matthew R. Becker
+* H. Vetinari
+
+
+
 v2026.9.1
 ====================
 

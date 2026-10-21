@@ -19,7 +19,6 @@ from .configure_feedstock import (  # noqa: TID252
     DEFAULT_PLATFORMS,
     DEFAULT_PROVIDERS,
 )
-from .deprecations import deprecated  # noqa: TID252
 from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
@@ -60,19 +59,6 @@ class CIservices(StrEnum):
     emulated = "emulated"
     native = "native"
     disable = "None"
-
-
-@deprecated("2026.8", "2026.10", addendum="These services are deprecated. See #2627.")
-class DeprecatedCIservices(StrEnum):
-    """
-    These are deprecated as of 2026.8 and will be removed in 2026.10. See #2627.
-    """
-
-    circle = "circle"
-    travis = "travis"
-    appveyor = "appveyor"
-    drone = "drone"
-    woodpecker = "woodpecker"
 
 
 class Lints(StrEnum):
@@ -471,9 +457,8 @@ OSVersion = create_model(
 )
 
 ProviderType = Union[
-    list[Union[CIservices, DeprecatedCIservices]],
+    list[CIservices],
     CIservices,
-    DeprecatedCIservices,
     bool,
     Nullable,
 ]
@@ -521,9 +506,8 @@ def conditional_value(typ: type, default: Any = None) -> BaseModel:
         provider=(
             Optional[
                 Union[
-                    list[Union[CIservices, DeprecatedCIservices]],
+                    list[CIservices],
                     CIservices,
-                    DeprecatedCIservices,
                     Nullable,
                 ]
             ],
@@ -645,6 +629,113 @@ class WorkflowSettings(BaseModel):
         """),
         default=[],
     )
+
+
+class GitHubTrustedPublisher(BaseModel):
+    """A GitHub Actions workflow allowed to publish this feedstock."""
+
+    model_config: ConfigDict = ConfigDict(extra="forbid")
+
+    provider: Literal["github"]
+
+    repository: str = Field(
+        pattern=r"^[^/\s]+/[^/\s]+$",
+        description="The repository the workflow runs in, as `owner/name`.",
+    )
+
+    workflow: str = Field(
+        pattern=r"^[^/\s]+\.ya?ml$",
+        description=cleandoc("""
+        The file name of the workflow, such as `release.yml`. It must live in
+        `repository`; if the job runs in a reusable workflow, name that file
+        rather than the one that calls it.
+        """),
+    )
+
+    repository_owner_id: int = Field(
+        gt=0,
+        description=cleandoc("""
+        The numeric id of the account owning the repository, which pins the
+        trust to that account rather than to a name that could be given up and
+        taken by somebody else. Find it with:
+
+        ```
+        curl -s https://api.github.com/users/<owner> | jq .id
+        ```
+        """),
+    )
+
+    environment: Optional[str] = Field(
+        default=None,
+        description=cleandoc("""
+        The name of a GitHub Actions environment that must be used by the CI
+        job. This field can be used to gate version publishing on a reviewer or
+        a branch.
+        """),
+    )
+
+
+class GitLabTrustedPublisher(BaseModel):
+    """A GitLab CI/CD job allowed to publish this feedstock."""
+
+    model_config: ConfigDict = ConfigDict(extra="forbid")
+
+    provider: Literal["gitlab"]
+
+    project_path: str = Field(
+        pattern=r"^[^/\s]+(/[^/\s]+)+$",
+        description="The project the job runs in, as `group/subgroup/project`.",
+    )
+
+    url: str = Field(
+        default="https://gitlab.com",
+        pattern=r"^https://[^/\s]+$",
+        description=cleandoc("""
+        The GitLab instance, which is also the issuer its tokens carry. Set it
+        for a self-managed instance, which has to be reachable over https. It
+        is compared with the token's issuer as written, so no trailing slash.
+        """),
+    )
+
+    namespace_id: int = Field(
+        gt=0,
+        description=cleandoc("""
+        The numeric id of the group the project belongs to, which pins the
+        trust to that group rather than to a path that could be given up and
+        taken by somebody else. Find it with:
+
+        ```
+        curl -s <url>/api/v4/groups/<group> | jq .id
+        ```
+        """),
+    )
+
+    ref_type: Optional[Literal["branch", "tag"]] = Field(
+        default=None,
+        description=cleandoc("""
+        Require the job to be running for a ref of this kind. Releases normally
+        come from a tag, and saying so stops a push to a branch publishing.
+        """),
+    )
+
+    ref_protected: Optional[bool] = Field(
+        default=None,
+        description="Require the ref to be protected.",
+    )
+
+    environment: Optional[str] = Field(
+        default=None,
+        description=cleandoc("""
+        The name of a GitLab environment that must be used by the CI job. This
+        field can be used to gate version publishing on a reviewer or a branch.
+        """),
+    )
+
+
+TrustedPublisher = Annotated[
+    Union[GitHubTrustedPublisher, GitLabTrustedPublisher],
+    Field(discriminator="provider"),
+]
 
 
 class ConfigModel(BaseModel):
@@ -905,6 +996,7 @@ class ConfigModel(BaseModel):
         * `win_arm64`
         * `linux_aarch64`
         * `linux_ppc64le`
+        * `linux_riscv64`
         * `linux_s390x`
         * `linux_armv7l`
 
@@ -912,23 +1004,20 @@ class ConfigModel(BaseModel):
 
         * `azure`
         * `github_actions`
-        * `circle` (deprecated)
-        * `travis` (deprecated)
-        * `appveyor` (deprecated)
         * `None` or `False` to disable a build platform.
         * `default` to choose an appropriate CI (only if available)
         * `native` to choose an appropriate CI for native compiling (only if available)
         * `emulated` to choose an appropriate CI for compiling inside an emulation
           of the target platform (only if available)
 
-        For example, making explicit that linux_64 builds on github actions, osx_64 builds on azure,
-        and switching win_64 to Appveyor:
+        For example, making explicit that linux_64 and win_64 builds on github actions
+        and switching osx_64 to Azure:
 
         ```yaml
         provider:
             linux_64: github_actions
             osx_64: azure
-            win_64: appveyor
+            win_64: github_actions
         ```
 
         Currently, x86_64 platforms are enabled, but other build platforms are
@@ -1057,6 +1146,31 @@ class ConfigModel(BaseModel):
         ```
 
         Will do testing only if the platform is native.
+        """),
+    )
+
+    trusted_publishers: Optional[list[TrustedPublisher]] = Field(
+        default_factory=list,
+        description=cleandoc("""
+        CI jobs allowed to ask conda-forge to update this feedstock's version
+        via conda-forge's trusted publishing. A job sends the identity token its
+        provider issued it and the claims are checked against these entries, so
+        no secret is held by either side. Only the version is under the
+        requester's control; the sources come from the recipe as always.
+
+        ```yaml
+        trusted_publishers:
+          - provider: github
+            repository: DIRACGrid/DIRAC
+            repository_owner_id: 694842
+            workflow: deploy.yml
+          - provider: gitlab
+            url: https://gitlab.cern.ch
+            project_path: lhcb-core/LbEnv
+            namespace_id: 783
+            ref_type: tag
+            ref_protected: true
+        ```
         """),
     )
 

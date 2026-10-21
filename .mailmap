@@ -13,8 +13,8 @@ Isuru Fernando <isuru.11@cse.mrt.ac.lk> Isuru Fernando <isuruf@gmail.com>
 Matthew R. Becker <becker.mr@gmail.com> Matthew R Becker <beckermr@users.noreply.github.com>
 Matthew R. Becker <becker.mr@gmail.com> beckermr <beckermr@users.noreply.github.com>
 Jaime Rodríguez-Guerra <jaimergp@users.noreply.github.com>
-Michał Górny <mgorny@gentoo.org> Michał Górny <mgorny@quansight.com>
 H. Vetinari <h.vetinari@gmx.com>
+Michał Górny <mgorny@gentoo.org> Michał Górny <mgorny@quansight.com>
 nichmor <nmorkotilo@gmail.com>
 Christopher J. Wright <cjwright4242gh@gmail.com> christopher <cjwright4242@gmail.com>
 Christopher J. Wright <cjwright4242gh@gmail.com> Christopher J. 'CJ' Wright <cjwright4242@gmail.com>
@@ -28,26 +28,26 @@ Filipe Fernandes <ocefpaf@gmail.com> ocefpaf <ocefpaf@gmail.com>
 Min RK <benjaminrk@gmail.com>
 John Kirkham <jakirkham@gmail.com> John Kirkham <kirkhamj@janelia.hhmi.org>
 John Kirkham <jakirkham@gmail.com> jakirkham <kirkhamj@janelia.hhmi.org>
-Dougal J. Sutherland <dougal@gmail.com>
 Mark Harfouche <mark.harfouche@gmail.com>
+Dougal J. Sutherland <dougal@gmail.com>
 Amit Kumar <dtu.amit@gmail.com>
 Marcel Bargull <marcel.bargull@udo.edu> Marcel Bargull <mbargull@users.noreply.github.com>
 Hadrien Mary <hadrien.mary@gmail.com> Hadrien Mary <hadim@users.noreply.github.com>
 shadow_walker <shadowwalkersb@gmail.com>
 Michael Sarahan <msarahan@gmail.com> Mike Sarahan <msarahan@gmail.com>
 Bastian Zimmermann <10774221+BastianZim@users.noreply.github.com> BastianZim <10774221+BastianZim@users.noreply.github.com>
+Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leo80042@gmail.com>
 Leo Fang <leofang@bnl.gov> Leo Fang <leof@nvidia.com>
 Ryan Volz <rvolz@mit.edu> Ryan Volz <ryan.volz@gmail.com>
 Johnny Willemsen <jwillemsen@remedy.nl>
 Pavel Zwerschke <pavelzw@gmail.com>
-Chris Burr <christopher.burr@cern.ch> Chris Burr <chrisburr@users.noreply.github.com>
 Nicholas Bollweg <nick.bollweg@gmail.com>
+dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
 Julian Rüth <julian.rueth@fsfe.org>
 Yannik Tausch <yannik.tausch@quantco.com>
-dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>
-Daniel Bast <2790401+dbast@users.noreply.github.com>
 Daniel Ching <carterbox@users.noreply.github.com> Daniel Ching <9604511+carterbox@users.noreply.github.com>
+Daniel Bast <2790401+dbast@users.noreply.github.com>
 Billy K. Poon <bkpoon@lbl.gov>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> Vinicius D. Cerutti <51954708+viniciusdc@users.noreply.github.com>
 vinicius douglas cerutti <vinivdc2009@hotmail.com> viniciusdc <51954708+viniciusdc@users.noreply.github.com>
@@ -80,6 +80,7 @@ Antonio S. Cofiño <cofinoa@gmail.com>
 Carlo <carlo.dri@gmail.com> Carlo <carlodri@users.noreply.github.com>
 Matthew Craig <mattwcraig@gmail.com> Matt Craig <mattwcraig@gmail.com>
 Joshua L. Adelman <joshua.adelman@gmail.com>
+Memento "RC" Mori <claude.rc@gmail.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <marius.vanniekerk@maxpoint.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> mariusvniekerk <mvanniekerk@flatiron.com>
 Marius van Niekerk <marius.v.niekerk@gmail.com> Marius Van Niekerk <marius.vanniekerk@maxpoint.com>
@@ -96,6 +97,7 @@ Patrick Sodré <sodre@sodre.co>
 David Hirschfeld <david.hirschfeld@stanwell.com>
 Finn Womack <finnwomack@microsoft.com> Finn Womack <flan313@gmail.com>
 M Bussonnier <bussonniermatthias@gmail.com>
+velonica0 <like@mail.nankai.edu.cn> velonica0 <47554626+velonica0@users.noreply.github.com>
 Josh Barnes <joshuacookebarnes@gmail.com>
 Tobias Megies <megies@users.noreply.github.com>
 Jonathan Helmus <jjhelmus@gmail.com>
@@ -134,6 +136,7 @@ Guillaume Fraux <luthaf@luthaf.fr> Guillaume Fraux <guillaume.fraux@epfl.ch>
 Lucas Colley <lucas.colley8@gmail.com>
 Jakov Smolić <jsmolic@quansight.com> Jakov Smolić <jsmolic@gentoo.org>
 Niklas Mertsch <49114330+NMertsch@users.noreply.github.com>
+Benjamin Bertrand <beenje@gmail.com>
 lorenz <looooo@users.noreply.github.com>
 Tom Augspurger <tom.augspurger88@gmail.com>
 Ryan May <rmay31@gmail.com>
@@ -176,5 +179,6 @@ Monson Shao <holymonson@gmail.com>
 pb01ka <gaganpb08singh@gmail.com>
 Ben Williams <benjaminhwilliams@users.noreply.github.com>
 Scott Wang <71915685+scott-5@users.noreply.github.com>
-Benjamin Bertrand <beenje@gmail.com>
 Sophia Castellarin <scastellarin@openteams.com>
+Jirawat Iamsamang <nodtem66@gmail.com>
+Lionel GUEZ <guez@lmd.ipsl.fr>

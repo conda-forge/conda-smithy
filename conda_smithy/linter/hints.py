@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -9,7 +10,6 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
-from conda.deprecations import deprecated
 from conda.models.version import VersionOrder
 
 from conda_smithy.linter import conda_recipe_v1_linter
@@ -47,14 +47,7 @@ def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.LegacyPyPIURL().as_string())
-
-
-@deprecated("2026.8", "2026.10", addendum="Use hint_legacy_pypi_url() instead")
-def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: list[dict[str, Any]], hints: list[str]
-):
-    hint_legacy_pypi_url(sources_section, hints)
+            hints.append(msg.r.LegacyPypiUrl().as_string())
 
 
 def hint_suggest_noarch(
@@ -157,6 +150,38 @@ def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
                 hints.append(msg.r.ScriptShellcheckFailure().as_string())
 
 
+def _spdx_license_list_data_dir() -> str:
+    """Locate the JSON data installed by the `spdx-license-list-data` conda package."""
+    candidates = [
+        os.path.join(sys.prefix, *prefix_parts, "spdx", "license-list-data", "json")
+        for prefix_parts in (("share",), ("Library", "share"))
+    ]
+    for candidate in candidates:
+        if os.path.isdir(candidate):
+            return candidate
+    raise FileNotFoundError(
+        "Could not find the spdx-license-list-data package data in any of: "
+        f"{', '.join(candidates)}. Is the spdx-license-list-data conda package installed?"
+    )
+
+
+def _spdx_license_list_data() -> tuple[set[str], set[str]]:
+    data_dir = _spdx_license_list_data_dir()
+    with open(os.path.join(data_dir, "licenses.json"), encoding="utf-8") as f:
+        expected_licenses = {
+            li["licenseId"]
+            for li in json.load(f)["licenses"]
+            if not li["isDeprecatedLicenseId"]
+        }
+    with open(os.path.join(data_dir, "exceptions.json"), encoding="utf-8") as f:
+        expected_exceptions = {
+            exc["licenseExceptionId"]
+            for exc in json.load(f)["exceptions"]
+            if not exc["isDeprecatedLicenseId"]
+        }
+    return expected_licenses, expected_exceptions
+
+
 def hint_check_spdx(about_section, hints):
     import license_expression
 
@@ -183,20 +208,9 @@ def hint_check_spdx(about_section, hints):
         if not licenseref_regex.match(license):
             filtered_licenses.append(license)
 
-    with open(
-        os.path.join(os.path.dirname(__file__), "licenses.txt"),
-        encoding="utf-8",
-    ) as f:
-        expected_licenses = f.readlines()
-        expected_licenses = {li.strip() for li in expected_licenses}
-    with open(
-        os.path.join(os.path.dirname(__file__), "license_exceptions.txt"),
-        encoding="utf-8",
-    ) as f:
-        expected_exceptions = f.readlines()
-        expected_exceptions = {li.strip() for li in expected_exceptions}
+    expected_licenses, expected_exceptions = _spdx_license_list_data()
     if set(filtered_licenses) - expected_licenses:
-        hints.append(msg.r.LicenseSPDX().as_string())
+        hints.append(msg.r.LicenseSpdx().as_string())
     if set(parsed_exceptions) - expected_exceptions:
         hints.append(msg.r.InvalidLicenseException().as_string())
 
@@ -737,7 +751,7 @@ def hint_os_version(
     }
     if matches:
         hints.append(
-            msg.fc.OSVersionLower(
+            msg.fc.OsVersionLower(
                 platforms=matches, default=default_os_version
             ).as_string()
         )
@@ -798,7 +812,7 @@ def hint_rattler_build_sp_dir(
 
     text = recipe_text or ""
     if SP_DIR_DEFINITION_RE.search(text) or PREFIX_SITE_PACKAGES_RE.search(text):
-        hints.append(msg.r.RattlerSPDir().as_string())
+        hints.append(msg.r.RattlerSpdir().as_string())
 
 
 def _check_pin_overridden(
