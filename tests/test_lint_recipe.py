@@ -6787,7 +6787,7 @@ def test_redundant_build_platform_and_provider(tmp_path):
           win_64: azure
         """))
 
-    lints, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
+    _, hints = linter.main(tmp_path, return_hints=True, conda_forge=True)
 
     expected = {
         "Platform linux_64 specifies redundant build_platform=linux_64. Please "
@@ -6800,7 +6800,7 @@ def test_redundant_build_platform_and_provider(tmp_path):
         "latter for native build.",
     }
 
-    assert {x for x in lints if x.startswith("Platform")} == expected
+    assert {x for x in hints if x.startswith("Platform")} == expected
 
 
 if __name__ == "__main__":

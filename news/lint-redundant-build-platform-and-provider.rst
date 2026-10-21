@@ -1,6 +1,6 @@
 **Added:**
 
-* A lint for redundant ``build_platform`` and ``provider`` entries. (#2654)
+* A hint for redundant ``build_platform`` and ``provider`` entries. (#2654)
 
 **Changed:**
 

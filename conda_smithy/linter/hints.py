@@ -925,3 +925,27 @@ def hint_deprecated_environment_variables(
                     replacement=deprecated_variables[deprecated_variable],
                 ).as_string()
             )
+
+
+def hint_redundant_platform_definitions(
+    forge_config: dict,
+    hints: list[str],
+):
+    """Hint for redundancy between `build_platforms` and `provider` keys"""
+
+    providers = forge_config.get("provider", {})
+    for platform, build_platform in forge_config.get("build_platform", {}).items():
+        if platform == build_platform:
+            hints.append(
+                msg.cf.RedundantBuildPlatform(
+                    platform=platform,
+                ).as_string()
+            )
+        elif (provider := providers.get(platform)) is not None:
+            hints.append(
+                msg.cf.RedundantBuildPlatformAndProvider(
+                    platform=platform,
+                    build_platform=build_platform,
+                    provider=provider,
+                ).as_string()
+            )

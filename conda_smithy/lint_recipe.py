@@ -43,6 +43,7 @@ from conda_smithy.linter.hints import (
     hint_python_version_independent_test_latest,
     hint_rattler_build_bld_bat,
     hint_rattler_build_sp_dir,
+    hint_redundant_platform_definitions,
     hint_redundant_python_min,
     hint_shellcheck_usage,
     hint_space_separated_specs,
@@ -77,7 +78,6 @@ from conda_smithy.linter.lints import (
     lint_recipe_maintainers,
     lint_recipe_name,
     lint_recipe_v1_noarch_and_runtime_dependencies,
-    lint_redundant_platform_definitions,
     lint_require_lower_bound_on_python_version,
     lint_rust_licenses_are_bundled,
     lint_section_order,
@@ -475,6 +475,9 @@ def lintify_meta_yaml(
 
     # 8. check for bld.bat with rattler-build
     hint_rattler_build_bld_bat(recipe_dir, hints, recipe_version)
+
+    # 9: Lint redundant platform definitions
+    hint_redundant_platform_definitions(feedstock_config_keys, hints)
 
     return lints, hints
 
@@ -935,9 +938,6 @@ def run_conda_forge_specific(
 
     # 19: Check for missing feedstock-name (if necessary).
     lint_feedstock_name(meta, feedstock_config, recipe_version, recipe_dir, lints)
-
-    # 20: Lint redundant platform definitions
-    lint_redundant_platform_definitions(feedstock_config, lints)
 
 
 def _format_validation_msg(error: jsonschema.ValidationError):

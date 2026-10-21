@@ -278,12 +278,12 @@ class MismatchedFeedstockName(LinterMessage):
 @dataclass(kw_only=True)
 class RedundantBuildPlatformAndProvider(LinterMessage):
     """
-    Lint when the same platform is listed in `build_platform` and `provider`.
+    Hint when the same platform is listed in `build_platform` and `provider`.
     """
 
-    kind = "lint"
+    kind = "hint"
     identifier = "CF-014"
-    added_in = "2026.9"
+    added_in = "2026.10"
     message = "Platform ${platform} specifies both build_platform=${build_platform} and provider=${provider}. Use the former for cross-compilation or the latter for native build.\n"
     platform: str
     build_platform: str
@@ -293,11 +293,11 @@ class RedundantBuildPlatformAndProvider(LinterMessage):
 @dataclass(kw_only=True)
 class RedundantBuildPlatform(LinterMessage):
     """
-    Lint when `build_platform` is the same as the platform.
+    Hint when `build_platform` is the same as the platform.
     """
 
-    kind = "lint"
+    kind = "hint"
     identifier = "CF-015"
-    added_in = "2026.9"
+    added_in = "2026.10"
     message = "Platform ${platform} specifies redundant build_platform=${platform}. Please remove the unnecessary entry.\n"
     platform: str
