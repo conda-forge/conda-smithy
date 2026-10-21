@@ -49,9 +49,19 @@ def test_init(py_recipe):
     init_obj(args)
     destination = os.path.join(recipe, "py-test-feedstock")
     assert os.path.isdir(destination)
+    data = yaml.safe_load(Path(destination, "conda-forge.yml").read_text())
+    assert data["provider"] == {"osx_64": None, "osx_arm64": "default"}
 
 
-def test_init_with_custom_config(py_recipe):
+@pytest.mark.parametrize(
+    "provider",
+    [
+        {"linux_aarch64": "default"},
+        {"osx_64": "azure", "osx_arm64": None},
+        {"osx_64": "azure", "osx_arm64": "github_actions"},
+    ],
+)
+def test_init_with_custom_config(py_recipe, provider):
     """This is the command that takes the initial staged-recipe folder and turns it into a
     feedstock"""
     # actual parser doesn't matter.  It's used for initialization only
@@ -67,6 +77,7 @@ def test_init_with_custom_config(py_recipe):
               automerge: true
               run_deps_from_wheel: true
             """))
+        yaml.safe_dump({"provider": provider}, fp)
 
     args = InitArgs(
         recipe_directory=os.path.join(recipe, "recipe"),
@@ -80,6 +91,25 @@ def test_init_with_custom_config(py_recipe):
     assert data.get("bot") is not None
     assert data["bot"]["automerge"] is True
     assert data["bot"]["run_deps_from_wheel"] is True
+    assert data["provider"] == {
+        "osx_64": None,
+        "osx_arm64": "default",
+        **provider,
+    }
+
+
+@pytest.mark.parametrize("config", [{}, {"provider": {"osx_64": "azure"}}])
+def test_generate_feedstock_content_preserves_existing_config(tmp_path, config):
+    recipe_dir = tmp_path / "source"
+    recipe_dir.mkdir()
+    feedstock_dir = tmp_path / "feedstock"
+    feedstock_dir.mkdir()
+    forge_yml = feedstock_dir / "conda-forge.yml"
+    forge_yml.write_text(yaml.safe_dump(config))
+
+    cli.generate_feedstock_content(feedstock_dir, recipe_dir)
+
+    assert yaml.safe_load(forge_yml.read_text()) == config
 
 
 def test_init_multiple_output_matrix(testing_workdir):
@@ -113,6 +143,8 @@ def test_init_multiple_output_matrix(testing_workdir):
     # though - loops within outputs are contained in those top-level configs.
     matrix_dir_len = len(os.listdir(matrix_dir))
     assert matrix_dir_len == 13
+    assert list(Path(matrix_dir).glob("osx_arm64_*.yaml"))
+    assert not list(Path(matrix_dir).glob("osx_64_*.yaml"))
     linux_libpng16 = os.path.join(matrix_dir, "linux_64_libpng1.6libpq9.5.yaml")
     assert os.path.isfile(linux_libpng16)
     with open(linux_libpng16) as f:
@@ -304,6 +336,8 @@ def test_regenerate(py_recipe, testing_workdir):
 
     # one py ver, no target_platform  (tests that older configs don't stick around)
     assert len(os.listdir(matrix_folder)) == 4
+    assert list(Path(matrix_folder).glob("osx_64_*.yaml"))
+    assert not list(Path(matrix_folder).glob("osx_arm64_*.yaml"))
 
 
 def test_render_variant_mismatches(testing_workdir):
