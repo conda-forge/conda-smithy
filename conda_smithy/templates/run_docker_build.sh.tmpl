@@ -69,13 +69,13 @@ if [ -z "${DOCKER_IMAGE}" ]; then
     fi
 fi
 
-BUILD_PLATFORM=$(cat .ci_support/${CONFIG}.yaml | grep '^build_platform:$' -A 1 | tail -n 1 | cut -b 3-)
+BUILD_ARCH=$(uname -m)
 # for the full tag, turn `linux-<arch>` into `linux/<arch>`; syntax is ${foo//pattern/replacement}
-DISTRO_TAG=${BUILD_PLATFORM//-//}
-# docker uses almost the same architecture names as conda-forge; see DISTRO_ARCH settings in
+DISTRO_TAG="linux/${BUILD_ARCH}"
+# docker uses almost the same architecture names as `uname -m`; see DISTRO_ARCH settings in
 # https://github.com/conda-forge/docker-images/blob/main/.github/workflows/ci.yaml
-# we only need to fix-up the `linux/64` -> `linux/amd64` case
-[[ "$DISTRO_TAG" == "linux/64" ]] && DISTRO_TAG="linux/amd64"
+# we only need to fix-up the `linux/x86_64` -> `linux/amd64` case
+[[ "$DISTRO_TAG" == "linux/x86_64" ]] && DISTRO_TAG="linux/amd64"
 
 mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"

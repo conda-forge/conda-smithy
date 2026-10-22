@@ -952,9 +952,6 @@ def finalize_config(config, platform, arch, forge_config):
     """
     build_platform = forge_config["build_platform"][f"{platform}_{arch}"]
     if build_platform.startswith("linux"):
-        # we always need build_platform on linux, as an argument for `docker pull --platform <...>`;
-        # for consistency with values of target_platform in the variant configs, use hyphens
-        config["build_platform"] = [build_platform.replace("_", "-")]
         if "docker_image" in config:
             config["docker_image"] = [config["docker_image"][0]]
         else:
