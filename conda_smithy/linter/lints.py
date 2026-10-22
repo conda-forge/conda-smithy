@@ -793,7 +793,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
 
     if "MACOSX_DEPLOYMENT_TARGET" in cbc_osx:
         lints.append(
-            msg.rv.MacOSDeploymentTargetRename(
+            msg.rv.MacosDeploymentTargetRename(
                 recipe_config_file=recipe_config_file
             ).as_string()
         )
@@ -813,8 +813,8 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
 
     if "c_stdlib_version" in cbc_osx.keys():
         # only warn if version is below baseline
-        outdated_lint = msg.rv.MacOSDeploymentTargetBelow(
-            baseline_version=baseline_version[0]
+        outdated_lint = msg.rv.MacosStdlibBelowPinning(
+            baseline=baseline_version[0]
         ).as_string()
         if len(v_stdlib) == len(baseline_version):
             # if length matches, compare individually
@@ -829,9 +829,7 @@ def lint_osx_pins(recipe_dir, recipe_config_filename, lints, recipe_version):
                     lints.append(outdated_lint)
 
     # warn if SDK is lower than v_stdlib
-    sdk_lint = msg.rv.MacOSDeploymentTargetBelowStdlib(
-        baseline=baseline_version[0]
-    ).as_string()
+    sdk_lint = msg.rv.MacosSdkBelowStdlib(baseline=baseline_version[0]).as_string()
     if len(sdk) == len(v_stdlib):
         # if length matches, compare individually
         for v_sdk, v_std in zip(sdk, v_stdlib):
@@ -928,7 +926,7 @@ def lint_stdlib(
 
     to_check = all_run_reqs_flat + all_contraints_flat
     if any(req.startswith("__osx >") for req in to_check):
-        msg.r.StdlibMacOS(recipe_version=recipe_version).append_if_absent(lints)
+        msg.r.StdlibMacos(recipe_version=recipe_version).append_if_absent(lints)
 
 
 def lint_v1_malformed_sections(meta: dict[str, Any], lints: list[str]) -> None:
@@ -1143,7 +1141,7 @@ def lint_invalid_workflow_settings(
                 oses_from_platforms = {x.split("_")[0] for x in platforms}
                 if oses_from_platforms != set(oses):
                     lints.append(
-                        msg.cf.WorkflowSettingsPlatformOSMismatch(
+                        msg.cf.WorkflowSettingsPlatformOsMismatch(
                             setting=key,
                             index=index,
                             os=oses,

@@ -19,7 +19,6 @@ from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
 from requests.exceptions import Timeout
 
-from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
 from conda_smithy.utils import get_yaml
 
@@ -255,25 +254,6 @@ def load_linter_toml_metadata():
     if (hints_toml_str := _try_fetch_url_content_cached(url)) is None:
         return None
     return tomllib.loads(hints_toml_str)
-
-
-@deprecated(
-    "2026.8",
-    "2026.10",
-    addendum="Use `load_linter_toml_metadata` instead.",
-)
-def load_linter_toml_metdata_internal(time_salt=None):
-    return load_linter_toml_metadata()
-
-
-# BW compat for the (misspelled) public alias
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "load_linter_toml_metdata",
-    load_linter_toml_metadata,
-    addendum="Use `load_linter_toml_metadata` instead.",
-)
 
 
 def get_global_pinning_python_min() -> Optional[str]:

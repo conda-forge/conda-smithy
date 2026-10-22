@@ -5,7 +5,6 @@ Messages concerning recipe files (`meta.yaml`, `recipe.yaml`).
 from dataclasses import asdict, dataclass
 from typing import Any, ClassVar, Literal, Self, TypeAlias
 
-from conda.deprecations import deprecated
 from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 
 from conda_smithy.linter.messages.base import LinterMessage
@@ -712,7 +711,7 @@ class StdlibSysroot(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class StdlibMacOS(LinterMessage, _AnyRecipeMessage):
+class StdlibMacos(LinterMessage, _AnyRecipeMessage):
     """
     https://github.com/conda-forge/conda-forge.github.io/issues/2102
     """
@@ -935,7 +934,7 @@ class ScriptShellcheckFailure(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class LicenseSPDX(LinterMessage, _AnyRecipeMessage):
+class LicenseSpdx(LinterMessage, _AnyRecipeMessage):
     """
     The `license` field must be a valid SPDX identifier.
 
@@ -1073,7 +1072,7 @@ class UsePip(LinterMessage, _AnyRecipeMessage):
 
 
 @dataclass(kw_only=True)
-class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
+class LegacyPypiUrl(LinterMessage, _AnyRecipeMessage):
     """
     Grayskull and the conda-forge example recipe used to have pypi.io as a default,
     but the canonical URL is now files.pythonhosted.org.
@@ -1087,15 +1086,6 @@ class LegacyPyPIURL(LinterMessage, _AnyRecipeMessage):
         "PyPI default URL is now files.pythonhosted.org, and not pypi.io."
         " You may want to update the default source url."
     )
-
-
-deprecated.constant(
-    "2026.8",
-    "2026.10",
-    "UsePyPIOrg",
-    LegacyPyPIURL,
-    addendum="Use LegacyPyPIURL instead",
-)
 
 
 @dataclass(kw_only=True)
@@ -1480,7 +1470,7 @@ class PythonVersionIndependentTestLatest(LinterMessage, _RecipeYamlMessage):
 
 
 @dataclass(kw_only=True)
-class RattlerSPDir(LinterMessage, _RecipeYamlMessage):
+class RattlerSpdir(LinterMessage, _RecipeYamlMessage):
     """
     rattler-build defines `$SP_DIR` (the environment's site-packages
     directory, `%SP_DIR%` on Windows), so recipes no longer need to set it

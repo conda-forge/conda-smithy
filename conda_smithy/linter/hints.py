@@ -10,7 +10,6 @@ from collections.abc import Generator, Mapping
 from glob import glob
 from typing import Any
 
-from conda.deprecations import deprecated
 from conda.models.version import VersionOrder
 
 from conda_smithy.linter import conda_recipe_v1_linter
@@ -48,14 +47,7 @@ def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.LegacyPyPIURL().as_string())
-
-
-@deprecated("2026.8", "2026.10", addendum="Use hint_legacy_pypi_url() instead")
-def hint_sources_should_not_mention_pypi_io_but_pypi_org(
-    sources_section: list[dict[str, Any]], hints: list[str]
-):
-    hint_legacy_pypi_url(sources_section, hints)
+            hints.append(msg.r.LegacyPypiUrl().as_string())
 
 
 def hint_suggest_noarch(
@@ -218,7 +210,7 @@ def hint_check_spdx(about_section, hints):
 
     expected_licenses, expected_exceptions = _spdx_license_list_data()
     if set(filtered_licenses) - expected_licenses:
-        hints.append(msg.r.LicenseSPDX().as_string())
+        hints.append(msg.r.LicenseSpdx().as_string())
     if set(parsed_exceptions) - expected_exceptions:
         hints.append(msg.r.InvalidLicenseException().as_string())
 
@@ -759,7 +751,7 @@ def hint_os_version(
     }
     if matches:
         hints.append(
-            msg.fc.OSVersionLower(
+            msg.fc.OsVersionLower(
                 platforms=matches, default=default_os_version
             ).as_string()
         )
@@ -820,7 +812,7 @@ def hint_rattler_build_sp_dir(
 
     text = recipe_text or ""
     if SP_DIR_DEFINITION_RE.search(text) or PREFIX_SITE_PACKAGES_RE.search(text):
-        hints.append(msg.r.RattlerSPDir().as_string())
+        hints.append(msg.r.RattlerSpdir().as_string())
 
 
 def _check_pin_overridden(
