@@ -952,6 +952,13 @@ def finalize_config(config, platform, arch, forge_config):
     """
     build_platform = forge_config["build_platform"][f"{platform}_{arch}"]
     if build_platform.startswith("linux"):
+        # we always need build_platform on linux, as an argument for `docker pull --platform <...>`;
+        docker_plat = build_platform.replace("_", "/")
+        # docker uses almost the same architecture names as conda-forge; see DISTRO_ARCH settings in
+        # https://github.com/conda-forge/docker-images/blob/main/.github/workflows/ci.yaml
+        # we only need to fix-up the `linux/64` -> `linux/amd64` case
+        docker_plat = "linux/amd64" if docker_plat == "linux/64" else docker_plat
+        config["DOCKER_PLATFORM"] = [docker_plat]
         if "docker_image" in config:
             config["docker_image"] = [config["docker_image"][0]]
         else:

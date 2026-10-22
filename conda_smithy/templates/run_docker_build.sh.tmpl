@@ -69,13 +69,8 @@ if [ -z "${DOCKER_IMAGE}" ]; then
     fi
 fi
 
-BUILD_ARCH=$(uname -m)
-# for the full tag, turn `linux-<arch>` into `linux/<arch>`; syntax is ${foo//pattern/replacement}
-DISTRO_TAG="linux/${BUILD_ARCH}"
-# docker uses almost the same architecture names as `uname -m`; see DISTRO_ARCH settings in
-# https://github.com/conda-forge/docker-images/blob/main/.github/workflows/ci.yaml
-# we only need to fix-up the `linux/x86_64` -> `linux/amd64` case
-[[ "$DISTRO_TAG" == "linux/x86_64" ]] && DISTRO_TAG="linux/amd64"
+# this is set unconditionally in the variant configs -> no fallback
+DOCKER_PLATFORM=$(cat .ci_support/${CONFIG}.yaml | grep '^DOCKER_PLATFORM:$' -A 1 | tail -n 1 | cut -b 3-)
 
 mkdir -p "$ARTIFACTS"
 DONE_CANARY="$ARTIFACTS/conda-forge-build-done-${CONFIG}"
@@ -118,7 +113,7 @@ fi
 export UPLOAD_PACKAGES="${UPLOAD_PACKAGES:-True}"
 export IS_PR_BUILD="${IS_PR_BUILD:-False}"
 
-${DOCKER_EXECUTABLE} pull --platform ${DISTRO_TAG} "${DOCKER_IMAGE}"
+${DOCKER_EXECUTABLE} pull --platform ${DOCKER_PLATFORM} "${DOCKER_IMAGE}"
 
 ${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
            -v "${RECIPE_ROOT}":/home/conda/recipe_root:rw${VOLUME_SUFFIX},delegated \
