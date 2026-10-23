@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any, Literal, Optional
 from urllib.parse import urlsplit
 
@@ -68,8 +68,9 @@ def lint_about_contents(about_section, lints, recipe_version: int = 0):
         "summary",
     ]
     for about_item in expected_section:
-        # if the section doesn't exist, or is just empty, lint it.
-        if not about_section.get(about_item, ""):
+        # A key written with no value is present and None, so the `get` default
+        # never fires.
+        if not (about_section.get(about_item) or ""):
             lints.append(msg.r.MissingAboutItem(item=about_item).as_string())
 
 
@@ -132,7 +133,7 @@ def lint_recipe_have_tests(
 
 
 def lint_license_cannot_be_unknown(about_section, lints):
-    license = about_section.get("license", "").lower()
+    license = (about_section.get("license") or "").lower()
     if "unknown" == license.strip():
         lints.append(msg.r.UnknownLicense().as_string())
 
@@ -210,7 +211,7 @@ def lint_sources_should_have_hash(
 
 
 def lint_license_should_not_have_license(about_section, lints):
-    license = about_section.get("license", "").lower()
+    license = (about_section.get("license") or "").lower()
     if (
         "license" in license.lower()
         and "unlicense" not in license.lower()
@@ -256,7 +257,7 @@ def lint_recipe_name(
     package_section: dict[str, Any],
     lints: list[str],
 ) -> str:
-    recipe_name = package_section.get("name", "").strip()
+    recipe_name = (package_section.get("name") or "").strip()
     lint_msg = _lint_recipe_name(recipe_name)
     if lint_msg:
         lints.append(lint_msg)
@@ -636,20 +637,26 @@ def lint_pin_subpackages(
                     ).as_string()
                 )
 
+    def _mapping(container, key):
+        # A section written with no value is present and None, so `in` on it raises.
+        section = container.get(key) or {}
+        return section if isinstance(section, Mapping) else {}
+
     def check_pins_build_and_requirements(top_level):
+        if not isinstance(top_level, Mapping):
+            return
+        requirements_section = _mapping(top_level, "requirements")
         if recipe_version == 0:
-            if "build" in top_level and "run_exports" in top_level["build"]:
-                check_pins(top_level["build"]["run_exports"])
-            if "requirements" in top_level and "run" in top_level["requirements"]:
-                check_pins(top_level["requirements"]["run"])
-            if "requirements" in top_level and "host" in top_level["requirements"]:
-                check_pins(top_level["requirements"]["host"])
+            build = _mapping(top_level, "build")
+            if "run_exports" in build:
+                check_pins(build["run_exports"])
+            if "run" in requirements_section:
+                check_pins(requirements_section["run"])
+            if "host" in requirements_section:
+                check_pins(requirements_section["host"])
         else:
-            if (
-                "requirements" in top_level
-                and "run_exports" in top_level["requirements"]
-            ):
-                run_export_section = top_level["requirements"]["run_exports"]
+            if "run_exports" in requirements_section:
+                run_export_section = requirements_section["run_exports"]
                 # the dictionary might have strong / weak / noarch etc. keys
                 if isinstance(run_export_section, dict):
                     for key in run_export_section:
@@ -1187,10 +1194,15 @@ def lint_feedstock_name(
     recipe_section = (
         meta["recipe"]
         if recipe_version == 1 and "recipe" in meta
-        else meta.get("package", {})
-    )
+        else meta.get("package")
+    ) or {}
+    if not isinstance(recipe_section, Mapping):
+        recipe_section = {}
+    extra_section = meta.get("extra") or {}
+    if not isinstance(extra_section, Mapping):
+        extra_section = {}
     recipe_name = recipe_section.get("name")
-    feedstock_name = meta.get("extra", {}).get("feedstock-name") or recipe_name
+    feedstock_name = extra_section.get("feedstock-name") or recipe_name
     user_or_org = feedstock_config.get("github", {}).get("user_or_org", "conda-forge")
 
     # If we have no feedstock_name (which falls back to recipe name) or no
