@@ -2800,6 +2800,17 @@ def clear_scripts(forge_dir):
             remove_file(os.path.join(forge_dir, folder, old_file))
 
 
+def clear_old_ci_providers(forge_dir):
+    for old_path in [
+        ".circleci",
+        ".travis.yml",
+        ".appveyor.yml",
+        ".drone.yml",
+        ".woodpecker.yml",
+    ]:
+        remove_file_or_dir(os.path.join(forge_dir, old_path))
+
+
 def make_jinja_env(feedstock_directory):
     """Creates a Jinja environment usable for rendering templates"""
     forge_dir = os.path.abspath(feedstock_directory)
@@ -2957,6 +2968,7 @@ def main(
 
     clear_variants(forge_dir)
     clear_scripts(forge_dir)
+    clear_old_ci_providers(forge_dir)
     set_migration_fns(forge_dir, config)
     logger.debug("migration fns set")
 
