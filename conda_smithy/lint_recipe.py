@@ -43,6 +43,7 @@ from conda_smithy.linter.hints import (
     hint_python_version_independent_test_latest,
     hint_rattler_build_bld_bat,
     hint_rattler_build_sp_dir,
+    hint_redundant_platform_definitions,
     hint_redundant_python_min,
     hint_shellcheck_usage,
     hint_space_separated_specs,
@@ -474,6 +475,9 @@ def lintify_meta_yaml(
 
     # 8. check for bld.bat with rattler-build
     hint_rattler_build_bld_bat(recipe_dir, hints, recipe_version)
+
+    # 9: Lint redundant platform definitions
+    hint_redundant_platform_definitions(feedstock_config_keys, hints)
 
     return lints, hints
 
