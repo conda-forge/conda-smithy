@@ -1837,7 +1837,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     # If explicit pool name is specified, use that. Otherwise, use the vm image
     # specified in config.
     if "name" not in azure_settings["pool"]:
-        azure_settings["pool"].setdefault("vmImage", "$(vm_image)")
+        azure_settings["pool"]["vmImage"] = "$(vm_image)"
 
     # Limit the amount of parallel jobs running at the same time
     # weighted by platform population
