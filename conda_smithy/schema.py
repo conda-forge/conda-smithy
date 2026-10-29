@@ -80,7 +80,7 @@ class AzureRunnerSettings(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="allow")
 
     pool: Optional[dict[str, str]] = Field(
-        default_factory=lambda: {"vmImage": "ubuntu-latest"},
+        default_factory=lambda: {},
         description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
     )
 
@@ -186,14 +186,14 @@ class AzureConfig(BaseModel):
 
     settings_osx: AzureRunnerSettings = Field(
         # $(VMIMAGE) will be defined in the matrix entries
-        default_factory=lambda: AzureRunnerSettings(pool={"vmImage": "$(VMIMAGE)"}),
+        default_factory=lambda: AzureRunnerSettings(),
         description="OSX-specific settings for runners",
     )
 
     settings_win: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
             install_atl=False,
-            pool={"vmImage": "windows-2022"},
+            pool={},
             variables={
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },

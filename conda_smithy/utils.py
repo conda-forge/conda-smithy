@@ -365,6 +365,7 @@ def fill_workflow_settings_defaults(
     workflow_settings: dict[str, Any],
     provider: str,
     system: str,
+    build_platform: str,
     win_default_drive: str,
 ) -> None:
     """
@@ -393,6 +394,18 @@ def fill_workflow_settings_defaults(
             # TODO: switch to normalizing all paths once we're ready
             "win": rf"{tools_drive}\\bld\\",
         }[system]
+    if workflow_settings.get("vm_image") is None:
+        # Azure only for now
+        workflow_settings["vm_image"] = {
+            "osx-64": "macOS-15",
+            "osx-arm64": "macOS-15-arm64",
+        }.get(
+            build_platform,
+            {
+                "linux": "ubuntu-latest",
+                "win": "windows-2022",
+            }.get(system),
+        )
 
     simple_defaults = {
         "pagefile_size": 0,

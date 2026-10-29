@@ -1727,6 +1727,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             workflow_settings,
             "github_actions",
             platform,
+            data["build_platform"],
             "D:" if on_hosted_win_64_runner or on_namespace else "C:",
         )
         data.update(workflow_settings)
@@ -1832,6 +1833,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings.pop("install_atl", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
+    azure_settings.setdefault("pool", {})
+    azure_settings["pool"].setdefault("vmImage", "$(vm_image)")
 
     # Limit the amount of parallel jobs running at the same time
     # weighted by platform population
@@ -1858,17 +1861,12 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 config_rendered["DOCKER_IMAGE"] = docker_image[-1]
         elif platform == "win":
             config_rendered["build_platform"] = data["build_platform"]
-        elif platform == "osx":
-            if data["build_platform"] == "osx-64":
-                config_rendered["VMIMAGE"] = "macOS-15"
-            elif data["build_platform"] == "osx-arm64":
-                config_rendered["VMIMAGE"] = "macOS-15-arm64"
-            else:
-                raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
+        elif platform != "osx":
+            raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
 
         # fmt: off
         workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
-        fill_workflow_settings_defaults(workflow_settings, "azure", platform, "D:" if data["build_platform"] == "win-64" else "C:")
+        fill_workflow_settings_defaults(workflow_settings, "azure", platform, data["build_platform"], "D:" if data["build_platform"] == "win-64" else "C:")
         data.update(workflow_settings)
 
         if platform == "linux":
