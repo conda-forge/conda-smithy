@@ -630,6 +630,20 @@ class WorkflowSettings(BaseModel):
         default=[],
     )
 
+    vm_image: Optional[
+        Union[
+            str,
+            list[conditional_value(str, None)],
+            Nullable,
+        ]
+    ] = Field(
+        description=cleandoc(r"""
+        Override the VM image used for building. The available values as well
+        as defaults depend on the CI provider used.
+        """),
+        default=[],
+    )
+
 
 class GitHubTrustedPublisher(BaseModel):
     """A GitHub Actions workflow allowed to publish this feedstock."""
