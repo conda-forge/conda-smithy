@@ -1834,6 +1834,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
     azure_settings.setdefault("pool", {})
+    # If explicit pool name is specified, use that. Otherwise, use the vm image
+    # specified in config.
     if "name" not in azure_settings["pool"]:
         azure_settings["pool"].setdefault("vmImage", "$(vm_image)")
 
