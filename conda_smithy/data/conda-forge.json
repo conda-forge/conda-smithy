@@ -1298,6 +1298,28 @@
           "default": [],
           "description": "Whether to resize partitions to use all available space. Currently\nonly supported for certain providers on GitHub Actions for Windows.",
           "title": "Resize Partitions"
+        },
+        "vm_image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__str__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Override the VM image used for building. The available values as well\nas defaults depend on the CI provider used.",
+          "title": "Vm Image"
         }
       },
       "title": "WorkflowSettings",

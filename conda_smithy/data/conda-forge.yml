@@ -152,3 +152,4 @@ workflow_settings:
   resize_partitions: []
   store_build_artifacts: []
   tools_install_dir: []
+  vm_image: []
