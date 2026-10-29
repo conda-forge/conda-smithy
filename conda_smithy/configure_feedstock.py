@@ -1834,7 +1834,8 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
     azure_settings.setdefault("pool", {})
-    azure_settings["pool"].setdefault("vmImage", "$(vm_image)")
+    if "name" not in azure_settings["pool"]:
+        azure_settings["pool"].setdefault("vmImage", "$(vm_image)")
 
     # Limit the amount of parallel jobs running at the same time
     # weighted by platform population
@@ -2416,6 +2417,17 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 }
             )
 
+    for settings_os in ("linux", "osx", "win"):
+        vm_image = config["azure"][f"settings_{settings_os}"]["pool"].get("vmImage")
+        if vm_image is not None:
+            config["workflow_settings"]["vm_image"].append(
+                {
+                    "provider": "azure",
+                    "os": settings_os,
+                    "value": vm_image,
+                }
+            )
+
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
     if file_config.get("matrix") and not os.path.exists(
@@ -2493,8 +2505,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
                 = config["azure"]["timeout_minutes"]
             # fmt: on
-        if "name" in config["azure"][f"settings_{plat}"]["pool"]:
-            del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
 
     if config["conda_forge_output_validation"]:
         config["secrets"] = sorted(
