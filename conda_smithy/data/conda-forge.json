@@ -188,7 +188,8 @@
               "type": "null"
             }
           ],
-          "description": "The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+          "deprecated": true,
+          "description": "Deprecated. Use `workflow_settings.vm_image` instead.\nThe pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'\",",
           "title": "Pool"
         },
         "swapfile_size": {

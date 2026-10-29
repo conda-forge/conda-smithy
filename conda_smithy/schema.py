@@ -81,7 +81,11 @@ class AzureRunnerSettings(BaseModel):
 
     pool: Optional[dict[str, str]] = Field(
         default_factory=lambda: {},
-        description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+        deprecated=True,
+        description=cleandoc("""
+            Deprecated. Use `workflow_settings.vm_image` instead.
+            The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+        """),
     )
 
     swapfile_size: Optional[Union[str, Nullable]] = Field(
