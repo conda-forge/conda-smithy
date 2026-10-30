@@ -3459,3 +3459,104 @@ def test_get_migrations_in_dir_timestamp_formats(tmp_path):
         for name in ("epoch", "zulu", "offset")
     ]
     assert keys[0] == keys[1] == keys[2] == {("zlib.yaml", 1790912420.0)}
+
+
+@pytest.mark.parametrize("override", [False, True])
+@pytest.mark.parametrize("legacy", [False, True])
+def test_vm_image_azure(py_recipe, jinja_env, override: bool, legacy: bool):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              linux_aarch64: azure
+              osx_64: azure
+              osx_arm64: azure
+              win_64: azure
+        """))
+        if legacy:
+            f.write(textwrap.dedent("""\
+                azure:
+                  settings_linux:
+                    pool:
+                      vmImage: ubuntu-24.04
+                  settings_win:
+                    pool:
+                      vmImage: windows-2025
+                  settings_osx:
+                    pool:
+                      vmImage: macOS-26
+            """))
+        if override:
+            f.write(textwrap.dedent("""\
+                workflow_settings:
+                  vm_image:
+                    - os: linux
+                      value: ubuntu-22.04
+                    - os: win
+                      value: windows-latest
+                    - platform: osx_64
+                      value: macOS-14
+                    - platform: osx_arm64
+                      value: macOS-26-arm64
+            """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    # defaults
+    linux_image = "ubuntu-latest"
+    osx_64_image = "macOS-15"
+    osx_arm64_image = "macOS-15-arm64"
+    win_image = "windows-2022"
+
+    # legacy settings override the defaults
+    if legacy:
+        linux_image = "ubuntu-24.04"
+        osx_64_image = "macOS-26"
+        # TODO: this is the original behavior; do we want to change it?
+        osx_arm64_image = "macOS-26"
+        win_image = "windows-2025"
+
+    # workflow_settings override legacy
+    if override:
+        linux_image = "ubuntu-22.04"
+        osx_64_image = "macOS-14"
+        osx_arm64_image = "macOS-26-arm64"
+        win_image = "windows-latest"
+
+    expected_values = {
+        "linux": {
+            "linux_64": linux_image,
+            "linux_aarch64": linux_image,
+        },
+        "osx": {
+            "osx_64": osx_64_image,
+            "osx_arm64": osx_arm64_image,
+        },
+        "win": {
+            "win_64": win_image,
+        },
+    }
+
+    for os_name, expected in expected_values.items():
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        assert workflow["jobs"][0]["pool"]["vmImage"] == "$(vm_image)"
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        images = {
+            "_".join(k.split("_", 2)[:2]): v["vm_image"] for k, v in matrix.items()
+        }
+        assert images == expected

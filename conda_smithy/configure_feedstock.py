@@ -2427,13 +2427,20 @@ def _read_forge_config(forge_dir, forge_yml=None):
     for settings_os in ("linux", "osx", "win"):
         vm_image = config["azure"][f"settings_{settings_os}"]["pool"].get("vmImage")
         if vm_image is not None:
-            config["workflow_settings"]["vm_image"].append(
-                {
-                    "provider": "azure",
-                    "os": settings_os,
-                    "value": vm_image,
-                }
-            )
+            if "vm_image" in file_config.get("workflow_settings", {}):
+                logger.warning(
+                    "`azure.settings_%(settings_os)s.pool.vmimage` is ignored when "
+                    "`workflow_settings.vm_image` is set",
+                    {"settings_os": settings_os},
+                )
+            else:
+                config["workflow_settings"]["vm_image"].append(
+                    {
+                        "provider": "azure",
+                        "os": settings_os,
+                        "value": vm_image,
+                    }
+                )
 
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
