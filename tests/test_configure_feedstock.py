@@ -3463,7 +3463,10 @@ def test_get_migrations_in_dir_timestamp_formats(tmp_path):
 
 @pytest.mark.parametrize("override", [False, True])
 @pytest.mark.parametrize("legacy", [False, True])
-def test_vm_image_azure(py_recipe, jinja_env, override: bool, legacy: bool):
+@pytest.mark.parametrize("legacy_pool", [False, True])
+def test_vm_image_azure(
+    py_recipe, jinja_env, override: bool, legacy: bool, legacy_pool: bool
+):
     forge_dir = py_recipe.recipe
     forge_yml = Path(forge_dir, "conda-forge.yml")
 
@@ -3476,18 +3479,21 @@ def test_vm_image_azure(py_recipe, jinja_env, override: bool, legacy: bool):
               osx_arm64: azure
               win_64: azure
         """))
-        if legacy:
-            f.write(textwrap.dedent("""\
+        if legacy or legacy_pool:
+            f.write(textwrap.dedent(f"""\
                 azure:
                   settings_linux:
                     pool:
-                      vmImage: ubuntu-24.04
+                      {'name: linux_pool' if legacy_pool else ''}
+                      {'vmImage: ubuntu-24.04' if legacy else ''}
                   settings_win:
                     pool:
-                      vmImage: windows-2025
+                      {'name: win_pool' if legacy_pool else ''}
+                      {'vmImage: windows-2025' if legacy else ''}
                   settings_osx:
                     pool:
-                      vmImage: macOS-26
+                      {'name: osx_pool' if legacy_pool else ''}
+                      {'vmImage: macOS-26' if legacy else ''}
             """))
         if override:
             f.write(textwrap.dedent("""\
@@ -3554,7 +3560,14 @@ def test_vm_image_azure(py_recipe, jinja_env, override: bool, legacy: bool):
         with workflow_yml.open() as f:
             workflow = yaml.safe_load(f)
 
-        assert workflow["jobs"][0]["pool"]["vmImage"] == "$(vm_image)"
+        if legacy_pool:
+            if legacy:
+                # if pool.name is passed explictly, we copy pool as-is
+                assert workflow["jobs"][0]["pool"]["vmImage"] is not None
+            else:
+                assert "vmImage" not in workflow["jobs"][0]["pool"]
+        else:
+            assert workflow["jobs"][0]["pool"]["vmImage"] == "$(vm_image)"
         matrix = workflow["jobs"][0]["strategy"]["matrix"]
         images = {
             "_".join(k.split("_", 2)[:2]): v["vm_image"] for k, v in matrix.items()
