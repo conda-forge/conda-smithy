@@ -1665,6 +1665,11 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     for data in forge_config["configs"]:
         if not data["build_platform"].startswith(platform):
             continue
+
+        workflow_settings = get_workflow_settings(
+            forge_config["workflow_settings"], "github_actions", data["platform"]
+        )
+
         # This Github Actions specific configs are prefixed with "gha_"
         # because we are not deepcopying the data dict intentionally
         # so it can be used in the general "render_github_actions" function
@@ -1675,8 +1680,11 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["self_hosted_labels"]
         )
         self_hosted_default += ["self-hosted"]
-        hosted_default = list(
-            GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["hosted_labels"]
+        vm_image = workflow_settings["vm_image"]
+        hosted_default = (
+            [vm_image]
+            if vm_image is not None
+            else list(GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["hosted_labels"])
         )
 
         # labels may be overridden in conda_build_config.yaml
@@ -1714,9 +1722,6 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                     label += ";container.privileged=true;container.mount-scratch=true"
             data["gha_runs_on"].append(label)
 
-        workflow_settings = get_workflow_settings(
-            forge_config["workflow_settings"], "github_actions", data["platform"]
-        )
         # Note that win-arm64 runners do not have D:
         on_hosted_win_64_runner = {
             "windows-latest",

@@ -394,6 +394,7 @@ def fill_workflow_settings_defaults(
             # TODO: switch to normalizing all paths once we're ready
             "win": rf"{tools_drive}\\bld\\",
         }[system]
+    # GitHub Actions defaults are handled directly in _github_actions_specific_setup()
     if workflow_settings.get("vm_image") is None and provider == "azure":
         vm_image = {
             "osx-64": "macOS-15",
