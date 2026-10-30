@@ -3573,3 +3573,70 @@ def test_vm_image_azure(
             "_".join(k.split("_", 2)[:2]): v["vm_image"] for k, v in matrix.items()
         }
         assert images == expected
+
+
+@pytest.mark.parametrize("override", [False, True])
+@pytest.mark.parametrize("label", [None, "default", "hosted", "something-else"])
+def test_vm_image_gha(py_recipe, jinja_env, override: bool, label: str | None):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+    config_yml = Path(forge_dir, "recipe/default_config.yaml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_arm64: github_actions
+              win_64: github_actions
+        """))
+        if override:
+            f.write(textwrap.dedent("""\
+                workflow_settings:
+                  vm_image:
+                    - os: linux
+                      value: ubuntu-22.04
+                    - os: win
+                      value: windows-latest
+                    - os: osx
+                      value: macos-14
+            """))
+
+    if label:
+        with open(config_yml, "w") as f:
+            f.write(textwrap.dedent(f"""\
+                github_actions_labels:
+                  - {label}
+            """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    expected = {
+        "linux_64": ["ubuntu-latest"],
+        "osx_arm64": ["macos-15"],
+        "win_64": ["windows-2022"],
+    }
+    if override:
+        expected = {
+            "linux_64": ["ubuntu-22.04"],
+            "osx_arm64": ["macos-14"],
+            "win_64": ["windows-latest"],
+        }
+    # custom label overrides vm_image
+    if label not in (None, "default", "hosted"):
+        expected = {k: ["something-else"] for k in expected}
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {
+        "_".join(v["CONFIG"].split("_", 2)[:2]): v["runs_on"] for v in matrix
+    } == expected
