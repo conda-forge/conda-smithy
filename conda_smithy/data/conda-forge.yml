@@ -9,22 +9,19 @@ azure:
   project_name: feedstock-builds
   settings_linux:
     install_atl: false
-    pool:
-      vmImage: ubuntu-latest
+    pool: {}
     swapfile_size: 0GiB
     timeoutInMinutes: 360
     variables: {}
   settings_osx:
     install_atl: false
-    pool:
-      vmImage: $(VMIMAGE)
+    pool: {}
     swapfile_size: null
     timeoutInMinutes: 360
     variables: {}
   settings_win:
     install_atl: false
-    pool:
-      vmImage: windows-2022
+    pool: {}
     swapfile_size: null
     timeoutInMinutes: 360
     variables:
@@ -152,3 +149,4 @@ workflow_settings:
   resize_partitions: []
   store_build_artifacts: []
   tools_install_dir: []
+  vm_image: []

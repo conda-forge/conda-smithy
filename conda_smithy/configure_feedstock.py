@@ -1665,6 +1665,11 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
     for data in forge_config["configs"]:
         if not data["build_platform"].startswith(platform):
             continue
+
+        workflow_settings = get_workflow_settings(
+            forge_config["workflow_settings"], "github_actions", data["platform"]
+        )
+
         # This Github Actions specific configs are prefixed with "gha_"
         # because we are not deepcopying the data dict intentionally
         # so it can be used in the general "render_github_actions" function
@@ -1675,8 +1680,11 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["self_hosted_labels"]
         )
         self_hosted_default += ["self-hosted"]
-        hosted_default = list(
-            GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["hosted_labels"]
+        vm_image = workflow_settings["vm_image"]
+        hosted_default = (
+            [vm_image]
+            if vm_image is not None
+            else list(GITHUB_ACTIONS_RUNS_ON[data["build_platform"]]["hosted_labels"])
         )
 
         # labels may be overridden in conda_build_config.yaml
@@ -1714,9 +1722,6 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
                     label += ";container.privileged=true;container.mount-scratch=true"
             data["gha_runs_on"].append(label)
 
-        workflow_settings = get_workflow_settings(
-            forge_config["workflow_settings"], "github_actions", data["platform"]
-        )
         # Note that win-arm64 runners do not have D:
         on_hosted_win_64_runner = {
             "windows-latest",
@@ -1727,6 +1732,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             workflow_settings,
             "github_actions",
             platform,
+            data["build_platform"],
             "D:" if on_hosted_win_64_runner or on_namespace else "C:",
         )
         data.update(workflow_settings)
@@ -1832,6 +1838,11 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings.pop("install_atl", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
+    azure_settings.setdefault("pool", {})
+    # If explicit pool name is specified, use that. Otherwise, use the vm image
+    # specified in config.
+    if "name" not in azure_settings["pool"]:
+        azure_settings["pool"]["vmImage"] = "$(vm_image)"
 
     # Limit the amount of parallel jobs running at the same time
     # weighted by platform population
@@ -1858,17 +1869,12 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
                 config_rendered["DOCKER_IMAGE"] = docker_image[-1]
         elif platform == "win":
             config_rendered["build_platform"] = data["build_platform"]
-        elif platform == "osx":
-            if data["build_platform"] == "osx-64":
-                config_rendered["VMIMAGE"] = "macOS-15"
-            elif data["build_platform"] == "osx-arm64":
-                config_rendered["VMIMAGE"] = "macOS-15-arm64"
-            else:
-                raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
+        elif platform != "osx":
+            raise ValueError(f"Unknown build platform: '{data['build_platform']}'")
 
         # fmt: off
         workflow_settings = get_workflow_settings(forge_config["workflow_settings"], "azure", data["platform"])
-        fill_workflow_settings_defaults(workflow_settings, "azure", platform, "D:" if data["build_platform"] == "win-64" else "C:")
+        fill_workflow_settings_defaults(workflow_settings, "azure", platform, data["build_platform"], "D:" if data["build_platform"] == "win-64" else "C:")
         data.update(workflow_settings)
 
         if platform == "linux":
@@ -2418,6 +2424,24 @@ def _read_forge_config(forge_dir, forge_yml=None):
                 }
             )
 
+    for settings_os in ("linux", "osx", "win"):
+        vm_image = config["azure"][f"settings_{settings_os}"]["pool"].get("vmImage")
+        if vm_image is not None:
+            if "vm_image" in file_config.get("workflow_settings", {}):
+                logger.warning(
+                    "`azure.settings_%(settings_os)s.pool.vmimage` is ignored when "
+                    "`workflow_settings.vm_image` is set",
+                    {"settings_os": settings_os},
+                )
+            else:
+                config["workflow_settings"]["vm_image"].append(
+                    {
+                        "provider": "azure",
+                        "os": settings_os,
+                        "value": vm_image,
+                    }
+                )
+
     # check for conda-smithy 2.x matrix which we can't auto-migrate
     # to conda_build_config
     if file_config.get("matrix") and not os.path.exists(
@@ -2495,8 +2519,6 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             config["azure"][f"settings_{plat}"]["timeoutInMinutes"] \
                 = config["azure"]["timeout_minutes"]
             # fmt: on
-        if "name" in config["azure"][f"settings_{plat}"]["pool"]:
-            del config["azure"][f"settings_{plat}"]["pool"]["vmImage"]
 
     if config["conda_forge_output_validation"]:
         config["secrets"] = sorted(

@@ -80,8 +80,12 @@ class AzureRunnerSettings(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="allow")
 
     pool: Optional[dict[str, str]] = Field(
-        default_factory=lambda: {"vmImage": "ubuntu-latest"},
-        description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+        default_factory=lambda: {},
+        deprecated=True,
+        description=cleandoc("""
+            Deprecated. Use `workflow_settings.vm_image` instead.
+            The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+        """),
     )
 
     swapfile_size: Optional[Union[str, Nullable]] = Field(
@@ -186,14 +190,14 @@ class AzureConfig(BaseModel):
 
     settings_osx: AzureRunnerSettings = Field(
         # $(VMIMAGE) will be defined in the matrix entries
-        default_factory=lambda: AzureRunnerSettings(pool={"vmImage": "$(VMIMAGE)"}),
+        default_factory=lambda: AzureRunnerSettings(),
         description="OSX-specific settings for runners",
     )
 
     settings_win: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
             install_atl=False,
-            pool={"vmImage": "windows-2022"},
+            pool={},
             variables={
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },
@@ -626,6 +630,20 @@ class WorkflowSettings(BaseModel):
         description=cleandoc(r"""
         Whether to resize partitions to use all available space. Currently
         only supported for certain providers on GitHub Actions for Windows.
+        """),
+        default=[],
+    )
+
+    vm_image: Optional[
+        Union[
+            str,
+            list[conditional_value(str, None)],
+            Nullable,
+        ]
+    ] = Field(
+        description=cleandoc(r"""
+        Override the VM image used for building. The available values as well
+        as defaults depend on the CI provider used.
         """),
         default=[],
     )
