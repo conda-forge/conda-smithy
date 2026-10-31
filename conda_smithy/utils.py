@@ -396,16 +396,16 @@ def fill_workflow_settings_defaults(
         }[system]
     # GitHub Actions defaults are handled directly in _github_actions_specific_setup()
     if workflow_settings.get("vm_image") is None and provider == "azure":
-        vm_image = {
+        azure_default_vms = {
             "osx-64": "macOS-15",
             "osx-arm64": "macOS-15-arm64",
-        }.get(build_platform)
-        if vm_image is None:
-            vm_image = {
-                "linux": "ubuntu-latest",
-                "win": "windows-2022",
-            }[system]
-        workflow_settings["vm_image"] = vm_image
+            "linux": "ubuntu-latest",
+            "win": "windows-2022",
+        }
+        workflow_settings["vm_image"] = azure_default_vms.get(
+            build_platform, azure_default_vms.get(system)
+        )
+        assert workflow_settings["vm_image"] is not None
 
     simple_defaults = {
         "pagefile_size": 0,
