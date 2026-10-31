@@ -3459,3 +3459,184 @@ def test_get_migrations_in_dir_timestamp_formats(tmp_path):
         for name in ("epoch", "zulu", "offset")
     ]
     assert keys[0] == keys[1] == keys[2] == {("zlib.yaml", 1790912420.0)}
+
+
+@pytest.mark.parametrize("override", [False, True])
+@pytest.mark.parametrize("legacy", [False, True])
+@pytest.mark.parametrize("legacy_pool", [False, True])
+def test_vm_image_azure(
+    py_recipe, jinja_env, override: bool, legacy: bool, legacy_pool: bool
+):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: azure
+              linux_aarch64: azure
+              osx_64: azure
+              osx_arm64: azure
+              win_64: azure
+        """))
+        if legacy or legacy_pool:
+            f.write(textwrap.dedent(f"""\
+                azure:
+                  settings_linux:
+                    pool:
+                      {'name: linux_pool' if legacy_pool else ''}
+                      {'vmImage: ubuntu-24.04' if legacy else ''}
+                  settings_win:
+                    pool:
+                      {'name: win_pool' if legacy_pool else ''}
+                      {'vmImage: windows-2025' if legacy else ''}
+                  settings_osx:
+                    pool:
+                      {'name: osx_pool' if legacy_pool else ''}
+                      {'vmImage: macOS-26' if legacy else ''}
+            """))
+        if override:
+            f.write(textwrap.dedent("""\
+                workflow_settings:
+                  vm_image:
+                    - os: linux
+                      value: ubuntu-22.04
+                    - os: win
+                      value: windows-latest
+                    - platform: osx_64
+                      value: macOS-14
+                    - platform: osx_arm64
+                      value: macOS-26-arm64
+            """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    # defaults
+    linux_image = "ubuntu-latest"
+    osx_64_image = "macOS-15"
+    osx_arm64_image = "macOS-15-arm64"
+    win_image = "windows-2022"
+
+    # legacy settings override the defaults
+    if legacy:
+        linux_image = "ubuntu-24.04"
+        osx_64_image = "macOS-26"
+        # TODO: this is the original behavior; do we want to change it?
+        osx_arm64_image = "macOS-26"
+        win_image = "windows-2025"
+
+    # workflow_settings override legacy
+    if override:
+        linux_image = "ubuntu-22.04"
+        osx_64_image = "macOS-14"
+        osx_arm64_image = "macOS-26-arm64"
+        win_image = "windows-latest"
+
+    expected_values = {
+        "linux": {
+            "linux_64": linux_image,
+            "linux_aarch64": linux_image,
+        },
+        "osx": {
+            "osx_64": osx_64_image,
+            "osx_arm64": osx_arm64_image,
+        },
+        "win": {
+            "win_64": win_image,
+        },
+    }
+
+    for os_name, expected in expected_values.items():
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        if legacy_pool:
+            if legacy:
+                # if pool.name is passed explictly, we copy pool as-is
+                assert workflow["jobs"][0]["pool"]["vmImage"] is not None
+            else:
+                assert "vmImage" not in workflow["jobs"][0]["pool"]
+        else:
+            assert workflow["jobs"][0]["pool"]["vmImage"] == "$(vm_image)"
+        matrix = workflow["jobs"][0]["strategy"]["matrix"]
+        images = {
+            "_".join(k.split("_", 2)[:2]): v["vm_image"] for k, v in matrix.items()
+        }
+        assert images == expected
+
+
+@pytest.mark.parametrize("override", [False, True])
+@pytest.mark.parametrize("label", [None, "default", "hosted", "something-else"])
+def test_vm_image_gha(py_recipe, jinja_env, override: bool, label: str | None):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+    config_yml = Path(forge_dir, "recipe/default_config.yaml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            provider:
+              linux_64: github_actions
+              osx_arm64: github_actions
+              win_64: github_actions
+        """))
+        if override:
+            f.write(textwrap.dedent("""\
+                workflow_settings:
+                  vm_image:
+                    - os: linux
+                      value: ubuntu-22.04
+                    - os: win
+                      value: windows-latest
+                    - os: osx
+                      value: macos-14
+            """))
+
+    if label:
+        with open(config_yml, "w") as f:
+            f.write(textwrap.dedent(f"""\
+                github_actions_labels:
+                  - {label}
+            """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    conda_build_yml = Path(forge_dir, ".github/workflows/conda-build.yml")
+    with conda_build_yml.open() as f:
+        workflow = yaml.safe_load(f)
+
+    expected = {
+        "linux_64": ["ubuntu-latest"],
+        "osx_arm64": ["macos-15"],
+        "win_64": ["windows-2022"],
+    }
+    if override:
+        expected = {
+            "linux_64": ["ubuntu-22.04"],
+            "osx_arm64": ["macos-14"],
+            "win_64": ["windows-latest"],
+        }
+    # custom label overrides vm_image
+    if label not in (None, "default", "hosted"):
+        expected = {k: ["something-else"] for k in expected}
+
+    matrix = workflow["jobs"]["build"]["strategy"]["matrix"]["include"]
+    assert {
+        "_".join(v["CONFIG"].split("_", 2)[:2]): v["runs_on"] for v in matrix
+    } == expected

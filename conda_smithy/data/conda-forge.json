@@ -188,7 +188,8 @@
               "type": "null"
             }
           ],
-          "description": "The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+          "deprecated": true,
+          "description": "Deprecated. Use `workflow_settings.vm_image` instead.\nThe pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'\",",
           "title": "Pool"
         },
         "swapfile_size": {
@@ -1298,6 +1299,28 @@
           "default": [],
           "description": "Whether to resize partitions to use all available space. Currently\nonly supported for certain providers on GitHub Actions for Windows.",
           "title": "Resize Partitions"
+        },
+        "vm_image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "$ref": "#/$defs/ConditionalValue__class__str__"
+              },
+              "type": "array"
+            },
+            {
+              "$ref": "#/$defs/Nullable"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": [],
+          "description": "Override the VM image used for building. The available values as well\nas defaults depend on the CI provider used.",
+          "title": "Vm Image"
         }
       },
       "title": "WorkflowSettings",
