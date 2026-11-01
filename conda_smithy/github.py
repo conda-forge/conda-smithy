@@ -514,7 +514,7 @@ def configure_github_team(
 
         # if we have not recorded the new maintainer's ID yet, we do that now
         if new_maintainer not in new_maintainer2id:
-            new_maintainer2id[new_maintainer] = gh.get_user(new_maintainer).id
+            new_maintainer2id[new_maintainer] = cached_username2id[new_maintainer]
 
     # Remove any maintainers that need to be removed (unlikely here).
     if remove:
