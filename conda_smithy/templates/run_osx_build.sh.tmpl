@@ -37,7 +37,7 @@ fi
 ( startgroup "Provisioning base env with micromamba" ) 2> /dev/null
 
 MAMBA_ROOT_PREFIX="${MINIFORGE_HOME}-micromamba-$(date +%s)"
-MICROMAMBA_VERSION="2.9.0-0"
+MICROMAMBA_VERSION="2.10.0-0"
 MICROMAMBA_URL="https://github.com/mamba-org/micromamba-releases/releases/download/${MICROMAMBA_VERSION}/micromamba-osx-${arch}"
 MICROMAMBA_TMPDIR=$(mktemp -d)
 MICROMAMBA_EXE=${MICROMAMBA_TMPDIR}/micromamba
