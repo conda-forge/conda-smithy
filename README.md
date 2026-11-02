@@ -7,8 +7,7 @@ Overview
 + Create a git repo with a conda recipe and the files to run conda builds via CI
   services.
 + Register the repo on github and push it.
-+ Connect the repo to the CI services travis-ci.com, appveyor.com, circleci.com, dev.azure.com
-  (For travis-ci.com, configure your org or user to enable the service for all repos)
++ Connect the repo to the CI services dev.azure.com
 
 [![tests](https://github.com/conda-forge/conda-smithy/actions/workflows/tests.yml/badge.svg)](https://github.com/conda-forge/conda-smithy/actions/workflows/tests.yml)
 [![Coverage Status](https://coveralls.io/repos/github/conda-forge/conda-smithy/badge.svg?branch=main)](https://coveralls.io/github/conda-forge/conda-smithy?branch=main)
@@ -30,7 +29,7 @@ repo, and `python -m pip install .`.
 Setup
 -----
 
-You need a token from github, travis-ci.com, appveyor.com and circleci.com to try out
+You need a token from github to try out
 `conda-smithy`. The commands which need this will tell you where to get these tokens and where to
 place them. If you need help getting tokens please ask on the
 [conda-forge google group](https://groups.google.com/forum/?hl=en#!forum/conda-forge).

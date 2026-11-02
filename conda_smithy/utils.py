@@ -365,6 +365,7 @@ def fill_workflow_settings_defaults(
     workflow_settings: dict[str, Any],
     provider: str,
     system: str,
+    build_platform: str,
     win_default_drive: str,
 ) -> None:
     """
@@ -393,6 +394,18 @@ def fill_workflow_settings_defaults(
             # TODO: switch to normalizing all paths once we're ready
             "win": rf"{tools_drive}\\bld\\",
         }[system]
+    # GitHub Actions defaults are handled directly in _github_actions_specific_setup()
+    if workflow_settings.get("vm_image") is None and provider == "azure":
+        azure_default_vms = {
+            "osx-64": "macOS-15",
+            "osx-arm64": "macOS-15-arm64",
+            "linux": "ubuntu-latest",
+            "win": "windows-2022",
+        }
+        workflow_settings["vm_image"] = azure_default_vms.get(
+            build_platform, azure_default_vms.get(system)
+        )
+        assert workflow_settings["vm_image"] is not None
 
     simple_defaults = {
         "pagefile_size": 0,

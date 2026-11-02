@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* <news item>
+* Widen `py-rattler` constraint to allow v0.28. (#2738)
 
 **Deprecated:**
 
@@ -16,7 +16,7 @@
 
 **Fixed:**
 
-* Register QEMU binfmt handlers on linux-aarch64 GitHub Actions runners, using the emulators from the build image.
+* <news item>
 
 **Security:**
 

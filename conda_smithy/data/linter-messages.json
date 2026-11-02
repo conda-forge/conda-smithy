@@ -5,34 +5,9 @@
     "R": "All recipe versions",
     "R0": "Recipe v0 (`meta.yaml`)",
     "R1": "Recipe v1 (`recipe.yaml`)",
-    "RC": "All recipe variants files",
-    "CBC": "Recipe variants in `conda_build_config.yaml`"
+    "RC": "All recipe variants files"
   },
   "messages": [
-    {
-      "name": "MacOSDeploymentTargetConflict",
-      "identifier": "CBC-000",
-      "category": "CBC",
-      "kind": "lint",
-      "added_in": "<3.56",
-      "deprecated_in": "3.56.0",
-      "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
-      "message": "Conflicting specification for minimum macOS deployment target!\nIf your conda_build_config.yaml sets `MACOSX_DEPLOYMENT_TARGET`, please change the name of that key to `c_stdlib_version`!\nContinuing with `max(c_stdlib_version, MACOSX_DEPLOYMENT_TARGET)`.",
-      "examples": [],
-      "path": "recipe/conda_build_config.yaml"
-    },
-    {
-      "name": "MacOSDeploymentTargetBelowStdlib",
-      "identifier": "CBC-001",
-      "category": "CBC",
-      "kind": "lint",
-      "added_in": "<3.56",
-      "deprecated_in": "3.56.0",
-      "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
-      "message": "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, in conda_build_config.yaml which is not possible! Please ensure `MACOSX_SDK_VERSION` is at least `c_stdlib_version` (you can leave it out if it is equal).\nIf you are not setting `c_stdlib_version` yourself, this means you are requesting a version below the current global baseline in conda-forge (${baseline}). If this is the intention, you also need to override `c_stdlib_version` and `MACOSX_DEPLOYMENT_TARGET` locally.",
-      "examples": [],
-      "path": "recipe/conda_build_config.yaml"
-    },
     {
       "name": "MaintainerMissing",
       "identifier": "CF-001",
@@ -85,7 +60,7 @@
       "path": "recipe/conda_build_config.yaml"
     },
     {
-      "name": "NoCustomGHAWorkflows",
+      "name": "NoCustomGhaWorkflows",
       "identifier": "CF-005",
       "category": "CF",
       "kind": "lint",
@@ -136,7 +111,7 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
-      "name": "WorkflowSettingsPlatformOSMismatch",
+      "name": "WorkflowSettingsPlatformOsMismatch",
       "identifier": "CF-009",
       "category": "CF",
       "kind": "lint",
@@ -208,7 +183,7 @@
       "path": "conda-forge.yml"
     },
     {
-      "name": "OSVersionLower",
+      "name": "OsVersionLower",
       "identifier": "FC-002",
       "category": "FC",
       "kind": "hint",
@@ -640,7 +615,7 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
-      "name": "StdlibMacOS",
+      "name": "StdlibMacos",
       "identifier": "R-035",
       "category": "R",
       "kind": "lint",
@@ -753,7 +728,7 @@
       "path": "recipe/*.sh"
     },
     {
-      "name": "LicenseSPDX",
+      "name": "LicenseSpdx",
       "identifier": "R-044",
       "category": "R",
       "kind": "hint",
@@ -825,7 +800,7 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
-      "name": "LegacyPyPIURL",
+      "name": "LegacyPypiUrl",
       "identifier": "R-050",
       "category": "R",
       "kind": "hint",
@@ -1035,7 +1010,7 @@
       "path": "recipe/recipe.yaml"
     },
     {
-      "name": "RattlerSPDir",
+      "name": "RattlerSpdir",
       "identifier": "R1-006",
       "category": "R1",
       "kind": "hint",
@@ -1071,7 +1046,7 @@
       "path": "recipe/(meta|recipe).yaml"
     },
     {
-      "name": "MacOSDeploymentTargetRename",
+      "name": "MacosDeploymentTargetRename",
       "identifier": "RC-000",
       "category": "RC",
       "kind": "lint",
@@ -1083,20 +1058,32 @@
       "path": "recipe/(conda_build_config|variants).yaml"
     },
     {
-      "name": "MacOSDeploymentTargetBelow",
+      "name": "MacosStdlibBelowPinning",
       "identifier": "RC-001",
       "category": "RC",
       "kind": "lint",
       "added_in": "<3.56",
       "deprecated_in": "",
       "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
-      "message": "You are setting `c_stdlib_version` on macOS below the current global baseline in conda-forge (${baseline_version}).",
+      "message": "You are setting `c_stdlib_version` on macOS below the current global baseline in conda-forge (${baseline}).",
+      "examples": [],
+      "path": "recipe/(conda_build_config|variants).yaml"
+    },
+    {
+      "name": "MacosSdkBelowStdlib",
+      "identifier": "RC-002",
+      "category": "RC",
+      "kind": "lint",
+      "added_in": "<3.56",
+      "deprecated_in": "",
+      "documentation": "https://github.com/conda-forge/conda-forge.github.io/issues/2102",
+      "message": "You are setting `MACOSX_SDK_VERSION` below `c_stdlib_version`, in conda_build_config.yaml which is not possible! Please ensure `MACOSX_SDK_VERSION` is at least `c_stdlib_version` (you can leave it out if it is equal).\nIf you are not setting `c_stdlib_version` yourself, this means you are requesting a version below the current global baseline in conda-forge (${baseline}). If this is the intention, you also need to override `c_stdlib_version` locally.",
       "examples": [],
       "path": "recipe/(conda_build_config|variants).yaml"
     },
     {
       "name": "MoreThanOneConfigFile",
-      "identifier": "RC-002",
+      "identifier": "RC-003",
       "category": "RC",
       "kind": "lint",
       "added_in": "<3.56",

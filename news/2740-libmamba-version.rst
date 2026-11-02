@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Widen `py-rattler` constraint to allow v0.27. (#2713)
+* The micromamba version used for osx & win builds has been updated to 2.10.0 (#2740).
 
 **Deprecated:**
 

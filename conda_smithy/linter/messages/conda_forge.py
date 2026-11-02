@@ -91,7 +91,7 @@ class NoEmptyVariantsFile(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class NoCustomGHAWorkflows(LinterMessage):
+class NoCustomGhaWorkflows(LinterMessage):
     """
     Due to its stature in the open-source community, conda-forge has enhanced
     access to certain CI services. This access is a community resource entrusted
@@ -194,7 +194,7 @@ class InconclusiveMaintainerCheck(LinterMessage):
 
 
 @dataclass(kw_only=True)
-class WorkflowSettingsPlatformOSMismatch(LinterMessage):
+class WorkflowSettingsPlatformOsMismatch(LinterMessage):
     """
     Lint when a value in `workflow_settings` has mismatched `os` and `platforms`.
     """

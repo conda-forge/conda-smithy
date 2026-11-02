@@ -19,7 +19,6 @@ from .configure_feedstock import (  # noqa: TID252
     DEFAULT_PLATFORMS,
     DEFAULT_PROVIDERS,
 )
-from .deprecations import deprecated  # noqa: TID252
 from .validate_schema import (  # noqa: TID252
     CONDA_FORGE_YAML_DEFAULTS_FILE,
     CONDA_FORGE_YAML_SCHEMA_FILE,
@@ -62,19 +61,6 @@ class CIservices(StrEnum):
     disable = "None"
 
 
-@deprecated("2026.8", "2026.10", addendum="These services are deprecated. See #2627.")
-class DeprecatedCIservices(StrEnum):
-    """
-    These are deprecated as of 2026.8 and will be removed in 2026.10. See #2627.
-    """
-
-    circle = "circle"
-    travis = "travis"
-    appveyor = "appveyor"
-    drone = "drone"
-    woodpecker = "woodpecker"
-
-
 class Lints(StrEnum):
     LINT_NOARCH_SELECTORS = "lint_noarch_selectors"
     LINT_STDLIB = "lint_stdlib"
@@ -94,8 +80,12 @@ class AzureRunnerSettings(BaseModel):
     model_config: ConfigDict = ConfigDict(extra="allow")
 
     pool: Optional[dict[str, str]] = Field(
-        default_factory=lambda: {"vmImage": "ubuntu-latest"},
-        description="The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+        default_factory=lambda: {},
+        deprecated=True,
+        description=cleandoc("""
+            Deprecated. Use `workflow_settings.vm_image` instead.
+            The pool of self-hosted runners, e.g. 'vmImage': 'ubuntu-latest'",
+        """),
     )
 
     swapfile_size: Optional[Union[str, Nullable]] = Field(
@@ -200,14 +190,14 @@ class AzureConfig(BaseModel):
 
     settings_osx: AzureRunnerSettings = Field(
         # $(VMIMAGE) will be defined in the matrix entries
-        default_factory=lambda: AzureRunnerSettings(pool={"vmImage": "$(VMIMAGE)"}),
+        default_factory=lambda: AzureRunnerSettings(),
         description="OSX-specific settings for runners",
     )
 
     settings_win: AzureRunnerSettings = Field(
         default_factory=lambda: AzureRunnerSettings(
             install_atl=False,
-            pool={"vmImage": "windows-2022"},
+            pool={},
             variables={
                 "UPLOAD_TEMP": "D:\\\\tmp",
             },
@@ -471,9 +461,8 @@ OSVersion = create_model(
 )
 
 ProviderType = Union[
-    list[Union[CIservices, DeprecatedCIservices]],
+    list[CIservices],
     CIservices,
-    DeprecatedCIservices,
     bool,
     Nullable,
 ]
@@ -521,9 +510,8 @@ def conditional_value(typ: type, default: Any = None) -> BaseModel:
         provider=(
             Optional[
                 Union[
-                    list[Union[CIservices, DeprecatedCIservices]],
+                    list[CIservices],
                     CIservices,
-                    DeprecatedCIservices,
                     Nullable,
                 ]
             ],
@@ -642,6 +630,20 @@ class WorkflowSettings(BaseModel):
         description=cleandoc(r"""
         Whether to resize partitions to use all available space. Currently
         only supported for certain providers on GitHub Actions for Windows.
+        """),
+        default=[],
+    )
+
+    vm_image: Optional[
+        Union[
+            str,
+            list[conditional_value(str, None)],
+            Nullable,
+        ]
+    ] = Field(
+        description=cleandoc(r"""
+        Override the VM image used for building. The available values as well
+        as defaults depend on the CI provider used.
         """),
         default=[],
     )
@@ -1020,23 +1022,20 @@ class ConfigModel(BaseModel):
 
         * `azure`
         * `github_actions`
-        * `circle` (deprecated)
-        * `travis` (deprecated)
-        * `appveyor` (deprecated)
         * `None` or `False` to disable a build platform.
         * `default` to choose an appropriate CI (only if available)
         * `native` to choose an appropriate CI for native compiling (only if available)
         * `emulated` to choose an appropriate CI for compiling inside an emulation
           of the target platform (only if available)
 
-        For example, making explicit that linux_64 builds on github actions, osx_64 builds on azure,
-        and switching win_64 to Appveyor:
+        For example, making explicit that linux_64 and win_64 builds on github actions
+        and switching osx_64 to Azure:
 
         ```yaml
         provider:
             linux_64: github_actions
             osx_64: azure
-            win_64: appveyor
+            win_64: github_actions
         ```
 
         Currently, x86_64 platforms are enabled, but other build platforms are
