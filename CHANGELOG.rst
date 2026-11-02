@@ -4,6 +4,22 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.10.24
+====================
+
+**Fixed:**
+
+* Non-unique naming of stored artifacts on Windows. (#2734)
+* Removing stale files from the removed CI providers. (#2735)
+* Fixed docker images not being found by adding `--platform` argument to `docker pull`. (#2730 via #2732)
+
+**Authors:**
+
+* H. Vetinari
+* Michał Górny
+
+
+
 v2026.10.21
 ====================
 

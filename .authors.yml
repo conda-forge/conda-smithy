@@ -539,7 +539,7 @@
   github: nehaljwani
 - name: H. Vetinari
   email: h.vetinari@gmx.com
-  num_commits: 211
+  num_commits: 214
   first_commit: 2021-11-14 02:53:10
   github: h-vetinari
 - name: Benjamin Tovar
@@ -697,7 +697,7 @@
   email: mgorny@gentoo.org
   alternate_emails:
   - mgorny@quansight.com
-  num_commits: 208
+  num_commits: 212
   first_commit: 2024-11-06 09:06:27
   github: mgorny
 - name: Matt Chan
