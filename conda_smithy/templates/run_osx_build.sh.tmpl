@@ -43,7 +43,7 @@ MICROMAMBA_TMPDIR=$(mktemp -d)
 MICROMAMBA_EXE=${MICROMAMBA_TMPDIR}/micromamba
 
 echo "Downloading micromamba ${MICROMAMBA_VERSION}"
-curl -L -o "${MICROMAMBA_EXE}" "${MICROMAMBA_URL}"
+curl --fail --retry 5 --retry-delay 5 -L -o "${MICROMAMBA_EXE}" "${MICROMAMBA_URL}"
 chmod +x "${MICROMAMBA_EXE}"
 
 echo Creating environment
@@ -88,7 +88,7 @@ popd
 echo Downloading Miniforge
 MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download"
 MINIFORGE_FILE="Miniforge3-MacOSX-$(uname -m).sh"
-curl -L -O "${MINIFORGE_URL}/${MINIFORGE_FILE}"
+curl --fail --retry 5 --retry-delay 5 -L -O "${MINIFORGE_URL}/${MINIFORGE_FILE}"
 
 echo Installing Miniforge
 rm -rf "${MINIFORGE_HOME}"
