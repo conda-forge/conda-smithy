@@ -2545,7 +2545,7 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
             f"python={python_version} conda-build conda-libmamba-solver"
         )
     elif config["conda_build_tool"] == "rattler-build":
-        config["conda_build_tool_deps"] = "rattler-build"
+        config["conda_build_tool_deps"] = f"python={python_version} rattler-build"
     else:
         config["conda_build_tool_deps"] = f"python={python_version} conda-build"
 
