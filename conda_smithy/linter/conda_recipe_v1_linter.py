@@ -168,7 +168,14 @@ def lint_usage_of_selectors_for_noarch(
     build_section: dict[str, Any],
     noarch_platforms: bool,
     lints: list[str],
+    conda_build_config_keys: Optional[set[str]] = None,
 ):
+    # cbc keys select a variant, not a platform, so allow them too. v0 has done
+    # this since gh-1843. See gh-2337.
+    allowed_nouns = ({"win", "linux", "osx", "unix"} if noarch_platforms else set()) | (
+        conda_build_config_keys or set()
+    )
+
     for section in requirements_section:
         section_requirements = requirements_section[section]
 
@@ -178,26 +185,22 @@ def lint_usage_of_selectors_for_noarch(
         has_bad_selector = False
 
         if any(isinstance(req, dict) for req in section_requirements):
-            if noarch_platforms and section in ("host", "run"):
-                for req in section_requirements:
-                    if isinstance(req, dict) and not has_bad_selector:
-                        for key in req:
-                            if key == "if":
-                                if_selectors = {
-                                    selector
-                                    for selector in req[key].split()
-                                    if selector not in ("not", "and", "or")
-                                }
-                                allowed_nouns = (
-                                    {"win", "linux", "osx", "unix"}
-                                    if noarch_platforms
-                                    else set()
-                                )
-                                if not if_selectors.issubset(allowed_nouns):
-                                    has_bad_selector = True
-                                    break
-            if not noarch_platforms:
-                has_bad_selector = True
+            for req in section_requirements:
+                if not isinstance(req, dict):
+                    continue
+                if section in ("host", "run") and "if" in req:
+                    if_selectors = {
+                        selector
+                        for selector in req["if"].split()
+                        if selector not in ("not", "and", "or")
+                    }
+                    if if_selectors.issubset(allowed_nouns):
+                        continue
+                    has_bad_selector = True
+                    break
+                if not noarch_platforms:
+                    has_bad_selector = True
+                    break
 
             if has_bad_selector:
                 lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value).as_string())
