@@ -33,13 +33,19 @@ set CONFIG_FILE=%CI_SUPPORT%\%CONFIG%.yaml
 {#- NOTE: We are NOT setting a default CONDA_BLD_PATH here; that's done in conda-forge-ci-setup #}
 
 set "MICROMAMBA_VERSION=2.10.0-0"
+set "MINIFORGE_VERSION=26.9.4-2"
 {#- PROCESSOR_ARCHITECTURE is set by the OS and either AMD64 or ARM64 #}
+{#- yet other conventions for micromamba and miniforge #}
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-    set "arch=64"
+    set "short_arch=64"
+    set "full_arch=x86_64"
     set "MICROMAMBA_SHA256=f8b4284bd4eb1134122eaf93b3ea6c7be567e596de5829e1a6f478e34e41974a"
+    set "MINIFORGE_SHA256=9d83983669bc5d3b5dd4c631454bf953c3caf4ac78b9c9ada9971e5b021d83c3"
 ) else (
-    set "arch=arm64"
+    set "short_arch=arm64"
+    set "full_arch=arm64"
     set "MICROMAMBA_SHA256=1fcb3463c684d02366a3d447c153d00922decb16999eef7fb4634d0942a9093e"
+    set "MINIFORGE_SHA256=4cbb52ff0239488723f5e7ed0f362d393fc471a733dcd5ee9b03c74f188010c4"
 )
 
 {%- if conda_install_tool == "micromamba" %}
@@ -47,7 +53,7 @@ if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
 call :start_group "Provisioning base env with micromamba"
 
 set "MAMBA_ROOT_PREFIX=%MINIFORGE_HOME%-micromamba-%RANDOM%"
-set "MICROMAMBA_URL=https://github.com/mamba-org/micromamba-releases/releases/download/%MICROMAMBA_VERSION%/micromamba-win-%arch%"
+set "MICROMAMBA_URL=https://github.com/mamba-org/micromamba-releases/releases/download/%MICROMAMBA_VERSION%/micromamba-win-%short_arch%"
 set "MICROMAMBA_TMPDIR=%TMP%\micromamba-%RANDOM%"
 set "MICROMAMBA_EXE=%MICROMAMBA_TMPDIR%\micromamba.exe"
 
@@ -94,7 +100,7 @@ if "%PIXI_CACHE_DIR%"=="%MINIFORGE_HOME%" (
 )
 set PIXI_ENV=build
 move /y pixi.toml pixi.toml.bak
-powershell -NoProfile -ExecutionPolicy unrestricted -Command "(Get-Content pixi.toml.bak -Encoding UTF8) -replace 'platforms = .*', 'platforms = [''win-%arch%'']' | Out-File pixi.toml -Encoding UTF8"
+powershell -NoProfile -ExecutionPolicy unrestricted -Command "(Get-Content pixi.toml.bak -Encoding UTF8) -replace 'platforms = .*', 'platforms = [''win-%short_arch%'']' | Out-File pixi.toml -Encoding UTF8"
 :: Git on Windows needs to run post link scripts to properly set up SSL certificates
 pixi config set --global run-post-link-scripts insecure
 if !errorlevel! neq 0 exit /b !errorlevel!
@@ -118,10 +124,15 @@ call :end_group
 
 call :start_group "Installing a fresh version of Miniforge"
 
-echo Downloading Miniforge
-set "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe"
-set "MINIFORGE_EXE=Miniforge3-Windows-x86_64.exe"
+set "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/%MINIFORGE_VERSION%/download/Miniforge3-Windows-%full_arch%.exe"
+set "MINIFORGE_EXE=Miniforge3-Windows-%full_arch%.exe"
+
+echo Downloading Miniforge %MINIFORGE_VERSION% from %MINIFORGE_URL%
 powershell -ExecutionPolicy Bypass -Command "(New-Object Net.WebClient).DownloadFile('%MINIFORGE_URL%', '%MINIFORGE_EXE%')"
+if !errorlevel! neq 0 exit /b !errorlevel!
+
+if "%MINIFORGE_SHA256%"=="" exit /b 1
+powershell -ExecutionPolicy Bypass -Command "$h = Get-FileHash '%MINIFORGE_EXE%' -ErrorAction Stop; if ($h.Hash -ne $env:MINIFORGE_EXE) { Write-Error "SHA256 mismatch:`n  Expected: $env:MINIFORGE_EXE`n  Actual:   $($h.Hash)"; exit 1 }"
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 echo Installing Miniforge
