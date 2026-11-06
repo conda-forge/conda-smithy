@@ -4263,6 +4263,119 @@ def test_lint_recipe_parses_ok():
         ), hints
 
 
+def test_lint_v1_malformed_structures_do_not_crash_the_linter():
+    """A malformed v1 section must still lint, not raise.
+
+    Each of these iterates to something the linter expected to be a mapping or a
+    string. Before the guards they raised, and a raise loses every other lint for
+    the whole recipe, which reaches the contributor as "I failed to even lint the
+    recipe, probably because of a conda-smithy bug".
+    """
+    base = """
+        package:
+          name: foo
+          version: "1.0"
+        build:
+          number: 0
+        about:
+          homepage: https://example.com
+          license: MIT
+          license_file: LICENSE
+          summary: s
+        extra:
+          recipe-maintainers:
+            - a
+        """
+
+    malformed = {
+        "tests as a mapping": """
+            tests:
+              python:
+                imports:
+                  - foo
+            """,
+        "tests entry as a bare string": """
+            tests:
+              - pytest
+            """,
+        "run with a non-conditional mapping": """
+            requirements:
+              run:
+                - pin_subpackage: liba
+            """,
+        "if without then": """
+            requirements:
+              run:
+                - if: win
+            """,
+    }
+
+    for name, extra in malformed.items():
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+                f.write(textwrap.dedent(base) + textwrap.dedent(extra))
+            with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+                f.write("MIT\n")
+            # It must return rather than raise, and it must say what it skipped.
+            lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+            assert any("is malformed" in lint for lint in lints), (name, lints)
+
+    # A well formed recipe must not draw the lint.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(textwrap.dedent(base) + textwrap.dedent("""
+                    tests:
+                      - python:
+                          imports:
+                            - foo
+                    """))
+        with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+            f.write("MIT\n")
+        lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+        assert not any("is malformed" in lint for lint in lints), lints
+
+
+def test_lint_v1_conditional_build_requirement():
+    """An `if`/`then` in `requirements.build` is valid v1 and must not raise.
+
+    `hint_noarch_usage` read the section raw and called `startswith` on the
+    mapping. Flattening the conditionals first is what the rest of the linter
+    already does with requirements.
+    """
+    recipe = """
+        package:
+          name: foo
+          version: "1.0"
+        build:
+          number: 0
+        requirements:
+          build:
+            - if: unix
+              then: make
+            - pip
+          host:
+            - python
+          run:
+            - python
+        about:
+          homepage: https://example.com
+          license: MIT
+          license_file: LICENSE
+          summary: s
+        extra:
+          recipe-maintainers:
+            - a
+        """
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open(os.path.join(tmpdir, "recipe.yaml"), "w") as f:
+            f.write(textwrap.dedent(recipe))
+        with open(os.path.join(tmpdir, "LICENSE"), "w") as f:
+            f.write("MIT\n")
+        lints, _ = linter.main(tmpdir, return_hints=True, conda_forge=True)
+    # the conditional is legal, so nothing here is malformed
+    assert not any("is malformed" in lint for lint in lints), lints
+
+
 def test_lint_recipe_parses_forblock():
     with tempfile.TemporaryDirectory() as tmpdir:
         with open(os.path.join(tmpdir, "meta.yaml"), "w") as f:

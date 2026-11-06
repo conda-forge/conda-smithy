@@ -1381,6 +1381,7 @@ class NoCommentSelectors(LinterMessage, _RecipeYamlMessage):
     lines: list[str]
 
 
+
 @dataclass(kw_only=True)
 class NoarchSelectorsV1(LinterMessage, _RecipeYamlMessage):
     """
@@ -1545,6 +1546,22 @@ class UnsupportedSchemaVersion(LinterMessage, _AnyRecipeMessage):
     # This lint existed before 2026.9, but is introduced into the
     # LinterMessage framework in 2026.9.
     added_in = "2026.9"
+
+@dataclass(kw_only=True)
+class MalformedSectionV1(LinterMessage, _RecipeYamlMessage):
+    """
+    A section has a shape the linter cannot read, so it was skipped.
+    """
+
+    kind = "lint"
+    identifier = "R1-009"
+    message = (
+        "The `${section}` section is malformed: ${detail}. It was skipped, so the"
+        " rest of the recipe was still linted, but rattler-build will not read it"
+        " either."
+    )
+    section: str
+    detail: str
 
 
 # endregion
