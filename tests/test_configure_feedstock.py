@@ -916,6 +916,13 @@ def test_conda_build_tools(config_yaml: ConfigYAML, caplog):
     )  # superseded by conda_build_tool=mambabuild
 
     assert cfg["conda_build_tool"] == config_yaml.type
+    # without a pin, pixi may solve the build environment for an old Python
+    # that the newest conda-forge-ci-setup has no build for
+    assert "python=3.14" in cfg["conda_build_tool_deps"].split()
+    build_tool_deps = configure_feedstock._sanitize_build_tool_deps_as_dict(
+        config_yaml.workdir, cfg
+    )
+    assert build_tool_deps["python"] == "3.14.*"
 
     # legacy compatibility config
     with open(os.path.join(config_yaml.workdir, "conda-forge.yml")) as fp:
