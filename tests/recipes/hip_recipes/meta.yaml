@@ -1,0 +1,15 @@
+package:
+    name: py-test
+    version: 1.0.0
+build:
+    skip: True   # [os.environ.get("CF_HIP_ENABLED") != "True"]
+requirements:
+    build:
+        - {{ compiler('c') }}
+        - {{ compiler('hip') }}
+    host:
+        - python
+    run:
+        - python
+about:
+    home: home
