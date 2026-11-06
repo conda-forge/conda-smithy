@@ -19,7 +19,7 @@
 
 **Fixed:**
 
-* <news item>
+* Fix wrong platform name in pixi.toml (#2737).
 
 **Security:**
 
