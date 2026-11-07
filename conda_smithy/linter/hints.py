@@ -43,7 +43,10 @@ def _hint_pip_usage(build_section) -> list[LinterMessage]:
 
 def wrap_hint(func):
     @deprecated(
-        "2026.11", "2027.2", prefix=f"{func.__module__}.{func.__qualname__.lstrip('_')}"
+        "2026.11",
+        "2027.2",
+        prefix=f"{func.__module__}.{func.__qualname__.lstrip('_')}",
+        addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
     )
     @wraps(func)
     def wrapper(*args, **kwargs):
