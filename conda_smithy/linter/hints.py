@@ -7,13 +7,16 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Generator, Mapping
+from functools import wraps
 from glob import glob
 from typing import Any
 
 from conda.models.version import VersionOrder
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
     find_local_config_file,
@@ -26,14 +29,35 @@ from conda_smithy.linter.utils import (
 from conda_smithy.utils import get_yaml
 
 
-def hint_pip_usage(build_section, hints):
+def _hint_pip_usage(build_section) -> list[LinterMessage]:
+    hints = []
     if "script" in build_section:
         scripts = build_section["script"]
         if isinstance(scripts, str):
             scripts = [scripts]
         for script in scripts:
             if "python setup.py install" in script:
-                hints.append(msg.r.UsePip().as_string())
+                hints.append(msg.r.UsePip())
+    return hints
+
+
+def wrap_hint(func):
+    @deprecated(
+        "2026.11", "2027.2", prefix=f"{func.__module__}.{func.__qualname__.lstrip('_')}"
+    )
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if "hints" in kwargs:
+            hints = kwargs.pop("hints")
+        else:
+            hints = args[-1]
+            args = args[:-1]
+        hints.extend(hint.as_string() for hint in func(*args, **kwargs))
+
+    return wrapper
+
+
+hint_pip_usage = wrap_hint(_hint_pip_usage)
 
 
 def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]):
