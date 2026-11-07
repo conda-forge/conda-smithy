@@ -92,6 +92,7 @@ class DeprecationHandler:
         addendum: str | None = None,
         stack: int = 0,
         deprecation_type: type[Warning] = DeprecationWarning,
+        prefix: str | None = None,
     ) -> Callable[[Callable[P, T]], Callable[P, T]]:
         """Deprecation decorator for functions, methods, & classes.
 
@@ -100,6 +101,7 @@ class DeprecationHandler:
             or a timedelta to add to current version (calver).
         :param addendum: Optional additional messaging. Useful to indicate what to do instead.
         :param stack: Optional stacklevel increment.
+        :param prefix: Optional prefix. Defaults to module and function name.
         """
 
         def deprecated_decorator(obj: Callable[P, T]) -> Callable[P, T]:
@@ -107,7 +109,7 @@ class DeprecationHandler:
             category, message = self._generate_message(
                 deprecate_in=deprecate_in,
                 remove_in=remove_in,
-                prefix=f"{obj.__module__}.{obj.__qualname__}",
+                prefix=prefix or f"{obj.__module__}.{obj.__qualname__}",
                 addendum=addendum,
                 deprecation_type=deprecation_type,
             )
