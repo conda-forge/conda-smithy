@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import os
 import re
 import time
 import tomllib
 from collections.abc import Mapping, Sequence
-from functools import lru_cache
+from functools import lru_cache, wraps
 from glob import glob
 from typing import Any, Optional, Union
 
@@ -19,6 +20,7 @@ from rattler_build_conda_compat import loader as rattler_loader
 from rattler_build_conda_compat.recipe_sources import get_all_sources
 from requests.exceptions import Timeout
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
 from conda_smithy.utils import get_yaml
 
@@ -328,3 +330,62 @@ def get_version_independent(
                 f"{language}_version_independent", False
             )
     return version_independent
+
+
+def _wrap_lint(
+    func, *, lints: bool = True, hints: bool = False, args_after_lints_hints: int = 0
+):
+    @deprecated(
+        "2026.11",
+        "2027.2",
+        prefix=f"{func.__module__}.{func.__qualname__.lstrip('_')}",
+        addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
+    )
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Determine the position where "hints" used to be based on the total
+        # number of positional arguments.
+        wrapped_sig = inspect.signature(func)
+        params = list(wrapped_sig.parameters.values())
+        assert all(
+            param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD)
+            for param in params
+        )
+        lints_pos = len(params) - args_after_lints_hints
+        if hints:
+            params.insert(
+                lints_pos,
+                inspect.Parameter(
+                    "hints",
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    annotation=list[str],
+                ),
+            )
+        if lints:
+            params.insert(
+                lints_pos,
+                inspect.Parameter(
+                    "lints",
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    annotation=list[str],
+                ),
+            )
+        legacy_sig = wrapped_sig.replace(parameters=params)
+        bound_args = legacy_sig.bind(*args, **kwargs)
+        lints_list = bound_args.arguments.pop("lints") if lints else []
+        hints_list = bound_args.arguments.pop("hints") if hints else []
+        for lint_or_hint in func(*bound_args.args, **bound_args.kwargs):
+            if lint_or_hint.kind == "lint":
+                lints_list.append(lint_or_hint.as_string())
+            elif lint_or_hint.kind == "hint":
+                hints_list.append(lint_or_hint.as_string())
+            else:
+                assert False, f"{lint_or_hint} neither lint or hint"
+
+    return wrapper
+
+
+def _wrap_hint(func, *, args_after_hints: int = 0):
+    return _wrap_lint(
+        func, lints=False, hints=True, args_after_lints_hints=args_after_hints
+    )
