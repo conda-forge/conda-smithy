@@ -792,11 +792,10 @@ PREFIX_SITE_PACKAGES_RE = re.compile(
 )
 
 
-def hint_rattler_build_sp_dir(
+def _hint_rattler_build_sp_dir(
     recipe_text: str,
-    hints: list[str],
     recipe_version: int = 0,
-):
+) -> Generator[LinterMessage]:
     """Hint that handling site-packages manually is an obsolete rattler-build workaround.
 
     rattler-build now defines `$SP_DIR` (the environment's site-packages
@@ -809,7 +808,7 @@ def hint_rattler_build_sp_dir(
 
     text = recipe_text or ""
     if SP_DIR_DEFINITION_RE.search(text) or PREFIX_SITE_PACKAGES_RE.search(text):
-        hints.append(msg.r.RattlerSpdir().as_string())
+        yield msg.r.RattlerSpdir()
 
 
 def _check_pin_overridden(
@@ -855,13 +854,12 @@ def _check_pin_overridden(
             yield spec
 
 
-def hint_dependency_pins(
+def _hint_dependency_pins(
     requirements_section,
     outputs_section,
     ci_support_files,
-    hints,
     recipe_version: int,
-):
+) -> Generator[LinterMessage]:
     """Hint for dependencies that override pinning"""
 
     if not ci_support_files:
@@ -892,17 +890,12 @@ def hint_dependency_pins(
             report.setdefault(output.get("name", f"output {i}"), {})["host"] = bad_specs
 
     for output, requirements in report.items():
-        hints.append(
-            msg.cf.PinnedDependencyOverridden(
-                output=output, bad_specs=requirements
-            ).as_string()
-        )
+        yield msg.cf.PinnedDependencyOverridden(output=output, bad_specs=requirements)
 
 
-def hint_deprecated_environment_variables(
+def _hint_deprecated_environment_variables(
     forge_config,
-    hints,
-):
+) -> Generator[LinterMessage]:
     """Hint for deprecated workflow environment variables"""
 
     deprecated_variables = {
@@ -916,11 +909,9 @@ def hint_deprecated_environment_variables(
     for platform in ("linux", "osx", "win"):
         variables = azure.get(f"settings_{platform}", {}).get("variables", {})
         for deprecated_variable in set(deprecated_variables).intersection(variables):
-            hints.append(
-                msg.cf.DeprecatedEnvironmentVariable(
-                    variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
-                    replacement=deprecated_variables[deprecated_variable],
-                ).as_string()
+            yield msg.cf.DeprecatedEnvironmentVariable(
+                variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
+                replacement=deprecated_variables[deprecated_variable],
             )
 
 
@@ -975,3 +966,8 @@ hint_abi3_missing_abi3audit = _wrap_hint(_hint_abi3_missing_abi3audit)
 hint_space_separated_specs = _wrap_hint(_hint_space_separated_specs)
 hint_os_version = _wrap_hint(_hint_os_version)
 hint_rattler_build_bld_bat = _wrap_hint(_hint_rattler_build_bld_bat, args_after_hints=1)
+hint_rattler_build_sp_dir = _wrap_hint(_hint_rattler_build_sp_dir, args_after_hints=1)
+hint_dependency_pins = _wrap_hint(_hint_dependency_pins, args_after_hints=1)
+hint_deprecated_environment_variables = _wrap_hint(
+    _hint_deprecated_environment_variables
+)
