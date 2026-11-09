@@ -54,16 +54,15 @@ def _hint_legacy_pypi_url(
             yield msg.r.LegacyPypiUrl()
 
 
-def hint_suggest_noarch(
+def _hint_suggest_noarch(
     noarch_value,
     build_reqs,
     raw_requirements_section,
     is_staged_recipes,
     conda_forge,
     recipe_fname,
-    hints,
     recipe_version: int = 0,
-):
+) -> Generator[LinterMessage]:
     if (
         noarch_value is None
         and build_reqs
@@ -72,8 +71,8 @@ def hint_suggest_noarch(
         and (is_staged_recipes or not conda_forge)
     ):
         if recipe_version == 1:
-            conda_recipe_v1_linter.hint_noarch_usage(
-                build_reqs, raw_requirements_section, hints
+            yield from conda_recipe_v1_linter.hint_noarch_usage(
+                build_reqs, raw_requirements_section
             )
         else:
             with open(recipe_fname, encoding="utf-8") as fh:
@@ -95,7 +94,7 @@ def hint_suggest_noarch(
                             no_arch_possible = False
                             break
                 if no_arch_possible:
-                    hints.append(msg.r.SuggestNoarch().as_string())
+                    yield msg.r.SuggestNoarch()
 
 
 def _hint_shellcheck_usage(
@@ -915,6 +914,7 @@ def _hint_deprecated_environment_variables(
 
 hint_pip_usage = _wrap_hint(_hint_pip_usage)
 hint_legacy_pypi_url = _wrap_hint(_hint_legacy_pypi_url)
+hint_suggest_noarch = _wrap_hint(_hint_suggest_noarch, args_after_hints=1)
 hint_shellcheck_usage = _wrap_hint(_hint_shellcheck_usage, args_after_hints=1)
 hint_check_spdx = _wrap_hint(_hint_check_spdx)
 hint_pip_no_build_backend = _wrap_hint(_hint_pip_no_build_backend)

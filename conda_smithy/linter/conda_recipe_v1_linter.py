@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Generator
 from typing import Any, Optional
 
 from rattler_build_conda_compat.jinja.jinja import (
@@ -10,10 +11,11 @@ from rattler_build_conda_compat.jinja.jinja import (
 from rattler_build_conda_compat.outputs import is_staging_output
 
 from conda_smithy.linter import messages as msg
-from conda_smithy.linter.errors import HINT_NO_ARCH
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     _lint_package_version,
     _lint_recipe_name,
+    _wrap_hint,
 )
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
@@ -82,11 +84,10 @@ def lint_recipe_tests(
     hints.extend(tests_hints)
 
 
-def hint_noarch_usage(
+def _hint_noarch_usage(
     build_section: dict[str, Any],
     requirement_section: dict[str, Any],
-    hints: list[str],
-):
+) -> Generator[LinterMessage]:
     build_reqs = requirement_section.get("build", None)
     if (
         build_reqs
@@ -110,7 +111,7 @@ def hint_noarch_usage(
                 break
 
         if no_arch_possible:
-            hints.append(HINT_NO_ARCH)
+            yield msg.r.SuggestNoarch()
 
 
 def get_recipe_name(recipe_content: RecipeWithContext) -> str:
@@ -207,3 +208,6 @@ def lint_usage_of_selectors_for_noarch(
         lints.append(
             msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True).as_string()
         )
+
+
+hint_noarch_usage = _wrap_hint(_hint_noarch_usage)
