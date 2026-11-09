@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import json
 import os
 import re
@@ -8,18 +7,17 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Generator, Mapping
-from functools import wraps
 from glob import glob
 from typing import Any
 
 from conda.models.version import VersionOrder
 
-from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
+    _wrap_hint,
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
@@ -913,41 +911,6 @@ def _hint_deprecated_environment_variables(
                 variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
                 replacement=deprecated_variables[deprecated_variable],
             )
-
-
-# TODO: at this point, it makes sense to make it into generic lints: bool, hints: bool wrapper
-def _wrap_hint(func, args_after_hints: int = 0):
-    @deprecated(
-        "2026.11",
-        "2027.2",
-        prefix=f"{func.__module__}.{func.__qualname__.lstrip('_')}",
-        addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
-    )
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Determine the position where "hints" used to be based on the total
-        # number of positional arguments.
-        wrapped_sig = inspect.signature(func)
-        params = list(wrapped_sig.parameters.values())
-        assert all(
-            param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD)
-            for param in params
-        )
-        hints_pos = len(params) - args_after_hints
-        params.insert(
-            hints_pos,
-            inspect.Parameter(
-                "hints", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=list[str]
-            ),
-        )
-        legacy_sig = wrapped_sig.replace(parameters=params)
-        bound_args = legacy_sig.bind(*args, **kwargs)
-        hints = bound_args.arguments.pop("hints")
-        hints.extend(
-            hint.as_string() for hint in func(*bound_args.args, **bound_args.kwargs)
-        )
-
-    return wrapper
 
 
 hint_pip_usage = _wrap_hint(_hint_pip_usage)
