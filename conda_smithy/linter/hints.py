@@ -29,41 +29,19 @@ from conda_smithy.linter.utils import (
 from conda_smithy.utils import get_yaml
 
 
-def _hint_pip_usage(build_section) -> list[LinterMessage]:
-    hints = []
+def _hint_pip_usage(build_section) -> Generator[LinterMessage]:
     if "script" in build_section:
         scripts = build_section["script"]
         if isinstance(scripts, str):
             scripts = [scripts]
         for script in scripts:
             if "python setup.py install" in script:
-                hints.append(msg.r.UsePip())
-    return hints
+                yield msg.r.UsePip()
 
 
-def wrap_hint(func):
-    @deprecated(
-        "2026.11",
-        "2027.2",
-        prefix=f"{func.__module__}.{func.__qualname__.lstrip('_')}",
-        addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
-    )
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if "hints" in kwargs:
-            hints = kwargs.pop("hints")
-        else:
-            hints = args[-1]
-            args = args[:-1]
-        hints.extend(hint.as_string() for hint in func(*args, **kwargs))
-
-    return wrapper
-
-
-hint_pip_usage = wrap_hint(_hint_pip_usage)
-
-
-def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]):
+def _hint_legacy_pypi_url(
+    sources_section: list[dict[str, Any]],
+) -> Generator[LinterMessage]:
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
     but cannonical url is files.pythonhosted.org.
@@ -74,7 +52,7 @@ def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.LegacyPypiUrl().as_string())
+            yield msg.r.LegacyPypiUrl()
 
 
 def hint_suggest_noarch(
@@ -952,3 +930,26 @@ def hint_deprecated_environment_variables(
                     replacement=deprecated_variables[deprecated_variable],
                 ).as_string()
             )
+
+
+def _wrap_hint(func, hints_pos: int = -1):
+    @deprecated(
+        "2026.11",
+        "2027.2",
+        prefix=f"{func.__module__}.{func.__qualname__.lstrip('_')}",
+        addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
+    )
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if "hints" in kwargs:
+            hints = kwargs.pop("hints")
+        else:
+            hints = args[hints_pos]
+            args = args[:hints_pos]
+        hints.extend(hint.as_string() for hint in func(*args, **kwargs))
+
+    return wrapper
+
+
+hint_pip_usage = _wrap_hint(_hint_pip_usage)
+hint_legacy_pypi_url = _wrap_hint(_hint_legacy_pypi_url)
