@@ -16,6 +16,7 @@ from conda_smithy.linter.utils import (
     _lint_package_version,
     _lint_recipe_name,
     _wrap_hint,
+    _wrap_lint,
 )
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
@@ -46,19 +47,14 @@ EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER = [
 JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
-def lint_recipe_tests(
+def _lint_recipe_tests(
     recipe_dir: Optional[str],
     test_section: list[dict[str, Any]],
     outputs_section: list[dict[str, Any]],
-    lints: list[str],
-    hints: list[str],
-):
-    tests_lints = []
-    tests_hints = []
-
+) -> list[LinterMessage]:
     if not test_section:
         if not outputs_section:
-            lints.append(msg.r.RequiredTests().as_string())
+            yield msg.r.RequiredTests()
         else:
             has_outputs_test = False
             no_test_hints = []
@@ -73,15 +69,12 @@ def lint_recipe_tests(
                     no_test_hints.append(
                         msg.r.RecommendedTests(
                             output=output.get("package", {}).get("name", "???")
-                        ).as_string()
+                        )
                     )
             if has_outputs_test:
-                hints.extend(no_test_hints)
+                yield from no_test_hints
             else:
-                lints.append(msg.r.RequiredTests().as_string())
-
-    lints.extend(tests_lints)
-    hints.extend(tests_hints)
+                yield msg.r.RequiredTests()
 
 
 def _hint_noarch_usage(
@@ -163,13 +156,12 @@ def lint_package_version(
         lints.append(lint_msg)
 
 
-def lint_usage_of_selectors_for_noarch(
+def _lint_usage_of_selectors_for_noarch(
     noarch_value: str,
     requirements_section: dict[str, Any],
     build_section: dict[str, Any],
     noarch_platforms: bool,
-    lints: list[str],
-):
+) -> Generator[LinterMessage]:
     for section in requirements_section:
         section_requirements = requirements_section[section]
 
@@ -201,13 +193,15 @@ def lint_usage_of_selectors_for_noarch(
                 has_bad_selector = True
 
             if has_bad_selector:
-                lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value).as_string())
+                yield msg.r.NoarchSelectorsV1(noarch=noarch_value)
                 break
 
     if "skip" in build_section:
-        lints.append(
-            msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True).as_string()
-        )
+        yield msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True)
 
 
+lint_recipe_tests = _wrap_lint(_lint_recipe_tests, hints=True)
 hint_noarch_usage = _wrap_hint(_hint_noarch_usage)
+# TODO: lint_package_name
+# TODO: lint_package_version
+lint_usage_of_selectors_for_noarch = _wrap_lint(_lint_usage_of_selectors_for_noarch)
