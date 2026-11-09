@@ -332,8 +332,9 @@ def get_version_independent(
     return version_independent
 
 
-# TODO: at this point, it makes sense to make it into generic lints: bool, hints: bool wrapper
-def _wrap_hint(func, args_after_hints: int = 0):
+def _wrap_lint(
+    func, *, lints: bool = True, hints: bool = False, args_after_lints_hints: int = 0
+):
     @deprecated(
         "2026.11",
         "2027.2",
@@ -350,18 +351,41 @@ def _wrap_hint(func, args_after_hints: int = 0):
             param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD)
             for param in params
         )
-        hints_pos = len(params) - args_after_hints
-        params.insert(
-            hints_pos,
-            inspect.Parameter(
-                "hints", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=list[str]
-            ),
-        )
+        lints_pos = len(params) - args_after_lints_hints
+        if hints:
+            params.insert(
+                lints_pos,
+                inspect.Parameter(
+                    "hints",
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    annotation=list[str],
+                ),
+            )
+        if lints:
+            params.insert(
+                lints_pos,
+                inspect.Parameter(
+                    "lints",
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    annotation=list[str],
+                ),
+            )
         legacy_sig = wrapped_sig.replace(parameters=params)
         bound_args = legacy_sig.bind(*args, **kwargs)
-        hints = bound_args.arguments.pop("hints")
-        hints.extend(
-            hint.as_string() for hint in func(*bound_args.args, **bound_args.kwargs)
-        )
+        lints_list = bound_args.arguments.pop("lints") if lints else []
+        hints_list = bound_args.arguments.pop("hints") if hints else []
+        for lint_or_hint in func(*bound_args.args, **bound_args.kwargs):
+            if lint_or_hint.kind == "lint":
+                lints_list.append(lint_or_hint.as_string())
+            elif lint_or_hint.kind == "hint":
+                hints_list.append(lint_or_hint.as_string())
+            else:
+                assert False, f"{lint_or_hint} neither lint or hint"
 
     return wrapper
+
+
+def _wrap_hint(func, *, args_after_hints: int = 0):
+    return _wrap_lint(
+        func, lints=False, hints=True, args_after_lints_hints=args_after_hints
+    )
