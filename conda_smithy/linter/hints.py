@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 import os
 import re
@@ -99,7 +100,9 @@ def hint_suggest_noarch(
                     hints.append(msg.r.SuggestNoarch().as_string())
 
 
-def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
+def _hint_shellcheck_usage(
+    recipe_dir, feedstock_config=None
+) -> Generator[LinterMessage]:
     shellcheck_enabled = False
     shell_scripts = []
     if recipe_dir:
@@ -144,15 +147,15 @@ def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
                     .replace("\r\n", "\n")
                     .splitlines()
                 )
-                hints.append(
+                yield (
                     msg.r.ScriptShellcheckReport(
                         command=cmd,
                         output_lines=findings,
-                    ).as_string()
+                    )
                 )
             elif p.returncode != 0:
                 # Something went wrong.
-                hints.append(msg.r.ScriptShellcheckFailure().as_string())
+                yield msg.r.ScriptShellcheckFailure()
 
 
 def _spdx_license_list_data_dir() -> str:
@@ -932,7 +935,7 @@ def hint_deprecated_environment_variables(
             )
 
 
-def _wrap_hint(func, hints_pos: int = -1):
+def _wrap_hint(func, args_after_hints: int = 0):
     @deprecated(
         "2026.11",
         "2027.2",
@@ -941,15 +944,31 @@ def _wrap_hint(func, hints_pos: int = -1):
     )
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if "hints" in kwargs:
-            hints = kwargs.pop("hints")
-        else:
-            hints = args[hints_pos]
-            args = args[:hints_pos]
-        hints.extend(hint.as_string() for hint in func(*args, **kwargs))
+        # Determine the position where "hints" used to be based on the total
+        # number of positional arguments.
+        wrapped_sig = inspect.signature(func)
+        params = list(wrapped_sig.parameters.values())
+        assert all(
+            param.kind in (param.POSITIONAL_ONLY, param.POSITIONAL_OR_KEYWORD)
+            for param in params
+        )
+        hints_pos = len(params) - args_after_hints
+        params.insert(
+            hints_pos,
+            inspect.Parameter(
+                "hints", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=list[str]
+            ),
+        )
+        legacy_sig = wrapped_sig.replace(parameters=params)
+        bound_args = legacy_sig.bind(*args, **kwargs)
+        hints = bound_args.arguments.pop("hints")
+        hints.extend(
+            hint.as_string() for hint in func(*bound_args.args, **bound_args.kwargs)
+        )
 
     return wrapper
 
 
 hint_pip_usage = _wrap_hint(_hint_pip_usage)
 hint_legacy_pypi_url = _wrap_hint(_hint_legacy_pypi_url)
+hint_shellcheck_usage = _wrap_hint(_hint_shellcheck_usage, args_after_hints=1)
