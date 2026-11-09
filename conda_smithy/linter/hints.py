@@ -71,7 +71,7 @@ def _hint_suggest_noarch(
         and (is_staged_recipes or not conda_forge)
     ):
         if recipe_version == 1:
-            yield from conda_recipe_v1_linter.hint_noarch_usage(
+            yield from conda_recipe_v1_linter._hint_noarch_usage(
                 build_reqs, raw_requirements_section
             )
         else:
