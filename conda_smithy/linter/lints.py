@@ -713,7 +713,7 @@ def _lint_go_licenses_are_bundled(
 
 
 def _lint_osx_pins(
-    recipe_dir, recipe_config_filename, lints, recipe_version
+    recipe_dir, recipe_config_filename, recipe_version
 ) -> Generator[LinterMessage]:
     cbc_osx = {}
     if recipe_dir is None or recipe_config_filename is None:
