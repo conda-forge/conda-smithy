@@ -400,7 +400,8 @@ def lintify_meta_yaml(
     )
 
     # 27: Check usage of whl files as a source
-    lint_check_usage_of_whls(recipe_fname, noarch_value, lints, hints)
+    if "lint_check_usage_of_whls" not in lints_to_skip:
+        lint_check_usage_of_whls(recipe_fname, noarch_value, lints, hints)
 
     # 28: Check that Rust licenses are bundled.
     lint_rust_licenses_are_bundled(
