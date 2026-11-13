@@ -14,8 +14,10 @@ from conda.models.version import VersionOrder
 
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     VALID_PYTHON_BUILD_BACKENDS,
+    _wrap_hint,
     find_local_config_file,
     flatten_v1_if_else,
     get_all_test_requirements,
@@ -26,17 +28,19 @@ from conda_smithy.linter.utils import (
 from conda_smithy.utils import get_yaml
 
 
-def hint_pip_usage(build_section, hints):
+def _hint_pip_usage(build_section) -> Generator[LinterMessage]:
     if "script" in build_section:
         scripts = build_section["script"]
         if isinstance(scripts, str):
             scripts = [scripts]
         for script in scripts:
             if "python setup.py install" in script:
-                hints.append(msg.r.UsePip().as_string())
+                yield msg.r.UsePip()
 
 
-def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]):
+def _hint_legacy_pypi_url(
+    sources_section: list[dict[str, Any]],
+) -> Generator[LinterMessage]:
     """
     Grayskull and conda-forge default recipe used to have pypi.io as a default,
     but cannonical url is files.pythonhosted.org.
@@ -47,19 +51,18 @@ def hint_legacy_pypi_url(sources_section: list[dict[str, Any]], hints: list[str]
         source = source_section.get("url", "") or ""
         sources = [source] if isinstance(source, str) else source
         if any(s.startswith("https://pypi.io/") for s in sources):
-            hints.append(msg.r.LegacyPypiUrl().as_string())
+            yield msg.r.LegacyPypiUrl()
 
 
-def hint_suggest_noarch(
+def _hint_suggest_noarch(
     noarch_value,
     build_reqs,
     raw_requirements_section,
     is_staged_recipes,
     conda_forge,
     recipe_fname,
-    hints,
     recipe_version: int = 0,
-):
+) -> Generator[LinterMessage]:
     if (
         noarch_value is None
         and build_reqs
@@ -68,8 +71,8 @@ def hint_suggest_noarch(
         and (is_staged_recipes or not conda_forge)
     ):
         if recipe_version == 1:
-            conda_recipe_v1_linter.hint_noarch_usage(
-                build_reqs, raw_requirements_section, hints
+            yield from conda_recipe_v1_linter._hint_noarch_usage(
+                build_reqs, raw_requirements_section
             )
         else:
             with open(recipe_fname, encoding="utf-8") as fh:
@@ -91,10 +94,12 @@ def hint_suggest_noarch(
                             no_arch_possible = False
                             break
                 if no_arch_possible:
-                    hints.append(msg.r.SuggestNoarch().as_string())
+                    yield msg.r.SuggestNoarch()
 
 
-def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
+def _hint_shellcheck_usage(
+    recipe_dir, feedstock_config=None
+) -> Generator[LinterMessage]:
     shellcheck_enabled = False
     shell_scripts = []
     if recipe_dir:
@@ -139,15 +144,15 @@ def hint_shellcheck_usage(recipe_dir, hints, feedstock_config=None):
                     .replace("\r\n", "\n")
                     .splitlines()
                 )
-                hints.append(
+                yield (
                     msg.r.ScriptShellcheckReport(
                         command=cmd,
                         output_lines=findings,
-                    ).as_string()
+                    )
                 )
             elif p.returncode != 0:
                 # Something went wrong.
-                hints.append(msg.r.ScriptShellcheckFailure().as_string())
+                yield msg.r.ScriptShellcheckFailure()
 
 
 def _spdx_license_list_data_dir() -> str:
@@ -182,7 +187,7 @@ def _spdx_license_list_data() -> tuple[set[str], set[str]]:
     return expected_licenses, expected_exceptions
 
 
-def hint_check_spdx(about_section, hints):
+def _hint_check_spdx(about_section) -> Generator[LinterMessage]:
     import license_expression
 
     license = about_section.get("license", "")
@@ -210,12 +215,14 @@ def hint_check_spdx(about_section, hints):
 
     expected_licenses, expected_exceptions = _spdx_license_list_data()
     if set(filtered_licenses) - expected_licenses:
-        hints.append(msg.r.LicenseSpdx().as_string())
+        yield msg.r.LicenseSpdx()
     if set(parsed_exceptions) - expected_exceptions:
-        hints.append(msg.r.InvalidLicenseException().as_string())
+        yield msg.r.InvalidLicenseException()
 
 
-def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
+def _hint_pip_no_build_backend(
+    host_or_build_section, package_name
+) -> Generator[LinterMessage]:
     # we do NOT exclude all build backends since some of them
     # need another backend to bootstrap
     # the list below are the ones that self-bootstrap without
@@ -245,9 +252,7 @@ def hint_pip_no_build_backend(host_or_build_section, package_name, hints):
                 break
 
         if not found_backend:
-            hints.append(
-                msg.r.PythonBuildBackendHost(package_name=package_name).as_string()
-            )
+            yield msg.r.PythonBuildBackendHost(package_name=package_name)
 
 
 def _hint_noarch_python_use_python_min_inner(
@@ -337,15 +342,14 @@ def _hint_noarch_python_use_python_min_inner(
     return recommendations
 
 
-def hint_noarch_python_use_python_min(
+def _hint_noarch_python_use_python_min(
     host_reqs,
     run_reqs,
     test_reqs,
     outputs_section,
     noarch_value,
     recipe_version,
-    hints,
-):
+) -> Generator[LinterMessage]:
     recommendations = []
 
     if outputs_section:
@@ -381,10 +385,12 @@ def hint_noarch_python_use_python_min(
         )
 
     if recommendations:
-        hints.append(msg.r.PythonMinPin(recommendations=recommendations).as_string())
+        yield msg.r.PythonMinPin(recommendations=recommendations)
 
 
-def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
+def _hint_redundant_python_min(
+    meta, recipe_text, recipe_version
+) -> Generator[LinterMessage]:
     if recipe_version == 1:
         context = meta.get("context")
         declared = context.get("python_min") if isinstance(context, Mapping) else None
@@ -402,7 +408,7 @@ def hint_redundant_python_min(meta, recipe_text, recipe_version, hints):
     if global_python_min is not None and VersionOrder(str(declared)) <= VersionOrder(
         global_python_min
     ):
-        hints.append(msg.r.RedundantPythonMin(value=str(declared)).as_string())
+        yield msg.r.RedundantPythonMin(value=str(declared))
 
 
 def _python_tests_cover_latest(tests_section, run_reqs):
@@ -427,14 +433,13 @@ def _python_tests_cover_latest(tests_section, run_reqs):
     return True
 
 
-def hint_noarch_python_test_latest(
+def _hint_noarch_python_test_latest(
     tests_section,
     run_reqs,
     outputs_section,
     noarch_value,
     recipe_version,
-    hints,
-):
+) -> Generator[LinterMessage]:
     if recipe_version != 1:
         return
 
@@ -459,18 +464,17 @@ def hint_noarch_python_test_latest(
 
     for tests, run, noarch in scopes:
         if noarch == "python" and not _python_tests_cover_latest(tests, run):
-            hints.append(msg.r.NoarchPythonTestLatest().as_string())
+            yield msg.r.NoarchPythonTestLatest()
             return
 
 
-def hint_python_version_independent_test_latest(
+def _hint_python_version_independent_test_latest(
     tests_section,
     run_reqs,
     outputs_section,
     build_section,
     recipe_version,
-    hints,
-):
+) -> Generator[LinterMessage]:
     if recipe_version != 1:
         return
 
@@ -497,20 +501,19 @@ def hint_python_version_independent_test_latest(
         if get_version_independent(
             build or {}, "python", recipe_version
         ) and not _python_tests_cover_latest(tests, run):
-            hints.append(msg.r.PythonVersionIndependentTestLatest().as_string())
+            yield msg.r.PythonVersionIndependentTestLatest()
             return
 
 
 CROSS_PYTHON_RE = re.compile(r"^cross-python(?:_|\s|$)")
 
 
-def hint_abi3_cross_python_run_exports(
+def _hint_abi3_cross_python_run_exports(
     requirements_section,
     outputs_section,
     build_section,
     recipe_version,
-    hints,
-):
+) -> Generator[LinterMessage]:
     if recipe_version != 1:
         return
 
@@ -544,7 +547,7 @@ def hint_abi3_cross_python_run_exports(
             continue
         from_package = flatten_v1_if_else(ignore_run_exports.get("from_package") or [])
         if any(CROSS_PYTHON_RE.match(str(entry).strip()) for entry in from_package):
-            hints.append(msg.r.Abi3CrossPythonRunExports().as_string())
+            yield msg.r.Abi3CrossPythonRunExports()
             return
 
 
@@ -615,14 +618,13 @@ def _requires_python_abi3(requirements_section) -> bool:
     return False
 
 
-def hint_abi3_missing_abi3audit(
+def _hint_abi3_missing_abi3audit(
     test_section,
     outputs_section,
     build_section,
     requirements_section,
     recipe_version,
-    hints,
-):
+) -> Generator[LinterMessage]:
     """Hint that abi3 recipes should verify their extension modules with abi3audit.
 
     abi3 packages are built once against `python_min` but installed on every
@@ -659,16 +661,15 @@ def hint_abi3_missing_abi3audit(
         if not _requires_python_abi3(requirements):
             continue
         if not _mentions_abi3audit(tests, recipe_version):
-            hints.append(msg.r.Abi3MissingAbi3Audit().as_string())
+            yield msg.r.Abi3MissingAbi3Audit()
             return
 
 
-def hint_space_separated_specs(
+def _hint_space_separated_specs(
     requirements_section,
     test_section,
     outputs_section,
-    hints,
-):
+) -> Generator[LinterMessage]:
     report = {}
     for req_type, reqs in {
         **requirements_section,
@@ -697,9 +698,8 @@ def hint_space_separated_specs(
                 ] = bad_specs
 
     for output, requirements in report.items():
-        hints.append(
-            msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements).as_string()
-        )
+
+        yield msg.r.SpaceSeparatedSpecs(output=output, bad_specs=requirements)
 
 
 def _ensure_spec_space_separated(spec: str) -> bool:
@@ -738,10 +738,9 @@ def _ensure_spec_space_separated(spec: str) -> bool:
     return False
 
 
-def hint_os_version(
+def _hint_os_version(
     forge_yaml: dict[str, Any],
-    hints: list[str],
-) -> None:
+) -> Generator[LinterMessage]:
     default_os_version = "alma9"
     obsolete_os_versions = ("cos7", "alma8", "ubi8")
     matches = {
@@ -750,18 +749,13 @@ def hint_os_version(
         if v in obsolete_os_versions
     }
     if matches:
-        hints.append(
-            msg.fc.OsVersionLower(
-                platforms=matches, default=default_os_version
-            ).as_string()
-        )
+        yield msg.fc.OsVersionLower(platforms=matches, default=default_os_version)
 
 
-def hint_rattler_build_bld_bat(
+def _hint_rattler_build_bld_bat(
     recipe_dir: str | None,
-    hints: list[str],
     recipe_version: int = 0,
-):
+) -> Generator[LinterMessage]:
     """Hint for bld.bat presence when using rattler-build.
 
     rattler-build uses build.bat instead of bld.bat for Windows builds.
@@ -777,7 +771,7 @@ def hint_rattler_build_bld_bat(
     # Check if bld.bat exists in the recipe directory
     bld_bat_path = os.path.join(recipe_dir, "bld.bat")
     if os.path.exists(bld_bat_path):
-        hints.append(msg.r.RattlerBldBat().as_string())
+        yield msg.r.RattlerBldBat()
 
 
 # Matches a manual definition of SP_DIR in a script line, e.g.
@@ -795,11 +789,10 @@ PREFIX_SITE_PACKAGES_RE = re.compile(
 )
 
 
-def hint_rattler_build_sp_dir(
+def _hint_rattler_build_sp_dir(
     recipe_text: str,
-    hints: list[str],
     recipe_version: int = 0,
-):
+) -> Generator[LinterMessage]:
     """Hint that handling site-packages manually is an obsolete rattler-build workaround.
 
     rattler-build now defines `$SP_DIR` (the environment's site-packages
@@ -812,7 +805,7 @@ def hint_rattler_build_sp_dir(
 
     text = recipe_text or ""
     if SP_DIR_DEFINITION_RE.search(text) or PREFIX_SITE_PACKAGES_RE.search(text):
-        hints.append(msg.r.RattlerSpdir().as_string())
+        yield msg.r.RattlerSpdir()
 
 
 def _check_pin_overridden(
@@ -858,13 +851,12 @@ def _check_pin_overridden(
             yield spec
 
 
-def hint_dependency_pins(
+def _hint_dependency_pins(
     requirements_section,
     outputs_section,
     ci_support_files,
-    hints,
     recipe_version: int,
-):
+) -> Generator[LinterMessage]:
     """Hint for dependencies that override pinning"""
 
     if not ci_support_files:
@@ -895,17 +887,12 @@ def hint_dependency_pins(
             report.setdefault(output.get("name", f"output {i}"), {})["host"] = bad_specs
 
     for output, requirements in report.items():
-        hints.append(
-            msg.cf.PinnedDependencyOverridden(
-                output=output, bad_specs=requirements
-            ).as_string()
-        )
+        yield msg.cf.PinnedDependencyOverridden(output=output, bad_specs=requirements)
 
 
-def hint_deprecated_environment_variables(
+def _hint_deprecated_environment_variables(
     forge_config,
-    hints,
-):
+) -> Generator[LinterMessage]:
     """Hint for deprecated workflow environment variables"""
 
     deprecated_variables = {
@@ -919,9 +906,31 @@ def hint_deprecated_environment_variables(
     for platform in ("linux", "osx", "win"):
         variables = azure.get(f"settings_{platform}", {}).get("variables", {})
         for deprecated_variable in set(deprecated_variables).intersection(variables):
-            hints.append(
-                msg.cf.DeprecatedEnvironmentVariable(
-                    variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
-                    replacement=deprecated_variables[deprecated_variable],
-                ).as_string()
+            yield msg.cf.DeprecatedEnvironmentVariable(
+                variable=f"azure.settings_{platform}.variables.{deprecated_variable}",
+                replacement=deprecated_variables[deprecated_variable],
             )
+
+
+hint_pip_usage = _wrap_hint(_hint_pip_usage)
+hint_legacy_pypi_url = _wrap_hint(_hint_legacy_pypi_url)
+hint_suggest_noarch = _wrap_hint(_hint_suggest_noarch, args_after_hints=1)
+hint_shellcheck_usage = _wrap_hint(_hint_shellcheck_usage, args_after_hints=1)
+hint_check_spdx = _wrap_hint(_hint_check_spdx)
+hint_pip_no_build_backend = _wrap_hint(_hint_pip_no_build_backend)
+hint_noarch_python_use_python_min = _wrap_hint(_hint_noarch_python_use_python_min)
+hint_redundant_python_min = _wrap_hint(_hint_redundant_python_min)
+hint_noarch_python_test_latest = _wrap_hint(_hint_noarch_python_test_latest)
+hint_python_version_independent_test_latest = _wrap_hint(
+    _hint_python_version_independent_test_latest
+)
+hint_abi3_cross_python_run_exports = _wrap_hint(_hint_abi3_cross_python_run_exports)
+hint_abi3_missing_abi3audit = _wrap_hint(_hint_abi3_missing_abi3audit)
+hint_space_separated_specs = _wrap_hint(_hint_space_separated_specs)
+hint_os_version = _wrap_hint(_hint_os_version)
+hint_rattler_build_bld_bat = _wrap_hint(_hint_rattler_build_bld_bat, args_after_hints=1)
+hint_rattler_build_sp_dir = _wrap_hint(_hint_rattler_build_sp_dir, args_after_hints=1)
+hint_dependency_pins = _wrap_hint(_hint_dependency_pins, args_after_hints=1)
+hint_deprecated_environment_variables = _wrap_hint(
+    _hint_deprecated_environment_variables
+)
