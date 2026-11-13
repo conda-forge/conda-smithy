@@ -25,7 +25,7 @@ from conda_smithy.linter.utils import (
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
-    _lint_package_version,
+    _lint_package_version_str,
     _lint_recipe_name,
     _wrap_hint,
     _wrap_lint,
@@ -380,7 +380,7 @@ def _lint_noarch_and_runtime_dependencies(
 
 def lint_package_version(package_section, lints):
     version = package_section.get("version")
-    lint_msg = _lint_package_version(str(version) if version is not None else None)
+    lint_msg = _lint_package_version_str(str(version) if version is not None else None)
     if lint_msg:
         lints.append(lint_msg)
 
