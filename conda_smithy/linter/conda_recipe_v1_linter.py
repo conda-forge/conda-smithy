@@ -13,7 +13,7 @@ from rattler_build_conda_compat.outputs import is_staging_output
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
-    _lint_package_version,
+    _lint_package_version_str,
     _lint_recipe_name,
     _wrap_hint,
     _wrap_lint,
@@ -150,7 +150,7 @@ def lint_package_version(
 ) -> None:
     version = get_recipe_version(recipe_content)
 
-    lint_msg = _lint_package_version(version)
+    lint_msg = _lint_package_version_str(version)
 
     if lint_msg:
         lints.append(lint_msg)

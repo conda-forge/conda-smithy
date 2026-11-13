@@ -209,7 +209,8 @@ def _lint_recipe_name(recipe_name: str) -> Optional[str]:
     return None
 
 
-def _lint_package_version(version: Optional[str]) -> Optional[str]:
+# TODO: when we remove deprecated lint functions, let's redo this into a single lint.
+def _lint_package_version_str(version: Optional[str]) -> Optional[str]:
     if version is None:
         return msg.r.MissingVersion().as_string()
 
