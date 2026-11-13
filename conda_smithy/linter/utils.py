@@ -6,7 +6,7 @@ import os
 import re
 import time
 import tomllib
-from collections.abc import Mapping, Sequence
+from collections.abc import Generator, Mapping, Sequence
 from functools import lru_cache, wraps
 from glob import glob
 from typing import Any, Optional, Union
@@ -22,6 +22,7 @@ from requests.exceptions import Timeout
 
 from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.utils import get_yaml
 
 FIELDS = copy.deepcopy(_CONDA_BUILD_FIELDS)
@@ -210,9 +211,9 @@ def _lint_recipe_name(recipe_name: str) -> Optional[str]:
 
 
 # TODO: when we remove deprecated lint functions, let's redo this into a single lint.
-def _lint_package_version_str(version: Optional[str]) -> Optional[str]:
+def _lint_package_version_str(version: Optional[str]) -> Generator[LinterMessage]:
     if version is None:
-        return msg.r.MissingVersion().as_string()
+        yield msg.r.MissingVersion()
 
     ver = str(version)
 
@@ -223,7 +224,7 @@ def _lint_package_version_str(version: Optional[str]) -> Optional[str]:
     try:
         VersionOrder(ver)
     except InvalidVersionSpec as e:
-        return msg.r.InvalidVersion(version=ver, error=str(e)).as_string()
+        yield msg.r.InvalidVersion(version=ver, error=str(e))
 
 
 PINNING_FEEDSTOCK_RAW = (

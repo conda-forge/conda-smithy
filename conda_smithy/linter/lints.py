@@ -378,11 +378,9 @@ def _lint_noarch_and_runtime_dependencies(
                     break
 
 
-def lint_package_version(package_section, lints):
+def _lint_package_version(package_section) -> Generator[LinterMessage]:
     version = package_section.get("version")
-    lint_msg = _lint_package_version_str(str(version) if version is not None else None)
-    if lint_msg:
-        lints.append(lint_msg)
+    yield from _lint_package_version_str(str(version) if version is not None else None)
 
 
 def _lint_jinja_variables_definitions(meta_fname) -> Generator[LinterMessage]:
@@ -1215,6 +1213,7 @@ lint_recipe_v1_noarch_and_runtime_dependencies = _wrap_lint(
     _lint_recipe_v1_noarch_and_runtime_dependencies, args_after_lints_hints=1
 )
 lint_noarch_and_runtime_dependencies = _wrap_lint(_lint_noarch_and_runtime_dependencies)
+lint_package_version = _wrap_lint(_lint_package_version)
 lint_jinja_variables_definitions = _wrap_lint(_lint_jinja_variables_definitions)
 lint_legacy_usage_of_compilers = _wrap_lint(_lint_legacy_usage_of_compilers)
 lint_single_space_in_pinned_requirements = _wrap_lint(

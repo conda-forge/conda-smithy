@@ -144,16 +144,11 @@ def lint_recipe_name(
     return name
 
 
-def lint_package_version(
+def _lint_package_version(
     recipe_content: RecipeWithContext,
-    lints: list[str],
-) -> None:
+) -> Generator[LinterMessage]:
     version = get_recipe_version(recipe_content)
-
-    lint_msg = _lint_package_version_str(version)
-
-    if lint_msg:
-        lints.append(lint_msg)
+    yield from _lint_package_version_str(version)
 
 
 def _lint_usage_of_selectors_for_noarch(
@@ -203,5 +198,5 @@ def _lint_usage_of_selectors_for_noarch(
 lint_recipe_tests = _wrap_lint(_lint_recipe_tests, hints=True)
 hint_noarch_usage = _wrap_hint(_hint_noarch_usage)
 # TODO: lint_package_name
-# TODO: lint_package_version
+lint_package_version = _wrap_lint(_lint_package_version)
 lint_usage_of_selectors_for_noarch = _wrap_lint(_lint_usage_of_selectors_for_noarch)
