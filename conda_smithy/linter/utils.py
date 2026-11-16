@@ -95,6 +95,11 @@ def _get_section(
         raise ValueError(f"Unknown recipe version: {recipe_version}")
 
 
+@deprecated(
+    "2026.11",
+    "2027.2",
+    addendum="Internal utility function.",
+)
 def get_section(parent, name, lints, recipe_version: int = 0) -> dict:
     structured_lints = []
     ret = _get_section(parent, name, structured_lints, recipe_version)
@@ -123,6 +128,11 @@ def _get_meta_section(
     return section
 
 
+@deprecated(
+    "2026.11",
+    "2027.2",
+    addendum="Internal utility function.",
+)
 def get_meta_section(parent, name, lints):
     structured_lints = []
     ret = _get_meta_section(parent, name, structured_lints)
@@ -165,6 +175,11 @@ def _get_list_section(
         return [{}]
 
 
+@deprecated(
+    "2026.11",
+    "2027.2",
+    addendum="Internal utility function.",
+)
 def get_list_section(parent, name, lints, allow_single=False):
     structured_lints = []
     ret = _get_list_section(parent, name, structured_lints, allow_single)
