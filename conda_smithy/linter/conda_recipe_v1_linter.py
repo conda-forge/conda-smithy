@@ -15,7 +15,7 @@ from conda_smithy.linter import messages as msg
 from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
     _lint_package_version_str,
-    _lint_recipe_name,
+    _lint_recipe_name_str,
     _wrap_hint,
     _wrap_lint,
 )
@@ -143,7 +143,7 @@ def lint_recipe_name(
     if "${{" in name:
         return None
 
-    lint_msg = _lint_recipe_name(name)
+    lint_msg = _lint_recipe_name_str(name)
     if lint_msg:
         lints.append(lint_msg)
 
@@ -208,4 +208,6 @@ lint_recipe_tests = _wrap_lint(_lint_recipe_tests, hints=True)
 hint_noarch_usage = _wrap_hint(_hint_noarch_usage)
 # TODO: lint_package_name
 lint_package_version = _wrap_lint(_lint_package_version)
-lint_usage_of_selectors_for_noarch = _wrap_lint(_lint_usage_of_selectors_for_noarch, args_after_lints_hints=1)
+lint_usage_of_selectors_for_noarch = _wrap_lint(
+    _lint_usage_of_selectors_for_noarch, args_after_lints_hints=1
+)

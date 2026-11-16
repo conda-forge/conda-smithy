@@ -28,7 +28,7 @@ from conda_smithy.linter.utils import (
     TEST_KEYS,
     _get_section,
     _lint_package_version_str,
-    _lint_recipe_name,
+    _lint_recipe_name_str,
     _wrap_hint,
     _wrap_lint,
     flatten_v1_if_else,
@@ -260,7 +260,7 @@ def lint_recipe_name(
     lints: list[str],
 ) -> str:
     recipe_name = package_section.get("name", "").strip()
-    lint_msg = _lint_recipe_name(recipe_name)
+    lint_msg = _lint_recipe_name_str(recipe_name)
     if lint_msg:
         lints.append(lint_msg)
     return recipe_name
