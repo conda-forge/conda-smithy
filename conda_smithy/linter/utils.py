@@ -80,32 +80,54 @@ VALID_PYTHON_BUILD_BACKENDS = [
 ]
 
 
-def get_section(parent, name, lints, recipe_version: int = 0):
+# TODO: Remove structured_lints arg here and below, once we have proper schema check in place.
+def _get_section(
+    parent: dict,
+    name: str,
+    structured_lints: list[LinterMessage],
+    recipe_version: int = 0,
+) -> dict:
     if recipe_version == 0:
-        return get_meta_section(parent, name, lints)
+        return _get_meta_section(parent, name, structured_lints)
     elif recipe_version == 1:
         return get_recipe_v1_section(parent, name)
     else:
         raise ValueError(f"Unknown recipe version: {recipe_version}")
 
 
-def get_meta_section(parent, name, lints):
+def get_section(parent, name, lints, recipe_version: int = 0) -> dict:
+    structured_lints = []
+    ret = _get_section(parent, name, structured_lints, recipe_version)
+    lints.extend(x.as_string() for x in structured_lints)
+    return ret
+
+
+def _get_meta_section(
+    parent: dict, name: str, structured_lints: list[LinterMessage]
+) -> dict:
     if name == "source":
-        return get_list_section(parent, name, lints, allow_single=True)
+        return _get_list_section(parent, name, structured_lints, allow_single=True)
     elif name == "outputs":
-        return get_list_section(parent, name, lints)
+        return _get_list_section(parent, name, structured_lints)
 
     section = parent.get(name, {})
     if not isinstance(section, Mapping):
-        lints.append(
+        structured_lints.append(
             msg.r.SectionHasInvalidType(
                 name=name,
                 section_type=type(section).__name__,
                 allowed_types=["dictionary"],
-            ).as_string()
+            )
         )
         section = {}
     return section
+
+
+def get_meta_section(parent, name, lints):
+    structured_lints = []
+    ret = _get_meta_section(parent, name, structured_lints)
+    lints.extend(x.as_string() for x in structured_lints)
+    return ret
 
 
 def get_recipe_v1_section(meta, name) -> Union[dict, list[dict]]:
@@ -120,7 +142,12 @@ def get_recipe_v1_section(meta, name) -> Union[dict, list[dict]]:
     return meta.get(name, {})
 
 
-def get_list_section(parent, name, lints, allow_single=False):
+def _get_list_section(
+    parent: dict,
+    name: str,
+    structured_lints: list[LinterMessage],
+    allow_single: bool = False,
+) -> list:
     section = parent.get(name, [])
     if allow_single and isinstance(section, Mapping):
         return [section]
@@ -128,14 +155,21 @@ def get_list_section(parent, name, lints, allow_single=False):
         return section
     else:
         section_type = f"{type(section).__module__}.{type(section).__name__}"
-        lints.append(
+        structured_lints.append(
             msg.r.SectionHasInvalidType(
                 name=name,
                 section_type=section_type,
                 allowed_types=["dictionary", "list"] if allow_single else ["list"],
-            ).as_string()
+            )
         )
         return [{}]
+
+
+def get_list_section(parent, name, lints, allow_single=False):
+    structured_lints = []
+    ret = _get_list_section(parent, name, structured_lints, allow_single)
+    lints.extend(x.as_string() for x in structured_lints)
+    return ret
 
 
 def find_local_config_file(recipe_dir: str, filename: str) -> Optional[str]:
