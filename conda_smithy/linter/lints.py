@@ -95,20 +95,18 @@ def _lint_recipe_maintainers(extra_section) -> Generator[LinterMessage]:
         yield msg.r.MaintainersMustBeList()
 
 
-def lint_recipe_have_tests(
+def _lint_recipe_have_tests(
     recipe_dir: str,
     test_section: list[dict[str, Any]],
     outputs_section: list[dict[str, Any]],
-    lints: list[str],
-    hints: list[str],
     recipe_version: int = 0,
-):
+) -> Generator[LinterMessage]:
     if recipe_version == 1:
-        conda_recipe_v1_linter.lint_recipe_tests(
-            recipe_dir, test_section, outputs_section, lints, hints
+        return conda_recipe_v1_linter._lint_recipe_tests(
+            recipe_dir, test_section, outputs_section
         )
-        return
 
+    section_lints = []
     if not any(key in TEST_KEYS for key in test_section):
         a_test_file_exists = bool(recipe_dir) and any(
             os.path.exists(os.path.join(recipe_dir, test_file))
@@ -119,22 +117,21 @@ def lint_recipe_have_tests(
             no_test_hints = []
             if outputs_section:
                 for out in outputs_section:
-                    test_out = get_section(out, "test", lints)
+                    test_out = get_section(out, "test", section_lints)
                     if any(key in TEST_KEYS for key in test_out):
                         has_outputs_test = True
                     elif test_out.get("script", "").endswith((".bat", ".sh")):
                         has_outputs_test = True
                     else:
                         no_test_hints.append(
-                            msg.r.RecommendedTests(
-                                output=out.get("name", "???")
-                            ).as_string()
+                            msg.r.RecommendedTests(output=out.get("name", "???"))
                         )
 
             if has_outputs_test:
-                hints.extend(no_test_hints)
+                yield from no_test_hints
             else:
-                lints.append(msg.r.RequiredTests().as_string())
+                yield msg.r.RequiredTests()
+    yield from section_lints
 
 
 def _lint_license_cannot_be_unknown(about_section) -> Generator[LinterMessage]:
@@ -268,30 +265,26 @@ def _lint_usage_of_legacy_patterns(requirements_section) -> Generator[LinterMess
         yield msg.r.PinnedNumpy()
 
 
-def lint_subheaders(major_sections, meta, lints):
+def _lint_subheaders(major_sections, meta) -> Generator[LinterMessage]:
+    section_lints = []
     for section in major_sections:
         expected_subsections = FIELDS.get(section, [])
         if not expected_subsections:
             continue
-        for subsection in get_section(meta, section, lints):
+        for subsection in get_section(meta, section, section_lints):
             if (
                 section != "source"
                 and section != "outputs"
                 and subsection not in expected_subsections
             ):
-                lints.append(
-                    msg.r.UnexpectedSubsection(
-                        section=section, subsection=subsection
-                    ).as_string()
-                )
+                yield msg.r.UnexpectedSubsection(section=section, subsection=subsection)
             elif section == "source" or section == "outputs":
                 for source_subsection in subsection:
                     if source_subsection not in expected_subsections:
-                        lints.append(
-                            msg.r.UnexpectedSubsection(
-                                section=section, subsection=source_subsection
-                            ).as_string()
+                        yield msg.r.UnexpectedSubsection(
+                            section=section, subsection=source_subsection
                         )
+    yield from section_lints
 
 
 def _lint_noarch(
@@ -1192,6 +1185,9 @@ lint_feedstock_name_not_end_with_feedstock = _wrap_lint(
     _lint_feedstock_name_not_end_with_feedstock
 )
 lint_recipe_maintainers = _wrap_lint(_lint_recipe_maintainers)
+lint_recipe_have_tests = _wrap_lint(
+    _lint_recipe_have_tests, hints=True, args_after_lints_hints=1
+)
 lint_license_cannot_be_unknown = _wrap_lint(_lint_license_cannot_be_unknown)
 lint_selectors_should_be_in_tidy_form = _wrap_lint(
     _lint_selectors_should_be_in_tidy_form, hints=True
@@ -1210,6 +1206,7 @@ lint_license_family_should_be_valid = _wrap_lint(
     _lint_license_family_should_be_valid, args_after_lints_hints=1
 )
 lint_usage_of_legacy_patterns = _wrap_lint(_lint_usage_of_legacy_patterns)
+lint_subheaders = _wrap_lint(_lint_subheaders)
 lint_noarch = _wrap_lint(_lint_noarch, args_after_lints_hints=2)
 lint_recipe_v1_noarch_and_runtime_dependencies = _wrap_lint(
     _lint_recipe_v1_noarch_and_runtime_dependencies, args_after_lints_hints=2
