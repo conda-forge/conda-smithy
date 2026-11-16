@@ -4,6 +4,44 @@ conda-smithy Change Log
 
 .. current developments
 
+v2026.11.6
+====================
+
+**Added:**
+
+* ``workflow_settings.vm_image`` option to set the VM image used by Azure and GitHub Actions runners. (#2739)
+
+**Changed:**
+
+* Widen `py-rattler` constraint to allow v0.28. (#2738)
+* The micromamba version used for osx & win builds has been updated to 2.10.0 (#2740).
+* The miniforge version is now pinned, starting with 26.9.4-2 (#2705).
+* The sha256 hash of micromamba & miniforge downloads is now getting validated (#2705).
+* Builds with `provider: {win_arm64: default}` now use native miniforge (#2705).
+
+**Deprecated:**
+
+* ``azure.settings_*.pool`` options, in favor of ``workflow_settings.vm_image``. (#2739)
+
+**Fixed:**
+
+* Fix wrong platform name in pixi.toml (#2737).
+* Fail the micromamba and Miniforge downloads in ``run_osx_build.sh`` on HTTP errors and retry transient ones, instead of saving the error page as the installer.
+* Pin Python in the build environment of feedstocks using rattler-build, as for the other build tools. Without it, pixi could pick Python 3.10 and with it an old conda-forge-ci-setup, as the newest has no 3.10 build.
+
+**Authors:**
+
+* Jaime Rodríguez-Guerra
+* H. Vetinari
+* Michał Górny
+* pre-commit-ci[bot]
+* Mark Harfouche
+* Pavel Zwerschke
+* dependabot[bot]
+* Dan Yeaw
+
+
+
 v2026.10.24
 ====================
 

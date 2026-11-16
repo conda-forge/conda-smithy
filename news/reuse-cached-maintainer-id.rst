@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Widen `py-rattler` constraint to allow v0.28. (#2738)
+* Reuse the cached GitHub user ID instead of making a redundant API call.
 
 **Deprecated:**
 

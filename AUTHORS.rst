@@ -27,8 +27,8 @@ Authors are sorted by number of commits.
 * Chris Burr
 * Leo Fang
 * Ryan Volz
-* Johnny Willemsen
 * Pavel Zwerschke
+* Johnny Willemsen
 * Nicholas Bollweg
 * dependabot[bot]
 * Julian Rüth
@@ -77,6 +77,7 @@ Authors are sorted by number of commits.
 * David Hirschfeld
 * Finn Womack
 * M Bussonnier
+* Dan Yeaw
 * velonica0
 * Josh Barnes
 * Tobias Megies
@@ -111,7 +112,6 @@ Authors are sorted by number of commits.
 * Anton Tetov
 * Brandon Maier
 * Ken Odegard
-* Dan Yeaw
 * Guillaume Fraux
 * Lucas Colley
 * Jakov Smolić
