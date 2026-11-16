@@ -14,6 +14,7 @@ from rattler_build_conda_compat.jinja.jinja import render_recipe_with_context
 from rattler_build_conda_compat.loader import parse_recipe_config_file
 from ruamel.yaml import CommentedSeq
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.feedstock_io import get_repo
 from conda_smithy.linter import conda_recipe_v1_linter
 from conda_smithy.linter import messages as msg
@@ -249,6 +250,11 @@ def _lint_license_family_should_be_valid(
                 yield msg.r.LicenseFamily()
 
 
+@deprecated(
+    "2026.11",
+    "2027.2",
+    addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
+)
 def lint_recipe_name(
     package_section: dict[str, Any],
     lints: list[str],

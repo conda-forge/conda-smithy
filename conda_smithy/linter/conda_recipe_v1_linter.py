@@ -10,6 +10,7 @@ from rattler_build_conda_compat.jinja.jinja import (
 )
 from rattler_build_conda_compat.outputs import is_staging_output
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
 from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
@@ -126,6 +127,11 @@ def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
     return None
 
 
+@deprecated(
+    "2026.11",
+    "2027.2",
+    addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
+)
 def lint_recipe_name(
     recipe_content: RecipeWithContext,
     lints: list[str],
