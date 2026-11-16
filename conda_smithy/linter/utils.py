@@ -237,7 +237,7 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _lint_recipe_name(recipe_name: str) -> Optional[str]:
+def _lint_recipe_name_str(recipe_name: str) -> Optional[str]:
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
         return msg.r.InvalidPackageName().as_string()
 
