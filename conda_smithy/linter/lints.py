@@ -25,12 +25,12 @@ from conda_smithy.linter.utils import (
     REQUIREMENTS_ORDER,
     TEST_FILES,
     TEST_KEYS,
+    _get_section,
     _lint_package_version_str,
     _lint_recipe_name,
     _wrap_hint,
     _wrap_lint,
     flatten_v1_if_else,
-    get_section,
     get_version_independent,
     is_selector_line,
     jinja_lines,
@@ -117,7 +117,7 @@ def _lint_recipe_have_tests(
             no_test_hints = []
             if outputs_section:
                 for out in outputs_section:
-                    test_out = get_section(out, "test", section_lints)
+                    test_out = _get_section(out, "test", section_lints)
                     if any(key in TEST_KEYS for key in test_out):
                         has_outputs_test = True
                     elif test_out.get("script", "").endswith((".bat", ".sh")):
@@ -271,7 +271,7 @@ def _lint_subheaders(major_sections, meta) -> Generator[LinterMessage]:
         expected_subsections = FIELDS.get(section, [])
         if not expected_subsections:
             continue
-        for subsection in get_section(meta, section, section_lints):
+        for subsection in _get_section(meta, section, section_lints):
             if (
                 section != "source"
                 and section != "outputs"
@@ -811,14 +811,13 @@ def _lint_osx_pins(
             yield sdk_lint
 
 
-def lint_stdlib(
+def _lint_stdlib(
     meta,
     requirements_section,
     recipe_dir,
     recipe_config_filename,
-    lints,
     recipe_version: int = 0,
-):
+) -> Generator[LinterMessage]:
     global_build_reqs = requirements_section.get("build") or []
     global_run_reqs = requirements_section.get("run") or []
     if recipe_version == 1:
@@ -835,7 +834,8 @@ def lint_stdlib(
             r"^\${{ compiler\(['\"](m2w64_)?(c|cxx|fortran|rust|go-cgo|ocaml)"
         )
 
-    outputs = get_section(meta, "outputs", lints, recipe_version)
+    lints = []
+    outputs = _get_section(meta, "outputs", lints, recipe_version)
     output_reqs = [x.get("requirements", {}) for x in outputs]
 
     # deal with cb2 recipes (no build/host/run distinction)
@@ -882,15 +882,23 @@ def lint_stdlib(
             else r"\$\{\{ stdlib\(['\"](m2w64_)?c['\"]\)"
         )
         if has_compiler and not any(re.search(stdlib_regex, x) for x in build_reqs):
-            msg.r.StdlibJinja(recipe_version=recipe_version).append_if_absent(lints)
+            msg.r.StdlibJinja(recipe_version=recipe_version).append_if_absent(
+                lints, as_string=False
+            )
 
     pat_sysroot = re.compile(r"sysroot_linux.*")
     if any(pat_sysroot.match(req) for req in all_build_reqs_flat):
-        msg.r.StdlibSysroot(recipe_version=recipe_version).append_if_absent(lints)
+        msg.r.StdlibSysroot(recipe_version=recipe_version).append_if_absent(
+            lints, as_string=False
+        )
 
     to_check = all_run_reqs_flat + all_contraints_flat
     if any(req.startswith("__osx >") for req in to_check):
-        msg.r.StdlibMacos(recipe_version=recipe_version).append_if_absent(lints)
+        msg.r.StdlibMacos(recipe_version=recipe_version).append_if_absent(
+            lints, as_string=False
+        )
+
+    yield from lints
 
 
 def _lint_recipe_is_parsable(
@@ -1232,6 +1240,7 @@ lint_go_licenses_are_bundled = _wrap_lint(
     _lint_go_licenses_are_bundled, args_after_lints_hints=1
 )
 lint_osx_pins = _wrap_lint(_lint_osx_pins, args_after_lints_hints=1)
+lint_stdlib = _wrap_lint(_lint_stdlib, args_after_lints_hints=1)
 lint_recipe_is_parsable = _wrap_lint(
     _lint_recipe_is_parsable, hints=True, args_after_lints_hints=1
 )

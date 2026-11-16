@@ -142,7 +142,10 @@ class LinterMessage:
     as_string = __str__
 
     def append_if_absent(
-        self, iterable: list, test: Literal["isinstance", "str"] = "str"
+        self,
+        iterable: list,
+        test: Literal["isinstance", "str"] = "str",
+        as_string: bool = True,
     ) -> None:
         """
         Appends itself to a list if there are no other instances of the message yet.
@@ -153,6 +156,9 @@ class LinterMessage:
           instances of this class in the list (potentially with other arguments).
         - `"str"` will only result in an appended item if there are no other items
           in the list that match in string representation.
+
+        If `as_string` is True, the appended `LinterMessage` is converted to
+        a string (the default).
         """
         if test == "isinstance":
             test = lambda a, b: isinstance(a, b.__class__)
@@ -164,4 +170,4 @@ class LinterMessage:
         if any(test(item, self) for item in iterable):
             return
         # FIXME: Remove this once we remove as_string
-        iterable.append(self.as_string())
+        iterable.append(self.as_string() if as_string else self)
