@@ -275,6 +275,24 @@ class GithubActionsConfig(BaseModel):
         default=14,
     )
 
+    attest_packages: Optional[bool] = Field(
+        default=False,
+        description=cleandoc("""
+        Whether to create a Sigstore attestation for every uploaded package,
+        using the `actions/attest` action. The attestations follow CEP-27 and
+        are stored in the GitHub attestation API of the feedstock, where they
+        can be looked up by the SHA-256 of the package.
+        """),
+    )
+
+    attestation_target_channel: Optional[str] = Field(
+        default="https://prefix.dev/conda-forge",
+        description=cleandoc("""
+        The channel URL written to the `targetChannel` field of the
+        attestations created with `attest_packages`.
+        """),
+    )
+
     cancel_in_progress: Optional[bool] = Field(
         description="Whether to cancel jobs in the same build if one fails.",
         default=True,
