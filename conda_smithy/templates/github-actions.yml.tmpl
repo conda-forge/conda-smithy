@@ -417,8 +417,12 @@ jobs:
       shell: bash
       run: |
         {%- raw %}
-        shopt -s nullglob
-        files=(attest-subjects/*/attest-subjects.json)
+        # a single artifact is extracted directly into the path, several
+        # artifacts into one subfolder each
+        files=()
+        if [[ -d attest-subjects ]]; then
+          mapfile -t files < <(find attest-subjects -name attest-subjects.json)
+        fi
         if [[ ${#files[@]} -eq 0 ]]; then
           echo "subjects=[]" >> "${GITHUB_OUTPUT}"
           exit 0
