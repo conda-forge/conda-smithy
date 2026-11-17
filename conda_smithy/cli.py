@@ -13,9 +13,7 @@ from rattler_build_conda_compat.render import MetaData as RattlerMetaData
 from rattler_build_conda_compat.utils import has_recipe as has_recipe_v1
 from ruamel.yaml import YAML
 
-import conda_smithy.cirun_utils
 from conda_smithy import __version__, configure_feedstock, feedstock_io
-from conda_smithy import lint_recipe as linter
 from conda_smithy.configure_feedstock import (
     _load_forge_config,
     get_cached_cfp_file_path,
@@ -397,6 +395,9 @@ class RegisterCI(Subcommand):
 
         if args.cirun:
             print("Cirun Registration")
+            # imported here: it pulls in the GitHub client, which a rerender never needs
+            import conda_smithy.cirun_utils
+
             if args.remove:
                 if args.cirun_resources:
                     to_remove = args.cirun_resources
@@ -623,6 +624,8 @@ class RecipeLint(Subcommand):
         scp.add_argument("recipe_directory", default=[os.getcwd()], nargs="*")
 
     def __call__(self, args):
+        from conda_smithy import lint_recipe as linter
+
         all_good = True
         for recipe in args.recipe_directory:
             lints, hints = linter.main(
