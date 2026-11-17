@@ -3647,3 +3647,66 @@ def test_vm_image_gha(py_recipe, jinja_env, override: bool, label: str | None):
     assert {
         "_".join(v["CONFIG"].split("_", 2)[:2]): v["runs_on"] for v in matrix
     } == expected
+
+
+def test_collapse_unreferenced_variant_dimensions(tmp_path):
+    recipe_dir = tmp_path / "recipe"
+    (recipe_dir / "patches").mkdir(parents=True)
+    (recipe_dir / "meta.yaml").write_text(textwrap.dedent("""\
+            package:
+              name: foo
+            requirements:
+              build:
+                - {{ compiler('cxx') }}
+              host:
+                - libarrow
+                - r-base
+            """))
+    (recipe_dir / "build.sh").write_text("echo $blas_impl\n")
+    (recipe_dir / "patches" / "0001.patch").write_text("+ uses cdt here\n")
+    combined_spec = {
+        "python": ["3.11", "3.12"],
+        "channel_sources": ["conda-forge", "conda-forge"],
+        "is_python_min": ["true", "false"],
+        # named in the recipe directory: kept
+        "libarrow": ["20", "21"],
+        "libarrow_all": ["20", "21"],
+        "r_base": ["4.4", "4.5"],
+        "cxx_compiler_version": ["14", "15"],
+        "blas_impl": ["openblas", "mkl"],
+        "cdt_name": ["conda", "cos7"],
+        # not named anywhere: collapsed
+        "nodejs": ["22", "24"],
+        "geant4": ["11.2", "11.3"],
+        "clhep": ["2.4.7", "2.4.8"],
+        # read by conda-smithy itself: kept
+        "docker_image": ["a", "b"],
+        "cuda_compiler_version": ["None", "12.9"],
+        "zip_keys": [
+            ["python", "channel_sources", "is_python_min"],
+            ["libarrow", "libarrow_all"],
+            ["geant4", "clhep"],
+            ["cuda_compiler_version", "docker_image"],
+        ],
+        "pin_run_as_build": {"python": {"max_pin": "x.x"}},
+        "single": ["1"],
+    }
+    original = copy.deepcopy(combined_spec)
+    collapsed = configure_feedstock._collapse_unreferenced_variant_dimensions(
+        combined_spec, str(recipe_dir)
+    )
+    assert combined_spec == original
+    expected = copy.deepcopy(original)
+    expected.update(nodejs=["22"], geant4=["11.2"], clhep=["2.4.7"])
+    assert collapsed == expected
+
+
+def test_collapse_unreferenced_variant_dimensions_nothing_to_do(tmp_path):
+    (tmp_path / "meta.yaml").write_text("package:\n  name: nodejs\n")
+    combined_spec = {"nodejs": ["22", "24"], "python": ["3.11", "3.12"]}
+    assert (
+        configure_feedstock._collapse_unreferenced_variant_dimensions(
+            combined_spec, str(tmp_path)
+        )
+        is combined_spec
+    )
