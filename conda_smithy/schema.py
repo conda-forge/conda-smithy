@@ -281,7 +281,9 @@ class GithubActionsConfig(BaseModel):
         Whether to create a Sigstore attestation for every uploaded package,
         using the `actions/attest` action. The attestations follow CEP-27 and
         are stored in the GitHub attestation API of the feedstock, where they
-        can be looked up by the SHA-256 of the package.
+        can be looked up by the SHA-256 of the package. The packages are read
+        from `attest-subjects.json`, which conda-forge-ci-setup (4.34.0 or
+        newer) writes into the build folder after the upload.
         """),
     )
 

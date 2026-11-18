@@ -140,7 +140,8 @@ def test_github_actions_attest_packages(py_recipe, jinja_env):
     ]
     assert collect["continue-on-error"] is True
     assert "github.event_name != 'pull_request'" in collect["if"]
-    assert "${#entries[@]}" in collect["run"]
+    # the package list is written by conda-forge-ci-setup after the upload
+    assert '"${bld}/attest-subjects.json"' in collect["run"]
 
     assert jobs["attest-plan"]["needs"] == "build"
     assert jobs["attest-plan"]["continue-on-error"] is True

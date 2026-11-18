@@ -254,11 +254,14 @@ jobs:
 {%- endfor %}
 {%- if github_actions.attest_packages %}
 
-    - name: List uploaded packages for attestation
+    - name: Find uploaded packages for attestation
       id: attest-subjects
       # Attestations are best effort and must never fail the build.
       continue-on-error: true
-      if: {% raw %}${{ matrix.UPLOAD_PACKAGES && github.event_name != 'pull_request'{% endraw %}{% if upload_on_branch %} && github.ref_name == '{{ upload_on_branch }}'{% endif %} }}
+      # conda-forge-ci-setup writes attest-subjects.json into the build folder
+      # after the packages were sent to conda-forge. The folder is mounted
+      # into docker, so the file is visible here.
+      if: {% raw %}${{ github.event_name != 'pull_request' }}{% endraw %}
       shell: bash
       env:
         CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
@@ -269,24 +272,11 @@ jobs:
         if command -v cygpath >/dev/null 2>&1; then
           bld="$(cygpath -u "${bld}")"
         fi
-        if command -v sha256sum >/dev/null 2>&1; then
-          sha256() { sha256sum "$1" | cut -d' ' -f1; }
-        else
-          sha256() { shasum -a 256 "$1" | cut -d' ' -f1; }
-        fi
-        shopt -s nullglob
-        entries=()
-        for pkg in "${bld}"/*/*.conda "${bld}"/*/*.tar.bz2; do
-          subdir="$(basename "$(dirname "${pkg}")")"
-          # only look at subdir folders, not at caches like pkg_cache
-          [[ "${subdir}" =~ ^(noarch|[a-z0-9]+-[a-z0-9_]+)$ ]] || continue
-          entries+=("{\"name\": \"$(basename "${pkg}")\", \"sha256\": \"$(sha256 "${pkg}")\"}")
-        done
-        if [[ ${#entries[@]} -eq 0 ]]; then
+        if [[ ! -s "${bld}/attest-subjects.json" ]]; then
           echo "No packages to attest"
           exit 0
         fi
-        (IFS=,; echo "[${entries[*]}]") > attest-subjects.json
+        cp "${bld}/attest-subjects.json" attest-subjects.json
         cat attest-subjects.json
         echo "found=true" >> "${GITHUB_OUTPUT}"
         {%- endraw %}
