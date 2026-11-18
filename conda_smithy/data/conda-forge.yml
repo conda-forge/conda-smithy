@@ -78,7 +78,7 @@ github:
 github_actions:
   artifact_retention_days: 14
   attest_packages: false
-  attestation_target_channel: https://prefix.dev/conda-forge
+  attestation_target_channel: https://conda.anaconda.org/conda-forge
   cancel_in_progress: true
   free_disk_space: false
   max_parallel: 50

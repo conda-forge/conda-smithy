@@ -286,10 +286,12 @@ class GithubActionsConfig(BaseModel):
     )
 
     attestation_target_channel: Optional[str] = Field(
-        default="https://prefix.dev/conda-forge",
+        default="https://conda.anaconda.org/conda-forge",
         description=cleandoc("""
         The channel URL written to the `targetChannel` field of the
-        attestations created with `attest_packages`.
+        attestations created with `attest_packages`. Verifiers compare it
+        with the channel the package is installed from, so it should be the
+        canonical URL of the channel the packages are published to.
         """),
     )
 

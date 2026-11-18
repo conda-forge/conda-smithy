@@ -115,6 +115,15 @@ def test_github_actions_no_attestations_by_default(py_recipe, jinja_env):
     assert "attest-subjects" not in step_ids
 
 
+def test_github_actions_attestation_default_target_channel(py_recipe, jinja_env):
+    py_recipe.config["github_actions"]["attest_packages"] = True
+    workflow = _render_github_workflow(py_recipe, jinja_env)
+    (step,) = workflow["jobs"]["attest"]["steps"]
+    assert json.loads(step["with"]["predicate"]) == {
+        "targetChannel": "https://conda.anaconda.org/conda-forge"
+    }
+
+
 def test_github_actions_attest_packages(py_recipe, jinja_env):
     py_recipe.config["github_actions"]["attest_packages"] = True
     py_recipe.config["github_actions"][

@@ -813,8 +813,8 @@
               "type": "null"
             }
           ],
-          "default": "https://prefix.dev/conda-forge",
-          "description": "The channel URL written to the `targetChannel` field of the\nattestations created with `attest_packages`.",
+          "default": "https://conda.anaconda.org/conda-forge",
+          "description": "The channel URL written to the `targetChannel` field of the\nattestations created with `attest_packages`. Verifiers compare it\nwith the channel the package is installed from, so it should be the\ncanonical URL of the channel the packages are published to.",
           "title": "Attestation Target Channel"
         },
         "cancel_in_progress": {
