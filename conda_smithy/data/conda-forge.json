@@ -1016,6 +1016,7 @@
     },
     "Lints": {
       "enum": [
+        "lint_check_usage_of_whls",
         "lint_noarch_selectors",
         "lint_stdlib",
         "hint_os_version",
