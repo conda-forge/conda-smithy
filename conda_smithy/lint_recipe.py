@@ -299,9 +299,11 @@ def lintify_meta_yaml(
 
     # 13: Check that the recipe name is valid
     if recipe_version == 1:
-        recipe_name = conda_recipe_v1_linter.lint_recipe_name(meta, lints)
+        recipe_name = conda_recipe_v1_linter.get_recipe_name(meta)
+        conda_recipe_v1_linter.lint_recipe_name(meta, lints)
     else:
-        recipe_name = lint_recipe_name(
+        recipe_name = package_section.get("name", "").strip()
+        lint_recipe_name(
             package_section,
             lints,
         )

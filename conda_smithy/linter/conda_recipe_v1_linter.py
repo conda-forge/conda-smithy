@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Generator
 from typing import Any, Optional
 
 from rattler_build_conda_compat.jinja.jinja import (
@@ -9,11 +10,14 @@ from rattler_build_conda_compat.jinja.jinja import (
 )
 from rattler_build_conda_compat.outputs import is_staging_output
 
+from conda_smithy.deprecations import deprecated
 from conda_smithy.linter import messages as msg
-from conda_smithy.linter.errors import HINT_NO_ARCH
+from conda_smithy.linter.messages.base import LinterMessage
 from conda_smithy.linter.utils import (
-    _lint_package_version,
-    _lint_recipe_name,
+    _lint_package_version_str,
+    _lint_recipe_name_str,
+    _wrap_hint,
+    _wrap_lint,
 )
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
@@ -44,19 +48,14 @@ EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER = [
 JINJA_VAR_PAT = re.compile(r"\${{(.*?)}}")
 
 
-def lint_recipe_tests(
+def _lint_recipe_tests(
     recipe_dir: Optional[str],
     test_section: list[dict[str, Any]],
     outputs_section: list[dict[str, Any]],
-    lints: list[str],
-    hints: list[str],
-):
-    tests_lints = []
-    tests_hints = []
-
+) -> list[LinterMessage]:
     if not test_section:
         if not outputs_section:
-            lints.append(msg.r.RequiredTests().as_string())
+            yield msg.r.RequiredTests()
         else:
             has_outputs_test = False
             no_test_hints = []
@@ -71,22 +70,18 @@ def lint_recipe_tests(
                     no_test_hints.append(
                         msg.r.RecommendedTests(
                             output=output.get("package", {}).get("name", "???")
-                        ).as_string()
+                        )
                     )
             if has_outputs_test:
-                hints.extend(no_test_hints)
+                yield from no_test_hints
             else:
-                lints.append(msg.r.RequiredTests().as_string())
-
-    lints.extend(tests_lints)
-    hints.extend(tests_hints)
+                yield msg.r.RequiredTests()
 
 
-def hint_noarch_usage(
+def _hint_noarch_usage(
     build_section: dict[str, Any],
     requirement_section: dict[str, Any],
-    hints: list[str],
-):
+) -> Generator[LinterMessage]:
     build_reqs = requirement_section.get("build", None)
     if (
         build_reqs
@@ -110,7 +105,7 @@ def hint_noarch_usage(
                 break
 
         if no_arch_possible:
-            hints.append(HINT_NO_ARCH)
+            yield msg.r.SuggestNoarch()
 
 
 def get_recipe_name(recipe_content: RecipeWithContext) -> str:
@@ -132,6 +127,11 @@ def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
     return None
 
 
+@deprecated(
+    "2026.11",
+    "2027.2",
+    addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
+)
 def lint_recipe_name(
     recipe_content: RecipeWithContext,
     lints: list[str],
@@ -143,33 +143,25 @@ def lint_recipe_name(
     if "${{" in name:
         return None
 
-    lint_msg = _lint_recipe_name(name)
-    if lint_msg:
-        lints.append(lint_msg)
+    lints.extend(x.as_string() for x in _lint_recipe_name_str(name))
 
     return name
 
 
-def lint_package_version(
+def _lint_package_version(
     recipe_content: RecipeWithContext,
-    lints: list[str],
-) -> None:
+) -> Generator[LinterMessage]:
     version = get_recipe_version(recipe_content)
-
-    lint_msg = _lint_package_version(version)
-
-    if lint_msg:
-        lints.append(lint_msg)
+    yield from _lint_package_version_str(version)
 
 
-def lint_usage_of_selectors_for_noarch(
+def _lint_usage_of_selectors_for_noarch(
     noarch_value: str,
     requirements_section: dict[str, Any],
     build_section: dict[str, Any],
     noarch_platforms: bool,
-    lints: list[str],
     conda_build_config_keys: Optional[set[str]] = None,
-):
+) -> Generator[LinterMessage]:
     # cbc keys select a variant, not a platform, so allow them too. v0 has done
     # this since gh-1843. See gh-2337.
     allowed_nouns = ({"win", "linux", "osx", "unix"} if noarch_platforms else set()) | (
@@ -203,10 +195,17 @@ def lint_usage_of_selectors_for_noarch(
                     break
 
             if has_bad_selector:
-                lints.append(msg.r.NoarchSelectorsV1(noarch=noarch_value).as_string())
+                yield msg.r.NoarchSelectorsV1(noarch=noarch_value)
                 break
 
     if "skip" in build_section:
-        lints.append(
-            msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True).as_string()
-        )
+        yield msg.r.NoarchSelectorsV1(noarch=noarch_value, skips=True)
+
+
+lint_recipe_tests = _wrap_lint(_lint_recipe_tests, hints=True)
+hint_noarch_usage = _wrap_hint(_hint_noarch_usage)
+# TODO: lint_package_name
+lint_package_version = _wrap_lint(_lint_package_version)
+lint_usage_of_selectors_for_noarch = _wrap_lint(
+    _lint_usage_of_selectors_for_noarch, args_after_lints_hints=1
+)
