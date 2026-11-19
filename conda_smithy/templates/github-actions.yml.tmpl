@@ -258,9 +258,9 @@ jobs:
       id: attest-subjects
       # Attestations are best effort and must never fail the build.
       continue-on-error: true
-      # conda-forge-ci-setup writes attest-subjects.json into the build folder
-      # after the packages were sent to conda-forge. The folder is mounted
-      # into docker, so the file is visible here.
+      # conda-forge-ci-setup writes an attest-subjects-<time>.json file into
+      # the build folder after each copy request to conda-forge. The folder is
+      # mounted into docker, so the files are visible here.
       if: {% raw %}${{ github.event_name != 'pull_request' }}{% endraw %}
       shell: bash
       env:
@@ -272,11 +272,15 @@ jobs:
         if command -v cygpath >/dev/null 2>&1; then
           bld="$(cygpath -u "${bld}")"
         fi
-        if [[ ! -s "${bld}/attest-subjects.json" ]]; then
+        shopt -s nullglob
+        files=("${bld}"/attest-subjects-*.json)
+        if [[ ${#files[@]} -eq 0 ]]; then
           echo "No packages to attest"
           exit 0
         fi
-        cp "${bld}/attest-subjects.json" attest-subjects.json
+        jq -s 'add' "${files[@]}" > attest-subjects.json
+        # remove them, so that a runner that is reused does not attest them again
+        rm -f "${files[@]}"
         cat attest-subjects.json
         echo "found=true" >> "${GITHUB_OUTPUT}"
         {%- endraw %}
@@ -417,7 +421,7 @@ jobs:
           echo "subjects=[]" >> "${GITHUB_OUTPUT}"
           exit 0
         fi
-        subjects="$(jq -c -s 'add | unique_by(.name)' "${files[@]}")"
+        subjects="$(jq -c -s 'add | unique_by([.name, .target_channel])' "${files[@]}")"
         echo "${subjects}" | jq .
         echo "subjects=${subjects}" >> "${GITHUB_OUTPUT}"
         {%- endraw %}
@@ -446,5 +450,5 @@ jobs:
         subject-name: {% raw %}${{ matrix.name }}{% endraw %}
         subject-digest: {% raw %}sha256:${{ matrix.sha256 }}{% endraw %}
         predicate-type: https://schemas.conda.org/attestations-publish-1.schema.json
-        predicate: '{"targetChannel": "{{ github_actions.attestation_target_channel }}"}'
+        predicate: {% raw %}'{"targetChannel": "${{ matrix.target_channel }}"}'{% endraw %}
 {%- endif %}

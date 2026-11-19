@@ -281,19 +281,10 @@ class GithubActionsConfig(BaseModel):
         Whether to create a Sigstore attestation for every uploaded package,
         using the `actions/attest` action. The attestations follow CEP-27 and
         are stored in the GitHub attestation API of the feedstock, where they
-        can be looked up by the SHA-256 of the package. The packages are read
-        from `attest-subjects.json`, which conda-forge-ci-setup (4.34.0 or
+        can be looked up by the SHA-256 of the package. The packages and the
+        channel they are published to are read from the
+        `attest-subjects-*.json` files that conda-forge-ci-setup (4.34.0 or
         newer) writes into the build folder after the upload.
-        """),
-    )
-
-    attestation_target_channel: Optional[str] = Field(
-        default="https://conda.anaconda.org/conda-forge",
-        description=cleandoc("""
-        The channel URL written to the `targetChannel` field of the
-        attestations created with `attest_packages`. Verifiers compare it
-        with the channel the package is installed from, so it should be the
-        canonical URL of the channel the packages are published to.
         """),
     )
 

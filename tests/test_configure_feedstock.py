@@ -1,7 +1,6 @@
 import copy
 import io
 import itertools
-import json
 import logging
 import os
 import re
@@ -115,20 +114,8 @@ def test_github_actions_no_attestations_by_default(py_recipe, jinja_env):
     assert "attest-subjects" not in step_ids
 
 
-def test_github_actions_attestation_default_target_channel(py_recipe, jinja_env):
-    py_recipe.config["github_actions"]["attest_packages"] = True
-    workflow = _render_github_workflow(py_recipe, jinja_env)
-    (step,) = workflow["jobs"]["attest"]["steps"]
-    assert json.loads(step["with"]["predicate"]) == {
-        "targetChannel": "https://conda.anaconda.org/conda-forge"
-    }
-
-
 def test_github_actions_attest_packages(py_recipe, jinja_env):
     py_recipe.config["github_actions"]["attest_packages"] = True
-    py_recipe.config["github_actions"][
-        "attestation_target_channel"
-    ] = "https://prefix.dev/conda-forge-shadow"
     workflow = _render_github_workflow(py_recipe, jinja_env)
     jobs = workflow["jobs"]
     assert set(jobs) == {"build", "attest-plan", "attest"}
@@ -140,8 +127,8 @@ def test_github_actions_attest_packages(py_recipe, jinja_env):
     ]
     assert collect["continue-on-error"] is True
     assert "github.event_name != 'pull_request'" in collect["if"]
-    # the package list is written by conda-forge-ci-setup after the upload
-    assert '"${bld}/attest-subjects.json"' in collect["run"]
+    # the package lists are written by conda-forge-ci-setup after the upload
+    assert '"${bld}"/attest-subjects-*.json' in collect["run"]
 
     assert jobs["attest-plan"]["needs"] == "build"
     assert jobs["attest-plan"]["continue-on-error"] is True
@@ -159,9 +146,10 @@ def test_github_actions_attest_packages(py_recipe, jinja_env):
     assert step["with"]["predicate-type"] == (
         "https://schemas.conda.org/attestations-publish-1.schema.json"
     )
-    assert json.loads(step["with"]["predicate"]) == {
-        "targetChannel": "https://prefix.dev/conda-forge-shadow"
-    }
+    # the target channel comes from conda-forge-ci-setup, per package
+    assert step["with"]["predicate"] == (
+        '{"targetChannel": "${{ matrix.target_channel }}"}'
+    )
 
 
 def test_channel_sources_not_used_in_ci_support_filename(

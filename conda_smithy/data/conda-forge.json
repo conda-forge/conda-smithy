@@ -801,21 +801,8 @@
             }
           ],
           "default": false,
-          "description": "Whether to create a Sigstore attestation for every uploaded package,\nusing the `actions/attest` action. The attestations follow CEP-27 and\nare stored in the GitHub attestation API of the feedstock, where they\ncan be looked up by the SHA-256 of the package. The packages are read\nfrom `attest-subjects.json`, which conda-forge-ci-setup (4.34.0 or\nnewer) writes into the build folder after the upload.",
+          "description": "Whether to create a Sigstore attestation for every uploaded package,\nusing the `actions/attest` action. The attestations follow CEP-27 and\nare stored in the GitHub attestation API of the feedstock, where they\ncan be looked up by the SHA-256 of the package. The packages and the\nchannel they are published to are read from the\n`attest-subjects-*.json` files that conda-forge-ci-setup (4.34.0 or\nnewer) writes into the build folder after the upload.",
           "title": "Attest Packages"
-        },
-        "attestation_target_channel": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": "https://conda.anaconda.org/conda-forge",
-          "description": "The channel URL written to the `targetChannel` field of the\nattestations created with `attest_packages`. Verifiers compare it\nwith the channel the package is installed from, so it should be the\ncanonical URL of the channel the packages are published to.",
-          "title": "Attestation Target Channel"
         },
         "cancel_in_progress": {
           "anyOf": [

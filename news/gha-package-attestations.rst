@@ -2,11 +2,10 @@
 
 * Added the opt-in ``github_actions.attest_packages`` option. When enabled, GitHub Actions
   creates one CEP-27 Sigstore attestation per uploaded package with ``actions/attest`` and
-  stores it in the GitHub attestation API of the feedstock. The uploaded packages are read
-  from ``attest-subjects.json``, which conda-forge-ci-setup 4.34.0 or newer writes into the
-  build folder. The ``targetChannel`` of the
-  attestation is set with ``github_actions.attestation_target_channel`` and defaults to
-  ``https://conda.anaconda.org/conda-forge``. (#2749)
+  stores it in the GitHub attestation API of the feedstock. The uploaded packages and the
+  channel they are published to (the ``targetChannel`` of the attestation) are read from
+  the ``attest-subjects-*.json`` files that conda-forge-ci-setup 4.34.0 or newer writes
+  into the build folder. (#2749)
 
 **Changed:**
 
