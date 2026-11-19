@@ -1000,7 +1000,7 @@ def _lint_recipe_is_parsable(
 IS_AB3_BOOL_RE = re.compile(r"is_abi3\s*(==|!=)\s*('|\")(true|false)('|\")")
 
 
-def lint_recipe_is_abi3_bool(
+def _lint_recipe_is_abi3_bool(
     recipe_text: str,
 ) -> Generator[LinterMessage]:
     if IS_AB3_BOOL_RE.search(recipe_text):
@@ -1249,7 +1249,7 @@ lint_stdlib = _wrap_lint(_lint_stdlib, args_after_lints_hints=1)
 lint_recipe_is_parsable = _wrap_lint(
     _lint_recipe_is_parsable, hints=True, args_after_lints_hints=1
 )
-lint_recipe_is_abi3_bool = _wrap_lint(lint_recipe_is_abi3_bool)
+lint_recipe_is_abi3_bool = _wrap_lint(_lint_recipe_is_abi3_bool)
 lint_floats_quoted = _wrap_lint(_lint_floats_quoted, args_after_lints_hints=1)
 lint_invalid_workflow_settings = _wrap_lint(_lint_invalid_workflow_settings)
 lint_feedstock_name = _wrap_lint(_lint_feedstock_name)
