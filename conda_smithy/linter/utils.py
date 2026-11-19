@@ -252,11 +252,9 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _lint_recipe_name_str(recipe_name: str) -> Optional[str]:
+def _lint_recipe_name_str(recipe_name: str) -> Generator[LinterMessage]:
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
-        return msg.r.InvalidPackageName().as_string()
-
-    return None
+        yield msg.r.InvalidPackageName()
 
 
 # TODO: when we remove deprecated lint functions, let's redo this into a single lint.

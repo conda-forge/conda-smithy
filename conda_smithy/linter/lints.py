@@ -253,9 +253,7 @@ def lint_recipe_name(
     lints: list[str],
 ) -> str:
     recipe_name = package_section.get("name", "").strip()
-    lint_msg = _lint_recipe_name_str(recipe_name)
-    if lint_msg:
-        lints.append(lint_msg)
+    lints.extend(x.as_string() for x in _lint_recipe_name_str(recipe_name))
     return recipe_name
 
 
