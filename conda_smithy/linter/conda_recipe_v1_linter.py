@@ -143,9 +143,7 @@ def lint_recipe_name(
     if "${{" in name:
         return None
 
-    lint_msg = _lint_recipe_name_str(name)
-    if lint_msg:
-        lints.append(lint_msg)
+    lints.extend(x.as_string() for x in _lint_recipe_name_str(name))
 
     return name
 
