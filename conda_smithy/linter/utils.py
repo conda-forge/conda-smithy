@@ -402,7 +402,7 @@ def _wrap_lint(
         "2026.11",
         "2027.2",
         prefix=f"{func.__module__}.{func.__qualname__.lstrip('_')}",
-        addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
+        addendum="Please use 'conda_smithy.lint_recipe.lint_recipe' to get all the lints and hints for a recipe.",
     )
     @wraps(func)
     def wrapper(*args, **kwargs):
