@@ -340,11 +340,11 @@ def flatten_v1_if_else(requirements: list[str | dict] | str) -> list[str]:
     return flattened_requirements
 
 
-def get_all_test_requirements(
-    meta: dict, lints: list[str], recipe_version: int
+def _get_all_test_requirements(
+    meta: dict, structured_lints: list[LinterMessage], recipe_version: int
 ) -> list[str]:
     if recipe_version == 1:
-        test_section = get_section(meta, "tests", lints, recipe_version)
+        test_section = _get_section(meta, "tests", structured_lints, recipe_version)
         test_reqs = []
         for test_element in test_section:
             test_reqs += (test_element.get("requirements") or {}).get("run") or []
@@ -360,9 +360,23 @@ def get_all_test_requirements(
                 else:
                     test_reqs.append("python")
     else:
-        test_section = get_section(meta, "test", lints, recipe_version)
+        test_section = _get_section(meta, "test", structured_lints, recipe_version)
         test_reqs = test_section.get("requires") or []
     return test_reqs
+
+
+@deprecated(
+    "2026.11",
+    "2027.2",
+    addendum="Internal utility function.",
+)
+def get_all_test_requirements(
+    meta: dict, lints: list[str], recipe_version: int
+) -> list[str]:
+    structured_lints = []
+    ret = _get_all_test_requirements(meta, structured_lints, recipe_version)
+    lints.extend(x.as_string() for x in structured_lints)
+    return ret
 
 
 def get_version_independent(
