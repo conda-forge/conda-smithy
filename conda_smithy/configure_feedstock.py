@@ -1083,6 +1083,109 @@ def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_
     return fast_finish_text
 
 
+# Variables conda-smithy reads from a variant itself, whether or not the recipe
+# names them.
+_SMITHY_VARIANT_KEYS = frozenset(
+    {
+        "zip_keys",
+        "pin_run_as_build",
+        "MACOSX_DEPLOYMENT_TARGET",
+        "MACOSX_SDK_VERSION",
+        "macos_min_version",
+        "macos_machine",
+        "c_stdlib",
+        "c_stdlib_version",
+        "channel_sources",
+        "channel_targets",
+        "docker_image",
+        "build_number_decrement",
+        "github_actions_labels",
+        "target_platform",
+        "python",
+        "python_min",
+        "numpy",
+        # conda-smithy adds these when a recipe uses ``mpi``
+        "mpi",
+        "mpich",
+        "openmpi",
+        "msmpi",
+        "mpi_serial",
+        "impi",
+    }
+)
+
+
+def _variable_names_in_text(key):
+    """The spellings by which a recipe can use the variant variable ``key``."""
+    names = {key, key.replace("_", "-")}
+    if target := re.match(r"(.*?)_(compiler|stdlib)(_version)?$", key):
+        # used as {{ compiler('lang') }} or {{ stdlib('lang') }}
+        names.add(target.group(1))
+    if key.startswith("cdt_"):
+        names.add("cdt")
+    return names
+
+
+def _recipe_dir_text(recipe_dir):
+    texts = []
+    for root, _, files in os.walk(recipe_dir):
+        for name in files:
+            try:
+                with open(
+                    os.path.join(root, name), encoding="utf-8", errors="ignore"
+                ) as f:
+                    texts.append(f.read())
+            except OSError:
+                continue
+    return "\n".join(texts)
+
+
+def _collapse_unreferenced_variant_dimensions(combined_spec, recipe_dir):
+    """Keep one value of every dimension of the matrix the recipe cannot use.
+
+    The global pinning holds every variable of every feedstock, and conda-build
+    explodes all of them before it finds out which ones a recipe uses: a key with
+    several values multiplies the matrix of every recipe, so most of the time of
+    a rerender goes into variants that differ only in values the recipe never
+    reads.  conda-build finds the variables a recipe uses by their names in the
+    recipe's text, so a dimension (a key, or a group of zipped keys) none of
+    whose names appear anywhere in the recipe directory cannot be used, and only
+    its first value is kept.  Variables conda-smithy reads itself are kept whole.
+    """
+    zip_keys = conda_build.variants._get_zip_keys(combined_spec)
+    passthru_keys = conda_build.variants._get_passthru_keys(combined_spec, zip_keys)
+    explode_keys = conda_build.variants._get_explode_keys(combined_spec, passthru_keys)
+    dimensions = [(key,) for key in sorted(explode_keys.difference(*zip_keys))] + [
+        tuple(group) for group in zip_keys
+    ]
+
+    recipe_text = None
+    collapsed = None
+    for dimension in dimensions:
+        if not all(
+            isinstance(combined_spec.get(key), (list, tuple))
+            and len(combined_spec[key]) > 1
+            for key in dimension
+        ):
+            continue
+        if _SMITHY_VARIANT_KEYS.intersection(dimension):
+            continue
+        if recipe_text is None:
+            recipe_text = _recipe_dir_text(recipe_dir)
+        if any(
+            name in recipe_text
+            for key in dimension
+            for name in _variable_names_in_text(key)
+        ):
+            continue
+        if collapsed is None:
+            collapsed = copy.copy(combined_spec)
+        for key in dimension:
+            collapsed[key] = list(combined_spec[key][:1])
+        logger.debug("collapsing unused variant dimension %s", dimension)
+    return combined_spec if collapsed is None else collapsed
+
+
 def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     """CFEP-9 variant migrations
 
@@ -1298,6 +1401,10 @@ def _render_ci_provider(
             forge_dir,
             config,
             forge_config,
+        )
+        migrated_combined_variant_spec = _collapse_unreferenced_variant_dimensions(
+            migrated_combined_variant_spec,
+            os.path.join(forge_dir, forge_config["recipe_dir"]),
         )
 
         # AFAIK there is no way to get conda build to ignore the CBC yaml
