@@ -1,0 +1,96 @@
+{%- raw -%}
+"""Sign a CEP-27 publish attestation for every uploaded package.
+
+Reads the attest-subjects-*.json files that conda-forge-ci-setup writes after
+each upload (`[{"name", "sha256", "target_channel"}]`), signs one Sigstore
+attestation per package with the OIDC identity of this GitHub Actions job,
+and stores it in the GitHub attestation API of the repository, where it can
+be looked up by the package's SHA-256.
+
+Usage: python attest_packages.py <directory with attest-subjects-*.json files>
+"""
+
+import json
+import os
+import sys
+from pathlib import Path
+
+import requests
+from sigstore import dsse
+from sigstore.models import ClientTrustConfig
+from sigstore.oidc import IdentityToken, detect_credential
+from sigstore.sign import SigningContext
+
+PREDICATE_TYPE = "https://schemas.conda.org/attestations-publish-1.schema.json"
+
+
+def read_subjects(directory):
+    subjects = {}
+    for path in sorted(Path(directory).rglob("attest-subjects*.json")):
+        for entry in json.loads(path.read_text()):
+            key = (entry["name"], entry["sha256"], entry["target_channel"])
+            subjects[key] = entry
+    return list(subjects.values())
+
+
+def statement(entry):
+    return (
+        dsse.StatementBuilder()
+        .subjects(
+            [
+                dsse.Subject(
+                    name=entry["name"],
+                    digest=dsse.DigestSet(root={"sha256": entry["sha256"]}),
+                )
+            ]
+        )
+        .predicate_type(PREDICATE_TYPE)
+        .predicate({"targetChannel": entry["target_channel"]})
+        .build()
+    )
+
+
+def store_on_github(bundle):
+    response = requests.post(
+        f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/attestations",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+        json={"bundle": json.loads(bundle.to_json())},
+        timeout=60,
+    )
+    response.raise_for_status()
+    return response.json()["id"]
+
+
+def main(directory):
+    subjects = read_subjects(directory)
+    if not subjects:
+        print("No packages to attest")
+        return 0
+
+    context = SigningContext.from_trust_config(ClientTrustConfig.production())
+    failed = []
+    for entry in subjects:
+        try:
+            # a fresh identity token per package, as they expire quickly
+            with context.signer(IdentityToken(detect_credential())) as signer:
+                bundle = signer.sign_dsse(statement(entry))
+            attestation_id = store_on_github(bundle)
+            print(
+                f"Attested {entry['name']} for {entry['target_channel']}: "
+                f"https://github.com/{os.environ['GITHUB_REPOSITORY']}"
+                f"/attestations/{attestation_id}"
+            )
+        except Exception as e:
+            print(f"Failed to attest {entry['name']}: {e!r}")
+            failed.append(entry["name"])
+
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1]))
+{%- endraw %}

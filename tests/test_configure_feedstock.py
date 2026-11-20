@@ -112,13 +112,14 @@ def test_github_actions_no_attestations_by_default(py_recipe, jinja_env):
     assert "permissions" not in workflow["jobs"]["build"]
     step_ids = [step.get("id") for step in workflow["jobs"]["build"]["steps"]]
     assert "attest-subjects" not in step_ids
+    assert not Path(py_recipe.recipe, ".scripts", "attest_packages.py").exists()
 
 
 def test_github_actions_attest_packages(py_recipe, jinja_env):
     py_recipe.config["github_actions"]["attest_packages"] = True
     workflow = _render_github_workflow(py_recipe, jinja_env)
     jobs = workflow["jobs"]
-    assert set(jobs) == {"build", "attest-plan", "attest"}
+    assert set(jobs) == {"build", "attest"}
 
     # the build job itself gets no extra permissions
     assert "permissions" not in jobs["build"]
@@ -130,26 +131,23 @@ def test_github_actions_attest_packages(py_recipe, jinja_env):
     # the package lists are written by conda-forge-ci-setup after the upload
     assert '"${bld}"/attest-subjects-*.json' in collect["run"]
 
-    assert jobs["attest-plan"]["needs"] == "build"
-    assert jobs["attest-plan"]["continue-on-error"] is True
-
+    # a single job signs all packages
     attest = jobs["attest"]
-    assert attest["needs"] == "attest-plan"
+    assert attest["needs"] == "build"
     assert attest["continue-on-error"] is True
+    assert "strategy" not in attest
     assert attest["permissions"] == {
         "attestations": "write",
         "contents": "read",
         "id-token": "write",
     }
-    (step,) = attest["steps"]
-    assert step["uses"].startswith("actions/attest@")
-    assert step["with"]["predicate-type"] == (
-        "https://schemas.conda.org/attestations-publish-1.schema.json"
+    assert "python .scripts/attest_packages.py attest-subjects" in (
+        attest["steps"][-1]["run"]
     )
-    # the target channel comes from conda-forge-ci-setup, per package
-    assert step["with"]["predicate"] == (
-        '{"targetChannel": "${{ matrix.target_channel }}"}'
-    )
+
+    script = Path(py_recipe.recipe, ".scripts", "attest_packages.py").read_text()
+    compile(script, "attest_packages.py", "exec")
+    assert "https://schemas.conda.org/attestations-publish-1.schema.json" in script
 
 
 def test_channel_sources_not_used_in_ci_support_filename(

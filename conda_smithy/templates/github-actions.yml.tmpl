@@ -389,66 +389,49 @@ jobs:
 
 {%- if github_actions.attest_packages %}
 
-  attest-plan:
-    name: Collect packages to attest
+  attest:
+    name: Attest packages
     needs: build
     # run even if some builds failed, so that every uploaded package is attested
     if: {% raw %}${{ !cancelled() && github.event_name != 'pull_request' }}{% endraw %}
     runs-on: ubuntu-latest
-    continue-on-error: true
-    outputs:
-      subjects: {% raw %}${{ steps.collect.outputs.subjects }}{% endraw %}
-    steps:
-    - name: Download package lists
-      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-      continue-on-error: true
-      with:
-        pattern: attest-subjects-*
-        path: attest-subjects
-
-    - name: Collect packages
-      id: collect
-      shell: bash
-      run: |
-        {%- raw %}
-        # a single artifact is extracted directly into the path, several
-        # artifacts into one subfolder each
-        files=()
-        if [[ -d attest-subjects ]]; then
-          mapfile -t files < <(find attest-subjects -name attest-subjects.json)
-        fi
-        if [[ ${#files[@]} -eq 0 ]]; then
-          echo "subjects=[]" >> "${GITHUB_OUTPUT}"
-          exit 0
-        fi
-        subjects="$(jq -c -s 'add | unique_by([.name, .target_channel])' "${files[@]}")"
-        echo "${subjects}" | jq .
-        echo "subjects=${subjects}" >> "${GITHUB_OUTPUT}"
-        {%- endraw %}
-
-  attest:
-    name: {% raw %}Attest ${{ matrix.name }}{% endraw %}
-    needs: attest-plan
-    if: {% raw %}${{ !cancelled() && needs.attest-plan.outputs.subjects != '' && needs.attest-plan.outputs.subjects != '[]' }}{% endraw %}
-    runs-on: ubuntu-latest
+    # Attestations are best effort and must never fail the workflow.
     continue-on-error: true
     permissions:
       attestations: write
       contents: read
       id-token: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include: {% raw %}${{ fromJSON(needs.attest-plan.outputs.subjects) }}{% endraw %}
     steps:
-    # One attestation per package, as required by CEP-27. The attestation is
-    # stored in the GitHub attestation API of this repository, where channels
-    # can look it up by the package's SHA-256.
-    - name: Attest package
-      uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+    - name: Checkout code
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
-        subject-name: {% raw %}${{ matrix.name }}{% endraw %}
-        subject-digest: {% raw %}sha256:${{ matrix.sha256 }}{% endraw %}
-        predicate-type: https://schemas.conda.org/attestations-publish-1.schema.json
-        predicate: {% raw %}'{"targetChannel": "${{ matrix.target_channel }}"}'{% endraw %}
+        sparse-checkout: .scripts/attest_packages.py
+        sparse-checkout-cone-mode: false
+        persist-credentials: false
+
+    - name: Download package lists
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        pattern: attest-subjects-*
+        path: attest-subjects
+
+    - name: Install pixi
+      uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
+      with:
+        pixi-version: v0.84.2
+        run-install: false
+
+    # One attestation per package, as required by CEP-27, signed with
+    # sigstore-python. They are stored in the GitHub attestation API of this
+    # repository, where channels can look them up by the package's SHA-256.
+    - name: Attest packages
+      env:
+        GITHUB_TOKEN: {% raw %}${{ github.token }}{% endraw %}
+      run: |
+        if [[ ! -d attest-subjects ]]; then
+          echo "No packages to attest"
+          exit 0
+        fi
+        pixi exec --spec python=3.13 --spec sigstore==4.5.1 --spec requests -- \
+          python .scripts/attest_packages.py attest-subjects
 {%- endif %}
