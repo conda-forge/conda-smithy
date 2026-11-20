@@ -279,7 +279,7 @@ class GithubActionsConfig(BaseModel):
         default=False,
         description=cleandoc("""
         Whether to create a Sigstore attestation for every uploaded package,
-        using sigstore-python in a single job. The attestations follow CEP-27 and
+        using sigstore-python, right after the upload. The attestations follow CEP-27 and
         are stored in the GitHub attestation API of the feedstock, where they
         can be looked up by the SHA-256 of the package. The packages and the
         channel they are published to are read from the

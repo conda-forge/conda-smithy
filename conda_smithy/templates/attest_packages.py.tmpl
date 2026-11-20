@@ -7,7 +7,7 @@ attestation per package with the OIDC identity of this GitHub Actions job,
 and stores it in the GitHub attestation API of the repository, where it can
 be looked up by the package's SHA-256.
 
-Usage: python attest_packages.py <directory with attest-subjects-*.json files>
+Usage: python attest_packages.py <build folder>
 """
 
 import json
@@ -25,11 +25,14 @@ PREDICATE_TYPE = "https://schemas.conda.org/attestations-publish-1.schema.json"
 
 
 def read_subjects(directory):
+    """Read and remove the package lists, so a reused runner does not attest
+    the same packages again."""
     subjects = {}
-    for path in sorted(Path(directory).rglob("attest-subjects*.json")):
+    for path in sorted(Path(directory).expanduser().glob("attest-subjects-*.json")):
         for entry in json.loads(path.read_text()):
             key = (entry["name"], entry["sha256"], entry["target_channel"])
             subjects[key] = entry
+        path.unlink()
     return list(subjects.values())
 
 

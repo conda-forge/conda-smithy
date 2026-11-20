@@ -119,31 +119,22 @@ def test_github_actions_attest_packages(py_recipe, jinja_env):
     py_recipe.config["github_actions"]["attest_packages"] = True
     workflow = _render_github_workflow(py_recipe, jinja_env)
     jobs = workflow["jobs"]
-    assert set(jobs) == {"build", "attest"}
-
-    # the build job itself gets no extra permissions
-    assert "permissions" not in jobs["build"]
-    (collect,) = [
-        step for step in jobs["build"]["steps"] if step.get("id") == "attest-subjects"
-    ]
-    assert collect["continue-on-error"] is True
-    assert "github.event_name != 'pull_request'" in collect["if"]
-    # the package lists are written by conda-forge-ci-setup after the upload
-    assert '"${bld}"/attest-subjects-*.json' in collect["run"]
-
-    # a single job signs all packages
-    attest = jobs["attest"]
-    assert attest["needs"] == "build"
-    assert attest["continue-on-error"] is True
-    assert "strategy" not in attest
-    assert attest["permissions"] == {
+    # the packages are attested in the build job, right after the upload
+    assert set(jobs) == {"build"}
+    build = jobs["build"]
+    assert build["permissions"] == {
         "attestations": "write",
         "contents": "read",
         "id-token": "write",
     }
-    assert "python .scripts/attest_packages.py attest-subjects" in (
-        attest["steps"][-1]["run"]
-    )
+    (attest,) = [
+        step for step in build["steps"] if step.get("name") == "Attest uploaded packages"
+    ]
+    assert attest["continue-on-error"] is True
+    assert "github.event_name != 'pull_request'" in attest["if"]
+    assert "matrix.UPLOAD_PACKAGES" in attest["if"]
+    assert "python .scripts/attest_packages.py" in attest["run"]
+    assert "${{ matrix.build_workspace_dir }}" in attest["run"]
 
     script = Path(py_recipe.recipe, ".scripts", "attest_packages.py").read_text()
     compile(script, "attest_packages.py", "exec")
