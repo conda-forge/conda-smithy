@@ -56,11 +56,14 @@ def generate_feedstock_content(
     forge_yml = default_feedstock_config_path(target_directory)
     yaml = YAML()
     if not os.path.exists(forge_yml):
+        # Seed new feedstocks without changing the defaults used to rerender existing ones.
+        config: dict[str, object] = {
+            "provider": {"osx_64": None, "osx_arm64": "default"}
+        }
+        if conda_build_tool:
+            config["conda_build_tool"] = conda_build_tool
         with feedstock_io.write_file(forge_yml) as fh:
-            if conda_build_tool:
-                yaml.dump({"conda_build_tool": conda_build_tool}, fh)
-            else:
-                fh.write("{}")
+            yaml.dump(config, fh)
 
     # merge in the existing configuration in the source recipe directory
     forge_yml_recipe = os.path.join(source_recipe_dir, "conda-forge.yml")
