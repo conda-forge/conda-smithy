@@ -44,6 +44,13 @@ jobs:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
     runs-on: {% raw %}${{ matrix.runs_on }}{% endraw %}
     timeout-minutes: {{ github_actions.timeout_minutes }}
+{%- if github_actions.attest_packages %}
+    permissions:
+      # sign and store attestations for the uploaded packages
+      attestations: write
+      contents: read
+      id-token: write
+{%- endif %}
     strategy:
       fail-fast: false
       {%- if github_actions.max_parallel %}
@@ -252,6 +259,32 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
+{%- if github_actions.attest_packages %}
+
+    - name: Install pixi for attestations
+      if: {% raw %}${{ matrix.UPLOAD_PACKAGES && github.event_name != 'pull_request'{% endraw %}{% if upload_on_branch %} && github.ref_name == '{{ upload_on_branch }}'{% endif %} }}
+      # Attestations are best effort and must never fail the build.
+      continue-on-error: true
+      uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
+      with:
+        pixi-version: v0.84.2
+        run-install: false
+
+    # conda-forge-ci-setup writes an attest-subjects-<time>.json file into the
+    # build folder after each copy request to conda-forge. The folder is
+    # mounted into docker, so the files are visible here. The script signs one
+    # CEP-27 attestation per package and stores it in the GitHub attestation
+    # API of this repository, where channels can look it up by SHA-256.
+    - name: Attest uploaded packages
+      if: {% raw %}${{ matrix.UPLOAD_PACKAGES && github.event_name != 'pull_request'{% endraw %}{% if upload_on_branch %} && github.ref_name == '{{ upload_on_branch }}'{% endif %} }}
+      continue-on-error: true
+      shell: bash
+      env:
+        GITHUB_TOKEN: {% raw %}${{ github.token }}{% endraw %}
+      run: >-
+        pixi exec --spec python=3.13 --spec sigstore==4.5.1 --spec requests --
+        python .scripts/attest_packages.py "{% raw %}${{ matrix.build_workspace_dir }}{% endraw %}"
+{%- endif %}
 {%- if vars.store_build_artifacts %}
 
     - name: Determine build outcome
@@ -344,3 +377,5 @@ jobs:
         archive: false
       continue-on-error: true
 {%- endif %}
+
+

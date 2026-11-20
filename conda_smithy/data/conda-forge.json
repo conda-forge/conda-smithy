@@ -791,6 +791,19 @@
           "description": "The number of days to retain artifacts",
           "title": "Artifact Retention Days"
         },
+        "attest_packages": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": false,
+          "description": "Whether to create a Sigstore attestation for every uploaded package,\nusing sigstore-python, right after the upload. The attestations follow CEP-27 and\nare stored in the GitHub attestation API of the feedstock, where they\ncan be looked up by the SHA-256 of the package. The packages and the\nchannel they are published to are read from the\n`attest-subjects-*.json` files that conda-forge-ci-setup (4.34.0 or\nnewer) writes into the build folder after the upload.",
+          "title": "Attest Packages"
+        },
         "cancel_in_progress": {
           "anyOf": [
             {

@@ -255,6 +255,8 @@ ALL_EXECUTABLE_FILES = EXECUTABLE_TEMPLATES + [
     "build-locally.py",
 ]
 
+ATTEST_PACKAGES_SCRIPT = ".scripts/attest_packages.py"
+
 NON_EXECUTABLE_SUPPORT_FILES = [
     ".gitattributes",
     ".gitignore",
@@ -1799,6 +1801,14 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
             os.path.join(conda_forge_content, "feedstock_content", rel_path),
             target_path,
         )
+    elif platforms and forge_config["github_actions"].get("attest_packages"):
+        # run by the attest job of the workflow
+        _render_template_files(
+            forge_config=forge_config,
+            jinja_env=jinja_env,
+            template_files=[ATTEST_PACKAGES_SCRIPT],
+            forge_dir=forge_dir,
+        )
     return config
 
 
@@ -2825,6 +2835,7 @@ def clear_scripts(forge_dir):
             "create_pagefile.sh",
             "SetPageFileSize.ps1",
             "free_disk_space.sh",
+            os.path.basename(ATTEST_PACKAGES_SCRIPT),
         ]:
             remove_file(os.path.join(forge_dir, folder, old_file))
 

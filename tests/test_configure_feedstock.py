@@ -95,6 +95,52 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     )
 
 
+def _render_github_workflow(recipe, jinja_env):
+    recipe.config["provider"]["linux"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=recipe.config,
+        forge_dir=recipe.recipe,
+    )
+    workflow = Path(recipe.recipe, ".github", "workflows", "conda-build.yml")
+    return yaml.safe_load(workflow.read_text())
+
+
+def test_github_actions_no_attestations_by_default(py_recipe, jinja_env):
+    workflow = _render_github_workflow(py_recipe, jinja_env)
+    assert set(workflow["jobs"]) == {"build"}
+    assert "permissions" not in workflow["jobs"]["build"]
+    step_ids = [step.get("id") for step in workflow["jobs"]["build"]["steps"]]
+    assert "attest-subjects" not in step_ids
+    assert not Path(py_recipe.recipe, ".scripts", "attest_packages.py").exists()
+
+
+def test_github_actions_attest_packages(py_recipe, jinja_env):
+    py_recipe.config["github_actions"]["attest_packages"] = True
+    workflow = _render_github_workflow(py_recipe, jinja_env)
+    jobs = workflow["jobs"]
+    # the packages are attested in the build job, right after the upload
+    assert set(jobs) == {"build"}
+    build = jobs["build"]
+    assert build["permissions"] == {
+        "attestations": "write",
+        "contents": "read",
+        "id-token": "write",
+    }
+    (attest,) = [
+        step for step in build["steps"] if step.get("name") == "Attest uploaded packages"
+    ]
+    assert attest["continue-on-error"] is True
+    assert "github.event_name != 'pull_request'" in attest["if"]
+    assert "matrix.UPLOAD_PACKAGES" in attest["if"]
+    assert "python .scripts/attest_packages.py" in attest["run"]
+    assert "${{ matrix.build_workspace_dir }}" in attest["run"]
+
+    script = Path(py_recipe.recipe, ".scripts", "attest_packages.py").read_text()
+    compile(script, "attest_packages.py", "exec")
+    assert "https://schemas.conda.org/attestations-publish-1.schema.json" in script
+
+
 def test_channel_sources_not_used_in_ci_support_filename(
     recipe_migration_with_channel_sources, jinja_env
 ):
