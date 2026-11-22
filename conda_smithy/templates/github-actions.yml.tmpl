@@ -278,10 +278,9 @@ jobs:
           echo "No packages to attest"
           exit 0
         fi
-        jq -s 'add' "${files[@]}" > attest-subjects.json
-        # remove them, so that a runner that is reused does not attest them again
-        rm -f "${files[@]}"
-        cat attest-subjects.json
+        # move them, so that a runner that is reused does not attest them again
+        mkdir -p attest-subjects
+        mv "${files[@]}" attest-subjects/
         echo "found=true" >> "${GITHUB_OUTPUT}"
         {%- endraw %}
 
@@ -291,7 +290,7 @@ jobs:
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: {% raw %}attest-subjects-${{ matrix.CONFIG }}{% endraw %}
-        path: attest-subjects.json
+        path: attest-subjects/
         retention-days: 1
 {%- endif %}
 {%- if vars.store_build_artifacts %}

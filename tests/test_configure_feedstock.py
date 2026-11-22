@@ -130,6 +130,7 @@ def test_github_actions_attest_packages(py_recipe, jinja_env):
     assert "github.event_name != 'pull_request'" in collect["if"]
     # the package lists are written by conda-forge-ci-setup after the upload
     assert '"${bld}"/attest-subjects-*.json' in collect["run"]
+    assert "jq" not in collect["run"]
 
     # a single job signs all packages
     attest = jobs["attest"]
