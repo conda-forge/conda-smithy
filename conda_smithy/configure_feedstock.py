@@ -77,6 +77,10 @@ conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 logger = logging.getLogger(__name__)
 
+# MPI implementations selected via the `mpi` variant; future MPI variants have
+# to be added here
+_MPI_VARIANT_KEYS = ("mpich", "openmpi", "msmpi", "mpi_serial", "impi")
+
 # feedstocks listed here are allowed to use GHA on
 # conda-forge
 # this should solve issues where other CI providers have too many
@@ -693,7 +697,7 @@ def _collapse_subpackage_variants(
         # smithy CI support scripts
         # future MPI variants have to be added here
         if "mpi" in all_used_vars:
-            all_used_vars.update(["mpich", "openmpi", "msmpi", "mpi_serial", "impi"])
+            all_used_vars.update(_MPI_VARIANT_KEYS)
         all_variants.update(HashableDict(v) for v in meta.config.variants)
 
         all_variants.add(HashableDict(meta.config.variant))
@@ -1122,6 +1126,134 @@ def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     return combined_spec
 
 
+# Variant keys which are consumed by conda-build or conda-smithy itself rather
+# than through the recipe, so they must never be collapsed.
+_NEVER_COLLAPSE_VARIANT_KEYS = frozenset(
+    {
+        "zip_keys",
+        "pin_run_as_build",
+        "extend_keys",
+        "ignore_version",
+        "ignore_build_only_deps",
+        "target_platform",
+        "channel_sources",
+        "channel_targets",
+        "docker_image",
+        "build_number_decrement",
+        "github_actions_labels",
+        "MACOSX_DEPLOYMENT_TARGET",
+        "MACOSX_SDK_VERSION",
+        "macos_min_version",
+        "macos_machine",
+        "CONDA_BUILD_SYSROOT",
+    }
+)
+
+
+def _read_recipe_text_for_variant_scan(recipe_dir):
+    """Concatenate every file that conda-build may search for used variables.
+
+    This is every file below the recipe directory (following symlinks) except
+    the recipe's own conda_build_config.yaml, plus any output ``script:``
+    referenced by the recipe, which may live outside the recipe directory.
+    """
+
+    def _read(path):
+        try:
+            with open(path, "rb") as fh:
+                return fh.read().decode("utf-8", errors="ignore")
+        except OSError:
+            # e.g. dangling symlinks: conda-build cannot use these either
+            return ""
+
+    chunks = []
+    seen_dirs = set()
+    for root, dirs, files in os.walk(recipe_dir, followlinks=True):
+        real_root = os.path.realpath(root)
+        if real_root in seen_dirs:
+            # avoid symlink loops
+            dirs.clear()
+            continue
+        seen_dirs.add(real_root)
+        for fn in files:
+            if fn.startswith("conda_build_config.yaml"):
+                continue
+            chunks.append(_read(os.path.join(root, fn)))
+
+    for match in re.finditer(
+        r"^\s*script:\s*['\"]?([^\s'\"#]+\.(?:sh|bat))",
+        "\n".join(chunks),
+        flags=re.MULTILINE,
+    ):
+        script_path = os.path.join(recipe_dir, match.group(1))
+        if os.path.isfile(script_path):
+            chunks.append(_read(script_path))
+    return "\n".join(chunks)
+
+
+def _collapse_unused_variant_keys(combined_spec, recipe_dir):
+    """Reduce multi-valued variant keys that the recipe cannot use to a single value.
+
+    conda-build explodes the full cartesian product of every key in the
+    combined spec before discarding the keys a recipe does not use. With the
+    global pinning containing many multi-valued keys (e.g. ``geant4``,
+    ``root_base``, ``hip_compiler_version``) this produces tens of thousands
+    of variants per platform, even for recipes which only use a couple of keys.
+
+    conda-build only considers a key used if its name (with ``-`` read as
+    ``_``) appears in the recipe or its build scripts, or via the
+    ``compiler()``, ``stdlib()`` and ``cdt()`` jinja functions. A plain
+    substring search over all files in the recipe directory is therefore a
+    conservative superset: keys that fail it cannot affect the render, so
+    keeping only their first value leaves the result unchanged.
+    """
+    zip_keys = combined_spec.get("zip_keys") or []
+    if zip_keys and isinstance(zip_keys[0], str):
+        zip_keys = [zip_keys]
+    never_collapse = _NEVER_COLLAPSE_VARIANT_KEYS | set(
+        combined_spec.get("extend_keys") or []
+    )
+    candidates = {
+        key
+        for key, value in combined_spec.items()
+        if key not in never_collapse and isinstance(value, list) and len(value) > 1
+    }
+    if not candidates:
+        return combined_spec
+
+    text = _read_recipe_text_for_variant_scan(recipe_dir)
+    text_underscored = text.replace("-", "_")
+
+    def _maybe_used(key):
+        if key in text or key in text_underscored:
+            return True
+        target_match = re.match(r"(.*?)_(compiler|stdlib)(_version)?$", key)
+        if target_match and re.search(
+            rf"{target_match.group(2)}\(\s*['\"]{re.escape(target_match.group(1))}['\"]",
+            text,
+        ):
+            return True
+        return key.startswith("cdt_") and "cdt(" in text
+
+    unused = {key for key in candidates if not _maybe_used(key)}
+    # _collapse_subpackage_variants treats these as used whenever mpi is
+    if _maybe_used("mpi"):
+        unused.difference_update(_MPI_VARIANT_KEYS)
+    # zipped keys must keep equal lengths, so only collapse a zip group if
+    # none of its members can be used
+    for group in zip_keys:
+        if not all(key in unused for key in group if key in combined_spec):
+            unused.difference_update(group)
+    if not unused:
+        return combined_spec
+
+    logger.debug("Collapsing unused variant keys: %s", sorted(unused))
+    collapsed = copy.copy(combined_spec)
+    for key in unused:
+        collapsed[key] = collapsed[key][:1]
+    return collapsed
+
+
 def _conda_build_api_render_for_smithy(
     recipe_path,
     config=None,
@@ -1328,12 +1460,15 @@ def _render_ci_provider(
                     channel_urls=channel_sources,
                 )
             else:
+                recipe_dir = os.path.join(forge_dir, forge_config["recipe_dir"])
                 metas = _conda_build_api_render_for_smithy(
-                    os.path.join(forge_dir, forge_config["recipe_dir"]),
+                    recipe_dir,
                     platform=platform,
                     arch=arch,
                     ignore_system_variants=True,
-                    variants=migrated_combined_variant_spec,
+                    variants=_collapse_unused_variant_keys(
+                        migrated_combined_variant_spec, recipe_dir
+                    ),
                     permit_undefined_jinja=True,
                     finalize=False,
                     bypass_env_check=True,

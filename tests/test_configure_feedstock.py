@@ -3647,3 +3647,175 @@ def test_vm_image_gha(py_recipe, jinja_env, override: bool, label: str | None):
     assert {
         "_".join(v["CONFIG"].split("_", 2)[:2]): v["runs_on"] for v in matrix
     } == expected
+
+
+def test_collapse_unused_variant_keys(tmp_path):
+    recipe_dir = tmp_path / "recipe"
+    recipe_dir.mkdir()
+    (recipe_dir / "meta.yaml").write_text(textwrap.dedent("""
+            requirements:
+              build:
+                - {{ compiler('c') }}
+                - {{ stdlib('c') }}
+              host:
+                - python
+                - libarrow-all
+            """))
+    (recipe_dir / "build.sh").write_text("echo ${openjdk}\n")
+    # keys only mentioned in the recipe's own conda_build_config.yaml are not used
+    (recipe_dir / "conda_build_config.yaml").write_text("geant4:\n  - 11\n")
+
+    spec = {
+        "python": ["3.11", "3.12"],
+        "is_python_min": ["true", "false"],
+        "openjdk": ["17", "21"],
+        "libarrow_all": ["20", "21"],
+        "c_compiler_version": ["13", "14"],
+        "c_stdlib_version": ["2.17", "2.28"],
+        "geant4": ["10.7", "11.3"],
+        "clhep": ["2.4.4", "2.4.7"],
+        "root_base": ["6.36", "6.38"],
+        "hip_compiler_version": ["None", "7.2"],
+        "docker_image": ["a", "b"],
+        "cuda_compiler_version": ["None", "12.9"],
+        "nodejs": ["20", "22"],
+        "target_platform": ["linux-64"],
+        "zip_keys": [
+            ["python", "is_python_min"],
+            ["geant4", "clhep"],
+            ["cuda_compiler_version", "docker_image"],
+        ],
+    }
+    collapsed = configure_feedstock._collapse_unused_variant_keys(spec, recipe_dir)
+
+    for key in (
+        "python",
+        "is_python_min",
+        "openjdk",
+        "libarrow_all",
+        "c_compiler_version",
+        "c_stdlib_version",
+        # zipped with docker_image, which is never collapsed
+        "cuda_compiler_version",
+        "docker_image",
+    ):
+        assert collapsed[key] == spec[key], key
+    for key in ("geant4", "clhep", "root_base", "hip_compiler_version", "nodejs"):
+        assert collapsed[key] == spec[key][:1], key
+    assert collapsed["zip_keys"] == spec["zip_keys"]
+    # the input is not modified
+    assert spec["nodejs"] == ["20", "22"]
+
+
+def test_collapse_unused_variant_keys_edge_cases(tmp_path):
+    recipe_dir = tmp_path / "recipe"
+    recipe_dir.mkdir()
+    (recipe_dir / "meta.yaml").write_text(textwrap.dedent("""
+            outputs:
+              - name: lib
+                script: ../build_lib.sh
+            requirements:
+              host:
+                - {{ mpi }}
+            """))
+    # used only from an output script outside the recipe directory
+    (tmp_path / "build_lib.sh").write_text("echo ${outside_key}\n")
+    # used only from a script in a symlinked directory
+    scripts_dir = tmp_path / "scripts"
+    scripts_dir.mkdir()
+    (scripts_dir / "helper.sh").write_text("echo ${symlinked_key}\n")
+    (recipe_dir / "scripts").symlink_to(scripts_dir, target_is_directory=True)
+    # dangling symlinks and symlink loops must not break the scan
+    (recipe_dir / "missing.patch").symlink_to(tmp_path / "does-not-exist")
+    (recipe_dir / "loop").symlink_to(recipe_dir, target_is_directory=True)
+
+    spec = {
+        "mpi": ["openmpi", "mpich"],
+        "openmpi": ["4", "5"],
+        "mpich": ["4.1", "4.2"],
+        "outside_key": ["1", "2"],
+        "symlinked_key": ["1", "2"],
+        "nodejs": ["20", "22"],
+    }
+    collapsed = configure_feedstock._collapse_unused_variant_keys(spec, recipe_dir)
+
+    for key in ("mpi", "openmpi", "mpich", "outside_key", "symlinked_key"):
+        assert collapsed[key] == spec[key], key
+    assert collapsed["nodejs"] == ["20"]
+
+
+@pytest.mark.parametrize(
+    "recipe_fixture",
+    [
+        "py_recipe",
+        "r_recipe",
+        "stdlib_recipe",
+        "cuda_enabled_recipe",
+        "recipe_migration_cfep9",
+        "noarch_recipe",
+    ],
+)
+def test_collapse_unused_variant_keys_keeps_rendered_configs(
+    config_yaml, recipe_fixture, jinja_env, request, monkeypatch
+):
+    if config_yaml.type != "conda-build":
+        pytest.skip("only the conda-build path collapses variant keys")
+    recipe = request.getfixturevalue(recipe_fixture)
+
+    # Move the pinning out of the recipe directory so that its keys are not
+    # trivially found by the recipe scan, and add keys the recipe never uses.
+    pinning = Path(recipe.recipe, "pinning.yaml")
+    shutil.move(recipe.config["exclusive_config_file"], pinning)
+    with pinning.open("a") as fh:
+        fh.write(textwrap.dedent("""
+                unused_key:
+                  - a
+                  - b
+                another_unused_key:
+                  - x
+                  - y
+                  - z
+                """))
+    recipe.config["exclusive_config_file"] = str(pinning)
+
+    original = configure_feedstock._collapse_unused_variant_keys
+    n_collapsed = []
+
+    def _spy(combined_spec, recipe_dir):
+        result = original(combined_spec, recipe_dir)
+        n_collapsed.append(
+            sum(
+                len(result[k]) != len(v)
+                for k, v in combined_spec.items()
+                if isinstance(v, list)
+            )
+        )
+        return result
+
+    def _render():
+        ci_support = Path(recipe.recipe, ".ci_support")
+        shutil.rmtree(ci_support, ignore_errors=True)
+        for render in (
+            configure_feedstock.render_azure,
+            configure_feedstock.render_github_actions,
+        ):
+            render(
+                jinja_env=jinja_env,
+                forge_config=copy.deepcopy(recipe.config),
+                forge_dir=recipe.recipe,
+            )
+        return {p.name: p.read_text() for p in ci_support.glob("*.yaml")}
+
+    monkeypatch.setattr(configure_feedstock, "_collapse_unused_variant_keys", _spy)
+    with_collapse = _render()
+    assert any(n_collapsed), "expected some variant keys to be collapsed"
+
+    monkeypatch.setattr(
+        configure_feedstock,
+        "_collapse_unused_variant_keys",
+        lambda combined_spec, recipe_dir: combined_spec,
+    )
+    without_collapse = _render()
+
+    assert with_collapse
+    assert with_collapse == without_collapse
