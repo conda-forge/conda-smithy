@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Import the GitHub, Cirun and linter modules only in the commands that use them, so ``conda smithy rerender`` starts faster. (#TBD)
+* Import the GitHub, Cirun and linter modules only in the commands that use them, so ``conda smithy rerender`` starts faster. (#2751)
 
 **Deprecated:**
 
