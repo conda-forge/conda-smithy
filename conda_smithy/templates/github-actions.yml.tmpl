@@ -425,5 +425,5 @@ jobs:
           echo "No packages to attest"
           exit 0
         fi
-        pixi exec -s "conda-forge-ci-setup>=4.34" -s "sigstore>=4.5.1,<5" -- attest_packages attest-subjects
+        pixi exec -s "conda-forge-ci-setup>=4.34" -- attest_packages attest-subjects
 {%- endif %}
