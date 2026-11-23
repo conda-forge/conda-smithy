@@ -112,7 +112,6 @@ def test_github_actions_no_attestations_by_default(py_recipe, jinja_env):
     assert "permissions" not in workflow["jobs"]["build"]
     step_ids = [step.get("id") for step in workflow["jobs"]["build"]["steps"]]
     assert "attest-subjects" not in step_ids
-    assert not Path(py_recipe.recipe, ".scripts", "attest_packages.py").exists()
 
 
 def test_github_actions_attest_packages(py_recipe, jinja_env):
@@ -142,14 +141,11 @@ def test_github_actions_attest_packages(py_recipe, jinja_env):
         "contents": "read",
         "id-token": "write",
     }
-    assert "pixi run --script .scripts/attest_packages.py attest-subjects" in (
-        attest["steps"][-1]["run"]
-    )
-
-    script = Path(py_recipe.recipe, ".scripts", "attest_packages.py").read_text()
-    compile(script, "attest_packages.py", "exec")
-    assert script.startswith("# /// script\n")
-    assert "https://schemas.conda.org/attestations-publish-1.schema.json" in script
+    # signing is done by conda-forge-ci-setup, no script in the feedstock
+    assert "attest_packages attest-subjects" in attest["steps"][-1]["run"]
+    assert "conda-forge-ci-setup" in attest["steps"][-1]["run"]
+    assert not any("actions/checkout" in step.get("uses", "") for step in attest["steps"])
+    assert not Path(py_recipe.recipe, ".scripts", "attest_packages.py").exists()
 
 
 def test_channel_sources_not_used_in_ci_support_filename(

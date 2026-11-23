@@ -401,20 +401,12 @@ jobs:
       contents: read
       id-token: write
     steps:
-    - name: Checkout code
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      with:
-        sparse-checkout: .scripts/attest_packages.py
-        sparse-checkout-cone-mode: false
-        persist-credentials: false
-
     - name: Download package lists
       uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         pattern: attest-subjects-*
         path: attest-subjects
 
-    # pixi 0.80 or newer can run a script with PEP 723 metadata
     - name: Install pixi
       uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
       with:
@@ -422,8 +414,9 @@ jobs:
         run-install: false
 
     # One attestation per package, as required by CEP-27, signed with
-    # sigstore-python. They are stored in the GitHub attestation API of this
-    # repository, where channels can look them up by the package's SHA-256.
+    # sigstore-python by the attest_packages command of conda-forge-ci-setup.
+    # They are stored in the GitHub attestation API of this repository, where
+    # channels can look them up by the package's SHA-256.
     - name: Attest packages
       env:
         GITHUB_TOKEN: {% raw %}${{ github.token }}{% endraw %}
@@ -432,5 +425,5 @@ jobs:
           echo "No packages to attest"
           exit 0
         fi
-        pixi run --script .scripts/attest_packages.py attest-subjects
+        pixi exec -s "conda-forge-ci-setup>=4.34" -s "sigstore>=4.5.1,<5" -- attest_packages attest-subjects
 {%- endif %}
