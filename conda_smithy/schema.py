@@ -62,6 +62,7 @@ class CIservices(StrEnum):
 
 
 class Lints(StrEnum):
+    LINT_CHECK_USAGE_OF_WHLS = "lint_check_usage_of_whls"
     LINT_NOARCH_SELECTORS = "lint_noarch_selectors"
     LINT_STDLIB = "lint_stdlib"
     HINT_OS_VERSION = "hint_os_version"
