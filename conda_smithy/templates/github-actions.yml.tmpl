@@ -39,6 +39,16 @@ concurrency:
   cancel-in-progress: true
 {%- endif %}
 
+{%- if github_actions.attest_packages %}
+# conda-forge-ci-setup signs a CEP-27 attestation for every package right
+# after it is uploaded to conda-forge, with the OIDC identity of this workflow,
+# and stores it in the GitHub attestation API of this repository.
+permissions:
+  attestations: write
+  contents: read
+  id-token: write
+{%- endif %}
+
 jobs:
   build:
     name: {% raw %}${{ matrix.CONFIG }}{% endraw %}
@@ -140,6 +150,10 @@ jobs:
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
+{%- if github_actions.attest_packages %}
+        # to store the attestations, see the permissions above
+        GITHUB_TOKEN: {% raw %}${{ github.event_name != 'pull_request' && github.token || '' }}{% endraw %}
+{%- endif %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
@@ -173,6 +187,10 @@ jobs:
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
+{%- if github_actions.attest_packages %}
+        # to store the attestations, see the permissions above
+        GITHUB_TOKEN: {% raw %}${{ github.event_name != 'pull_request' && github.token || '' }}{% endraw %}
+{%- endif %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
@@ -249,6 +267,10 @@ jobs:
         UPLOAD_PACKAGES: {% raw %}${{ matrix.UPLOAD_PACKAGES }}{% endraw %}
         RATTLER_BUILD_COLOR: always
         RATTLER_BUILD_ENABLE_GITHUB_INTEGRATION: 'true'
+{%- if github_actions.attest_packages %}
+        # to store the attestations, see the permissions above
+        GITHUB_TOKEN: {% raw %}${{ github.event_name != 'pull_request' && github.token || '' }}{% endraw %}
+{%- endif %}
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}

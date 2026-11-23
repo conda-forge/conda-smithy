@@ -77,6 +77,7 @@ github:
   user_or_org: conda-forge
 github_actions:
   artifact_retention_days: 14
+  attest_packages: false
   cancel_in_progress: true
   free_disk_space: false
   max_parallel: 50

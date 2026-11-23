@@ -131,6 +131,12 @@ ${DOCKER_EXECUTABLE} run ${DOCKER_RUN_ARGS} \
            -e flow_run_id \
            -e remote_url \
            -e sha \
+{%- if github_actions.attest_packages %}
+           -e ACTIONS_ID_TOKEN_REQUEST_TOKEN \
+           -e ACTIONS_ID_TOKEN_REQUEST_URL \
+           -e GITHUB_REPOSITORY \
+           -e GITHUB_TOKEN \
+{%- endif %}
 {%- for secret in secrets %}
            -e {{ secret }} \
 {%- endfor %}
