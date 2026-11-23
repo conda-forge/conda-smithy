@@ -142,12 +142,13 @@ def test_github_actions_attest_packages(py_recipe, jinja_env):
         "contents": "read",
         "id-token": "write",
     }
-    assert "python .scripts/attest_packages.py attest-subjects" in (
+    assert "pixi run --script .scripts/attest_packages.py attest-subjects" in (
         attest["steps"][-1]["run"]
     )
 
     script = Path(py_recipe.recipe, ".scripts", "attest_packages.py").read_text()
     compile(script, "attest_packages.py", "exec")
+    assert script.startswith("# /// script\n")
     assert "https://schemas.conda.org/attestations-publish-1.schema.json" in script
 
 

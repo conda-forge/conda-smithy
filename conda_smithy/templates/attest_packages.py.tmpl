@@ -1,4 +1,14 @@
 {%- raw -%}
+# /// script
+# requires-python = ">=3.11"
+#
+# [tool.pixi.workspace]
+# channels = ["conda-forge"]
+#
+# [tool.pixi.dependencies]
+# requests = "*"
+# sigstore = ">=4.5.1,<5"
+# ///
 """Sign a CEP-27 publish attestation for every uploaded package.
 
 Reads the attest-subjects-*.json files that conda-forge-ci-setup writes after
@@ -7,7 +17,19 @@ attestation per package with the OIDC identity of this GitHub Actions job,
 and stores it in the GitHub attestation API of the repository, where it can
 be looked up by the package's SHA-256.
 
-Usage: python attest_packages.py <directory with attest-subjects-*.json files>
+It only runs in GitHub Actions, in a job with the `id-token: write` and
+`attestations: write` permissions, and reads these environment variables:
+
+- `GITHUB_ACTIONS`: set by GitHub Actions; the script refuses to run without it.
+- `ACTIONS_ID_TOKEN_REQUEST_URL` and `ACTIONS_ID_TOKEN_REQUEST_TOKEN`: set by
+  GitHub Actions when the job has `id-token: write`; used by sigstore to get
+  the OIDC identity token that the attestations are signed with.
+- `GITHUB_REPOSITORY`: set by GitHub Actions; the repository that the
+  attestations are stored in.
+- `GITHUB_TOKEN`: must be passed by the workflow (`${{ github.token }}`); used
+  to store the attestations.
+
+Usage: pixi run --script attest_packages.py <directory with attest-subjects-*.json files>
 """
 
 import json
@@ -66,13 +88,18 @@ def store_on_github(bundle):
 
 
 def main(directory):
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        print("This script signs with the OIDC identity of a GitHub Actions job")
+        print("and only runs in GitHub Actions.")
+        return 1
+
     subjects = read_subjects(directory)
     if not subjects:
         print("No packages to attest")
         return 0
 
     context = SigningContext.from_trust_config(ClientTrustConfig.production())
-    failed = []
+    failed = 0
     for entry in subjects:
         try:
             # a fresh identity token per package, as they expire quickly
@@ -86,9 +113,9 @@ def main(directory):
             )
         except Exception as e:
             print(f"Failed to attest {entry['name']}: {e!r}")
-            failed.append(entry["name"])
+            failed = 1
 
-    return 1 if failed else 0
+    return failed
 
 
 if __name__ == "__main__":

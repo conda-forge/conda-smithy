@@ -414,6 +414,7 @@ jobs:
         pattern: attest-subjects-*
         path: attest-subjects
 
+    # pixi 0.80 or newer can run a script with PEP 723 metadata
     - name: Install pixi
       uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
       with:
@@ -431,6 +432,5 @@ jobs:
           echo "No packages to attest"
           exit 0
         fi
-        pixi exec --spec python=3.13 --spec sigstore==4.5.1 --spec requests -- \
-          python .scripts/attest_packages.py attest-subjects
+        pixi run --script .scripts/attest_packages.py attest-subjects
 {%- endif %}
