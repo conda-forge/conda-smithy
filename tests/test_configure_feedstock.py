@@ -3649,21 +3649,32 @@ def test_vm_image_gha(py_recipe, jinja_env, override: bool, label: str | None):
     } == expected
 
 
-@pytest.mark.parametrize("main", ["foo-feedstock", "foo-feedstock.git"])
-def test_repo_name_from_linked_worktree(tmp_path, main):
+@pytest.mark.parametrize(
+    ("main", "wt_name"),
+    [
+        ("foo-feedstock", "some-branch"),
+        ("foo-feedstock", "fix-feedstock"),
+        ("foo-feedstock.git", "some-branch"),
+        ("foo-feedstock/.bare", "some-branch"),
+        ("cache.git", "foo-feedstock"),
+    ],
+)
+def test_repo_name_from_linked_worktree(tmp_path, main, wt_name):
     git = ["git", "-c", "user.name=t", "-c", "user.email=t@t"]
     src = tmp_path / "src"
     subprocess.run([*git, "init", "-q", src], check=True)
     subprocess.run(
         [*git, "-C", src, "commit", "-q", "--allow-empty", "-m", "x"], check=True
     )
-    bare = main.endswith(".git")
+    main_path = tmp_path / main
+    bare = main.endswith((".git", "/.bare"))
+    main_path.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run(
-        [*git, "clone", "-q", *(["--bare"] if bare else []), src, tmp_path / main],
+        [*git, "clone", "-q", *(["--bare"] if bare else []), src, main_path],
         check=True,
     )
-    git_dir = tmp_path / main if bare else tmp_path / main / ".git"
-    worktree = tmp_path / "some-branch"
+    git_dir = main_path if bare else main_path / ".git"
+    worktree = tmp_path / wt_name
     subprocess.run(
         [*git, f"--git-dir={git_dir}", "worktree", "add", "-q", "-b", "wt", worktree],
         check=True,
@@ -3672,3 +3683,58 @@ def test_repo_name_from_linked_worktree(tmp_path, main):
 
     config = configure_feedstock._load_forge_config(str(worktree), None)
     assert config["github"]["repo_name"] == "foo-feedstock"
+
+    # A plain feedstock copy (without .git) inside a linked worktree must not
+    # inherit the parent worktree's repository name.
+    nested_copy = worktree / "tmp" / "bar-feedstock"
+    nested_copy.mkdir(parents=True)
+    (nested_copy / "conda-forge.yml").touch()
+    nested_config = configure_feedstock._load_forge_config(str(nested_copy), None)
+    assert nested_config["github"]["repo_name"] == "bar-feedstock"
+
+
+def test_readme_repo_name_webservices_and_worktree(
+    tmp_path_factory, noarch_recipe, jinja_env
+):
+    """Ensure README repo links stay accurate both in webservices-style fresh git
+    copies (no remotes, standalone git init) and in linked git worktrees."""
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t"]
+    src_dir = Path(noarch_recipe.recipe)
+    work_root = tmp_path_factory.mktemp("ws")
+
+    # Simulate conda-forge-feedstock-ops container rerender: copy feedstock files
+    # without .git into <tmpdir>/<repo>-feedstock and run `git init -b main .`
+    ws_dir = work_root / "custom-name-feedstock"
+    shutil.copytree(src_dir, ws_dir, ignore=shutil.ignore_patterns(".git", "prof"))
+    subprocess.run([*git, "-C", ws_dir, "init", "-q", "-b", "main", "."], check=True)
+    subprocess.run([*git, "-C", ws_dir, "add", "."], check=True)
+    subprocess.run([*git, "-C", ws_dir, "commit", "-q", "-m", "initial"], check=True)
+
+    ws_cfg = configure_feedstock._load_forge_config(
+        str(ws_dir), str(ws_dir / "recipe" / "default_config.yaml")
+    )
+    assert ws_cfg["github"]["repo_name"] == "custom-name-feedstock"
+    ws_cfg["azure"]["build_id"] = 1
+    configure_feedstock.render_readme(
+        jinja_env=jinja_env, forge_config=ws_cfg, forge_dir=str(ws_dir)
+    )
+    ws_readme = (ws_dir / "README.md").read_text(encoding="utf-8")
+    assert "https://github.com/conda-forge/custom-name-feedstock/" in ws_readme
+
+    # Linked worktree created from that feedstock must render the same repo_name
+    wt_dir = work_root / "wt-branch"
+    subprocess.run(
+        [*git, "-C", ws_dir, "worktree", "add", "-q", "-b", "wt", wt_dir],
+        check=True,
+    )
+    wt_cfg = configure_feedstock._load_forge_config(
+        str(wt_dir), str(wt_dir / "recipe" / "default_config.yaml")
+    )
+    assert wt_cfg["github"]["repo_name"] == "custom-name-feedstock"
+    wt_cfg["azure"]["build_id"] = 1
+    configure_feedstock.render_readme(
+        jinja_env=jinja_env, forge_config=wt_cfg, forge_dir=str(wt_dir)
+    )
+    wt_readme = (wt_dir / "README.md").read_text(encoding="utf-8")
+    assert "https://github.com/conda-forge/custom-name-feedstock/" in wt_readme
+    assert "wt-branch" not in wt_readme

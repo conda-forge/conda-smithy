@@ -2625,13 +2625,18 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     if not config["github"]["repo_name"]:
         feedstock_name = os.path.basename(forge_dir)
         # a linked worktree's directory name is arbitrary; use the main repository's
-        repo = get_repo(forge_dir)
+        repo = get_repo(forge_dir, search_parent_directories=False)
         if repo and os.path.isfile(commondir := os.path.join(repo.path, "commondir")):
-            with open(commondir) as f:
+            with open(commondir, encoding="utf-8") as f:
                 common = Path(repo.path, f.read().strip()).resolve()
-            feedstock_name = (
-                common.parent.name if common.name == ".git" else common.name
+            main_name = (
+                common.parent.name if common.name.startswith(".") else common.name
             ).removesuffix(".git")
+            if main_name and (
+                main_name.endswith("-feedstock")
+                or not feedstock_name.endswith("-feedstock")
+            ):
+                feedstock_name = main_name
         if not feedstock_name.endswith("-feedstock"):
             feedstock_name += "-feedstock"
         config["github"]["repo_name"] = feedstock_name
