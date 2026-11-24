@@ -3647,3 +3647,28 @@ def test_vm_image_gha(py_recipe, jinja_env, override: bool, label: str | None):
     assert {
         "_".join(v["CONFIG"].split("_", 2)[:2]): v["runs_on"] for v in matrix
     } == expected
+
+
+@pytest.mark.parametrize("main", ["foo-feedstock", "foo-feedstock.git"])
+def test_repo_name_from_linked_worktree(tmp_path, main):
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t"]
+    src = tmp_path / "src"
+    subprocess.run([*git, "init", "-q", src], check=True)
+    subprocess.run(
+        [*git, "-C", src, "commit", "-q", "--allow-empty", "-m", "x"], check=True
+    )
+    bare = main.endswith(".git")
+    subprocess.run(
+        [*git, "clone", "-q", *(["--bare"] if bare else []), src, tmp_path / main],
+        check=True,
+    )
+    git_dir = tmp_path / main if bare else tmp_path / main / ".git"
+    worktree = tmp_path / "some-branch"
+    subprocess.run(
+        [*git, f"--git-dir={git_dir}", "worktree", "add", "-q", "-b", "wt", worktree],
+        check=True,
+    )
+    (worktree / "conda-forge.yml").touch()
+
+    config = configure_feedstock._load_forge_config(str(worktree), None)
+    assert config["github"]["repo_name"] == "foo-feedstock"
