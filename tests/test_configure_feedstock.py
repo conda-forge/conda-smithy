@@ -2799,8 +2799,16 @@ def test_tools_build_paths_azure_old_vars(py_recipe, jinja_env):
             for entry in matrix.values()
         } == expected_values
 
-        assert "MINIFORGE_HOME" not in workflow["jobs"][0]["variables"]
-        assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
+        assert not any(
+            "MINIFORGE_HOME" == vd["name"]
+            for vd in workflow["jobs"][0]["variables"]
+            if "name" in vd
+        )
+        assert not any(
+            "CONDA_BLD_PATH" == vd["name"]
+            for vd in workflow["jobs"][0]["variables"]
+            if "name" in vd
+        )
 
 
 def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env, caplog):
@@ -2868,8 +2876,16 @@ def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env, caplog):
             for entry in matrix.values()
         } == expected_values
 
-        assert "MINIFORGE_HOME" not in workflow["jobs"][0]["variables"]
-        assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
+        assert not any(
+            "MINIFORGE_HOME" == vd["name"]
+            for vd in workflow["jobs"][0]["variables"]
+            if "name" in vd
+        )
+        assert not any(
+            "CONDA_BLD_PATH" == vd["name"]
+            for vd in workflow["jobs"][0]["variables"]
+            if "name" in vd
+        )
 
 
 def test_tools_build_paths_gha_override_tools_dir(py_recipe, jinja_env):
