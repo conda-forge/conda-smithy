@@ -1802,6 +1802,21 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
     return config
 
 
+def _convert_azure_variables_to_list_and_add_groups(azure_settings, groups):
+    variables = azure_settings.get("variables", [])
+
+    # we need to convert to the list format in order to add in groups
+    if isinstance(variables, dict):
+        variables = [{"name": k, "value": v} for k, v in variables.items()]
+
+    # add the groups
+    variables.extend([{"group": name} for name in groups])
+
+    azure_settings["variables"] = variables
+
+    return azure_settings
+
+
 def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     build_setup = _get_build_setup_line(forge_dir, platform, forge_config)
 
@@ -1838,6 +1853,14 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings.pop("install_atl", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
+    variable_groups = azure_settings.pop("variable_groups", []) or []
+    # add default group for conda-forge if we are setting up for conda-forge and
+    # there are not any overrides
+    if (
+        forge_config["azure"]["project_id"] == "84710dde-1620-425b-80d0-4cf5baca359d"
+        and not variable_groups
+    ):
+        variable_groups.append("anaconda-org")
     azure_settings.setdefault("pool", {})
     # If explicit pool name is specified, use that. Otherwise, use the vm image
     # specified in config.
@@ -1887,6 +1910,11 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
             config_rendered["CONFIG_SHORT"] = data["config_name_short"]
         azure_settings["strategy"]["matrix"][data["config_name"]] = config_rendered
         # fmt: on
+
+    # finally handle variable groups
+    azure_settings = _convert_azure_variables_to_list_and_add_groups(
+        azure_settings, variable_groups
+    )
 
     forge_config["azure_yaml"] = yaml.dump(azure_settings)
     _render_template_files(

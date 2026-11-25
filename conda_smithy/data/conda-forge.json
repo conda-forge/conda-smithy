@@ -236,6 +236,23 @@
           "description": "Variables",
           "title": "Variables"
         },
+        "variable_groups": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": [
+            "List of variable groups to use in Azure CI jobs. If empty and the conda-forge azure project ID is being used, then the value `anaconda-org` is automatically used."
+          ],
+          "title": "Variable Groups"
+        },
         "install_atl": {
           "anyOf": [
             {

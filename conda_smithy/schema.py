@@ -107,6 +107,15 @@ class AzureRunnerSettings(BaseModel):
         default_factory=dict, description="Variables"
     )
 
+    variable_groups: Optional[list[str]] = Field(
+        default_factory=list,
+        description=(
+            "List of variable groups to use in Azure CI jobs. "
+            "If empty and the conda-forge azure project ID is being used, "
+            "then the value `anaconda-org` is automatically used.",
+        ),
+    )
+
     # windows only
     install_atl: Optional[bool] = Field(
         default=False, description="Whether to install ATL components for MSVC"
