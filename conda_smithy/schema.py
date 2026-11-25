@@ -110,7 +110,12 @@ class AzureRunnerSettings(BaseModel):
 
     variable_groups: Optional[list[str]] = Field(
         default_factory=lambda: ["anaconda-org"],
-        description="List of variable groups to use in Azure CI jobs.",
+        description=(
+            "List of variable groups to use in Azure CI jobs. "
+            "If you override this list and are using `conda-forge`, "
+            "make sure to add 'anaconda-org' as an entry to ensure "
+            "your packages upload.",
+        ),
     )
 
     # windows only
