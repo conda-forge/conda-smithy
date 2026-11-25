@@ -1059,30 +1059,6 @@ def dump_subspace_config_files(metas, root_path, platform, arch, upload, forge_c
     return sorted(result, key=lambda x: x["config_name"])
 
 
-def _get_fast_finish_script(provider_name, forge_config, forge_dir, fast_finish_text):
-    get_fast_finish_script = ""
-    tooling_branch = forge_config["github"]["tooling_branch_name"]
-
-    cfbs_fpath = os.path.join(
-        forge_dir, forge_config["recipe_dir"], "ff_ci_pr_build.py"
-    )
-    # If the recipe supplies its own ff_ci_pr_build.py script,
-    # we use it instead of the global one.
-    if os.path.exists(cfbs_fpath):
-        get_fast_finish_script += "cat {recipe_dir}/ff_ci_pr_build.py".format(
-            recipe_dir=forge_config["recipe_dir"]
-        )
-    else:
-        get_fast_finish_script += "curl https://raw.githubusercontent.com/conda-forge/conda-forge-ci-setup-feedstock/{branch}/recipe/conda_forge_ci_setup/ff_ci_pr_build.py"  # NOQA
-
-    fast_finish_text = fast_finish_text.format(
-        get_fast_finish_script=get_fast_finish_script.format(branch=tooling_branch)
-    )
-
-    fast_finish_text = fast_finish_text.strip()
-    return fast_finish_text
-
-
 def migrate_combined_spec(combined_spec, forge_dir, config, forge_config):
     """CFEP-9 variant migrations
 
@@ -1207,7 +1183,6 @@ def _render_ci_provider(
     forge_dir,
     platforms,
     archs,
-    fast_finish_text,
     platform_target_path,
     platform_template_file,
     platform_specific_setup,
@@ -1349,7 +1324,7 @@ def _render_ci_provider(
             to_delete = []
             for idx, meta in enumerate(metas):
                 if meta.noarch:
-                    # do not build noarch, including noarch: python, packages on Travis CI.
+                    # do not build noarch, including noarch: python, packages on this provider.
                     to_delete.append(idx)
             for idx in reversed(to_delete):
                 del metas[idx]
@@ -1415,13 +1390,6 @@ def _render_ci_provider(
         forge_config = deepcopy(forge_config)
 
         forge_config["configs"] = configs
-
-        forge_config["fast_finish"] = _get_fast_finish_script(
-            provider_name,
-            forge_dir=forge_dir,
-            forge_config=forge_config,
-            fast_finish_text=fast_finish_text,
-        )
 
         forge_config["local_ci_setup"] = _has_local_ci_setup(forge_dir, forge_config)
 
@@ -1766,7 +1734,6 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
     rel_path = os.path.join(".github", "workflows", "conda-build.yml")
     target_path = os.path.join(forge_dir, rel_path)
     template_filename = "github-actions.yml.tmpl"
-    fast_finish_text = ""
 
     (
         platforms,
@@ -1785,7 +1752,6 @@ def render_github_actions(jinja_env, forge_config, forge_dir, return_metadata=Fa
         forge_dir=forge_dir,
         platforms=platforms,
         archs=archs,
-        fast_finish_text=fast_finish_text,
         platform_target_path=target_path,
         platform_template_file=template_filename,
         platform_specific_setup=_github_actions_specific_setup,
@@ -1929,7 +1895,6 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
 def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
     target_path = os.path.join(forge_dir, "azure-pipelines.yml")
     template_filename = "azure-pipelines.yml.tmpl"
-    fast_finish_text = ""
 
     (
         platforms,
@@ -1948,7 +1913,6 @@ def render_azure(jinja_env, forge_config, forge_dir, return_metadata=False):
         forge_dir=forge_dir,
         platforms=platforms,
         archs=archs,
-        fast_finish_text=fast_finish_text,
         platform_target_path=target_path,
         platform_template_file=template_filename,
         platform_specific_setup=_azure_specific_setup,
