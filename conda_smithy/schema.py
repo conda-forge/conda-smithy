@@ -103,8 +103,12 @@ class AzureRunnerSettings(BaseModel):
         alias="timeoutInMinutes",
     )
 
-    variables: Optional[dict[str, str]] = Field(
-        default_factory=dict, description="Variables"
+    variables: Optional[list[dict[str, str]]] = Field(
+        default_factory=list,
+        description=(
+            "Variables for azure CI jobs. The entry `group: anaconda-org` "
+            "is required for uploads to conda-forge."
+        ),
     )
 
     # windows only
@@ -185,13 +189,22 @@ class AzureConfig(BaseModel):
     ##### Self-hosted runners settings ######
     #########################################
     settings_linux: AzureRunnerSettings = Field(
-        default_factory=lambda: AzureRunnerSettings(swapfile_size="0GiB"),
+        default_factory=lambda: AzureRunnerSettings(
+            swapfile_size="0GiB",
+            variables=[
+                {"group": "anaconda-org"},
+            ],
+        ),
         description="Linux-specific settings for runners",
     )
 
     settings_osx: AzureRunnerSettings = Field(
         # $(VMIMAGE) will be defined in the matrix entries
-        default_factory=lambda: AzureRunnerSettings(),
+        default_factory=lambda: AzureRunnerSettings(
+            variables=[
+                {"group": "anaconda-org"},
+            ],
+        ),
         description="OSX-specific settings for runners",
     )
 
@@ -199,9 +212,13 @@ class AzureConfig(BaseModel):
         default_factory=lambda: AzureRunnerSettings(
             install_atl=False,
             pool={},
-            variables={
-                "UPLOAD_TEMP": "D:\\\\tmp",
-            },
+            variables=[
+                {"group": "anaconda-org"},
+                {
+                    "name": "UPLOAD_TEMP",
+                    "value": "D:\\\\tmp",
+                },
+            ],
         ),
         description=cleandoc("""
             Windows-specific settings for runners. Aside from overriding the `vmImage`,
