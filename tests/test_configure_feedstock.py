@@ -2799,8 +2799,16 @@ def test_tools_build_paths_azure_old_vars(py_recipe, jinja_env):
             for entry in matrix.values()
         } == expected_values
 
-        assert "MINIFORGE_HOME" not in workflow["jobs"][0]["variables"]
-        assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
+        assert not any(
+            "MINIFORGE_HOME" == vd["name"]
+            for vd in workflow["jobs"][0]["variables"]
+            if "name" in vd
+        )
+        assert not any(
+            "CONDA_BLD_PATH" == vd["name"]
+            for vd in workflow["jobs"][0]["variables"]
+            if "name" in vd
+        )
 
 
 def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env, caplog):
@@ -2868,8 +2876,16 @@ def test_tools_build_paths_azure_old_and_new_vars(py_recipe, jinja_env, caplog):
             for entry in matrix.values()
         } == expected_values
 
-        assert "MINIFORGE_HOME" not in workflow["jobs"][0]["variables"]
-        assert "CONDA_BLD_PATH" not in workflow["jobs"][0]["variables"]
+        assert not any(
+            "MINIFORGE_HOME" == vd["name"]
+            for vd in workflow["jobs"][0]["variables"]
+            if "name" in vd
+        )
+        assert not any(
+            "CONDA_BLD_PATH" == vd["name"]
+            for vd in workflow["jobs"][0]["variables"]
+            if "name" in vd
+        )
 
 
 def test_tools_build_paths_gha_override_tools_dir(py_recipe, jinja_env):
@@ -3738,3 +3754,58 @@ def test_readme_repo_name_webservices_and_worktree(
     wt_readme = (wt_dir / "README.md").read_text(encoding="utf-8")
     assert "https://github.com/conda-forge/custom-name-feedstock/" in wt_readme
     assert "wt-branch" not in wt_readme
+
+
+def test_azure_variable_groups(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            azure:
+              settings_win:
+                variable_groups:
+                  - blah-foo-bar
+                  - yak
+              settings_osx:
+                variables:
+                  BLAH: FOO
+                variable_groups:
+                  - dog
+            provider:
+              win_arm64: azure
+              win_64: azure
+              osx_64: azure
+              linux_64: azure
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    expected = {
+        "win": [
+            {"name": "UPLOAD_TEMP", "value": "D:\\\\tmp"},
+            {"group": "blah-foo-bar"},
+            {"group": "yak"},
+        ],
+        "osx": [{"group": "dog"}, {"name": "BLAH", "value": "FOO"}],
+        "linux": [{"group": "anaconda-org"}],
+    }
+
+    for os_name, expected_values in expected.items():
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        variables = workflow["jobs"][0]["variables"]
+        assert len(variables) == len(expected[os_name])
+        for v in expected[os_name]:
+            assert v in variables

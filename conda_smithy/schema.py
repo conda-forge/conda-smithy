@@ -107,6 +107,15 @@ class AzureRunnerSettings(BaseModel):
         default_factory=dict, description="Variables"
     )
 
+    variable_groups: Optional[list[str]] = Field(
+        default_factory=list,
+        description=(
+            "List of variable groups to use in Azure CI jobs. "
+            "If empty and the conda-forge azure project ID is being used, "
+            "then the value `anaconda-org` is automatically used.",
+        ),
+    )
+
     # windows only
     install_atl: Optional[bool] = Field(
         default=False, description="Whether to install ATL components for MSVC"
@@ -940,18 +949,6 @@ class ConfigModel(BaseModel):
         """),
     )
 
-    idle_timeout_minutes: Optional[Union[int, Nullable]] = Field(
-        default=None,
-        description=cleandoc("""
-        Configurable idle timeout. Used for packages that don't have chatty enough
-        builds. Applicable only to circleci and travis.
-
-        ```yaml
-        idle_timeout_minutes: 60
-        ```
-        """),
-    )
-
     noarch_platforms: Optional[Union[Platforms, list[Platforms]]] = Field(
         default_factory=lambda: ["linux_64"],
         description=cleandoc("""
@@ -1337,30 +1334,6 @@ class ConfigModel(BaseModel):
     ###################################
     ####       CI Providers        ####
     ###################################
-    travis: Optional[dict[str, Any]] = Field(
-        default_factory=dict,
-        description=cleandoc("""
-        Travis CI settings. This is usually read-only and should not normally be
-        manually modified. Tools like conda-smithy may modify this, as needed.
-        """),
-    )
-
-    circle: Optional[dict[str, Any]] = Field(
-        default_factory=dict,
-        description=cleandoc("""
-        Circle CI settings. This is usually read-only and should not normally be
-        manually modified. Tools like conda-smithy may modify this, as needed.
-        """),
-    )
-
-    appveyor: Optional[dict[str, Any]] = Field(
-        default_factory=lambda: {"image": "Visual Studio 2017"},
-        description=cleandoc("""
-        AppVeyor CI settings. This is usually read-only and should not normally be
-        manually modified. Tools like conda-smithy may modify this, as needed.
-        """),
-    )
-
     azure: Optional[AzureConfig] = Field(
         default_factory=AzureConfig,
         description=cleandoc("""
@@ -1422,14 +1395,6 @@ class ConfigModel(BaseModel):
         """),
     )
 
-    drone: Optional[dict[str, str]] = Field(
-        default_factory=dict,
-        description=cleandoc("""
-        Drone CI settings. This is usually read-only and should not normally be
-        manually modified. Tools like conda-smithy may modify this, as needed.
-        """),
-    )
-
     github_actions: Optional[GithubActionsConfig] = Field(
         default_factory=GithubActionsConfig,
         description=cleandoc("""
@@ -1438,20 +1403,22 @@ class ConfigModel(BaseModel):
         """),
     )
 
-    woodpecker: Optional[dict[str, str]] = Field(
-        default_factory=dict,
-        description=cleandoc("""
-        Woodpecker CI settings. This is usually read-only and should not normally be
-        manually modified. Tools like conda-smithy may modify this, as needed.
-        """),
-    )
-
     ###################################
     ####       Deprecated          ####
     ###################################
 
-    # Deprecated values, only present for validation will not show up in
-    # the model dump, due to exclude=True
+    # Deprecated values, only present for validation, will not show up in
+    # the model dump due to exclude=True. Keep them in alphabetical order.
+
+    appveyor: Optional[dict[str, Any]] = Field(
+        default_factory=dict,
+        exclude=True,
+        deprecated=True,
+        description=cleandoc("""
+        AppVeyor settings. AppVeyor is no longer supported by conda-smithy, so this
+        setting has no effect and can be removed.
+        """),
+    )
 
     build_with_mambabuild: Optional[bool] = Field(
         default=True,
@@ -1459,6 +1426,37 @@ class ConfigModel(BaseModel):
         deprecated=True,
         description=cleandoc("""
         build_with_mambabuild is deprecated, use `conda_build_tool` instead.
+        """),
+    )
+
+    circle: Optional[dict[str, Any]] = Field(
+        default_factory=dict,
+        exclude=True,
+        deprecated=True,
+        description=cleandoc("""
+        CircleCI settings. CircleCI is no longer supported by conda-smithy, so this
+        setting has no effect and can be removed.
+        """),
+    )
+
+    drone: Optional[dict[str, str]] = Field(
+        default_factory=dict,
+        exclude=True,
+        deprecated=True,
+        description=cleandoc("""
+        Drone CI settings. Drone CI is no longer supported by conda-smithy, so this
+        setting has no effect and can be removed.
+        """),
+    )
+
+    idle_timeout_minutes: Optional[Union[int, Nullable]] = Field(
+        default=None,
+        exclude=True,
+        deprecated=True,
+        description=cleandoc("""
+        Configurable idle timeout. Used for packages that don't have chatty enough
+        builds. It only applied to CircleCI and Travis CI, which are no longer
+        supported by conda-smithy, so this setting has no effect and can be removed.
         """),
     )
 
@@ -1472,6 +1470,26 @@ class ConfigModel(BaseModel):
         More information can be found in the
         [Build Matrices](/docs/maintainer/knowledge_base/#build-matrices) section of the
         conda-forge docs.
+        """),
+    )
+
+    travis: Optional[dict[str, Any]] = Field(
+        default_factory=dict,
+        exclude=True,
+        deprecated=True,
+        description=cleandoc("""
+        Travis CI settings. Travis CI is no longer supported by conda-smithy, so this
+        setting has no effect and can be removed.
+        """),
+    )
+
+    woodpecker: Optional[dict[str, str]] = Field(
+        default_factory=dict,
+        exclude=True,
+        deprecated=True,
+        description=cleandoc("""
+        Woodpecker CI settings. Woodpecker CI is no longer supported by conda-smithy, so this
+        setting has no effect and can be removed.
         """),
     )
 
