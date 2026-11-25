@@ -1,5 +1,3 @@
-appveyor:
-  image: Visual Studio 2017
 azure:
   build_id: null
   force: false
@@ -54,7 +52,6 @@ build_platform:
   zos_z: zos_z
 channel_priority: strict
 choco: []
-circle: {}
 clone_depth: null
 compiler_stack: comp7
 conda_build:
@@ -72,7 +69,6 @@ docker:
   fallback_image: quay.io/condaforge/linux-anvil-comp7
   interactive: null
   run_args: ''
-drone: {}
 github:
   branch_name: main
   repo_name: ''
@@ -89,7 +85,6 @@ github_actions:
   timeout_minutes: 360
   triggers: []
   upload_packages: true
-idle_timeout_minutes: null
 linter:
   skip: []
 max_py_ver: '37'
@@ -142,9 +137,7 @@ skip_render: []
 templates: {}
 test: null
 test_on_native_only: false
-travis: {}
 trusted_publishers: []
-woodpecker: {}
 workflow_settings:
   build_workspace_dir: []
   free_disk_space: []
