@@ -104,7 +104,7 @@ class AzureRunnerSettings(BaseModel):
     )
 
     variables: Optional[dict[str, str]] = Field(
-        default_factory=dict, description="Variables",
+        default_factory=dict, description="Variables"
     )
 
     variable_groups: Optional[list[str]] = Field(
