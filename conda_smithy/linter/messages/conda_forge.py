@@ -273,3 +273,31 @@ class MismatchedFeedstockName(LinterMessage):
     message = "Mismatched feedstock name in the recipe: ${current}. Specify `extra.feedstock_name: ${expected}`.\n"
     current: str
     expected: str
+
+
+@dataclass(kw_only=True)
+class RedundantBuildPlatformAndProvider(LinterMessage):
+    """
+    Hint when the same platform is listed in `build_platform` and `provider`.
+    """
+
+    kind = "hint"
+    identifier = "CF-014"
+    added_in = "2026.10"
+    message = "Platform ${platform} specifies both build_platform=${build_platform} and provider=${provider}. Use the former for cross-compilation or the latter for native build.\n"
+    platform: str
+    build_platform: str
+    provider: str
+
+
+@dataclass(kw_only=True)
+class RedundantBuildPlatform(LinterMessage):
+    """
+    Hint when `build_platform` is the same as the platform.
+    """
+
+    kind = "hint"
+    identifier = "CF-015"
+    added_in = "2026.10"
+    message = "Platform ${platform} specifies redundant build_platform=${platform}. Please remove the unnecessary entry.\n"
+    platform: str
