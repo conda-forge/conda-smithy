@@ -1381,7 +1381,6 @@ class NoCommentSelectors(LinterMessage, _RecipeYamlMessage):
     lines: list[str]
 
 
-
 @dataclass(kw_only=True)
 class NoarchSelectorsV1(LinterMessage, _RecipeYamlMessage):
     """
@@ -1546,6 +1545,7 @@ class UnsupportedSchemaVersion(LinterMessage, _AnyRecipeMessage):
     # This lint existed before 2026.9, but is introduced into the
     # LinterMessage framework in 2026.9.
     added_in = "2026.9"
+
 
 @dataclass(kw_only=True)
 class MalformedSectionV1(LinterMessage, _RecipeYamlMessage):
