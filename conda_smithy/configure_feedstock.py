@@ -1853,7 +1853,7 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings.pop("install_atl", None)
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
-    variable_groups = azure_settings.pop("variable_groups", [])
+    variable_groups = azure_settings.pop("variable_groups", []) or []
     azure_settings.setdefault("pool", {})
     # If explicit pool name is specified, use that. Otherwise, use the vm image
     # specified in config.
