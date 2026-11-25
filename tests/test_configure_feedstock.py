@@ -3663,3 +3663,58 @@ def test_vm_image_gha(py_recipe, jinja_env, override: bool, label: str | None):
     assert {
         "_".join(v["CONFIG"].split("_", 2)[:2]): v["runs_on"] for v in matrix
     } == expected
+
+
+def test_azure_variable_groups(py_recipe, jinja_env):
+    forge_dir = py_recipe.recipe
+    forge_yml = Path(forge_dir, "conda-forge.yml")
+
+    with open(forge_yml, "a") as f:
+        f.write(textwrap.dedent("""\
+            azure:
+              settings_win:
+                variable_groups:
+                  - blah-foo-bar
+                  - yak
+              settings_osx:
+                variables:
+                  BLAH: FOO
+                variable_groups:
+                  - dog
+            provider:
+              win_arm64: azure
+              win_64: azure
+              osx_64: azure
+              linux_64: azure
+        """))
+
+    config = configure_feedstock._load_forge_config(
+        forge_dir, "recipe/default_config.yaml"
+    )
+    configure_feedstock.render_azure(
+        jinja_env=jinja_env,
+        forge_config=config,
+        forge_dir=forge_dir,
+    )
+
+    expected = {
+        "win": [
+            {"name": "UPLOAD_TEMP", "value": "D:\\\\tmp"},
+            {"group": "blah-foo-bar"},
+            {"group": "yak"},
+        ],
+        "osx": [{"group": "dog"}, {"name": "BLAH", "value": "FOO"}],
+        "linux": [{"group": "anaconda-org"}],
+    }
+
+    for os_name, expected_values in expected.items():
+        workflow_yml = Path(
+            forge_dir, ".azure-pipelines", f"azure-pipelines-{os_name}.yml"
+        )
+        with workflow_yml.open() as f:
+            workflow = yaml.safe_load(f)
+
+        variables = workflow["jobs"][0]["variables"]
+        assert len(variables) == len(expected[os_name])
+        for v in expected[os_name]:
+            assert v in variables
