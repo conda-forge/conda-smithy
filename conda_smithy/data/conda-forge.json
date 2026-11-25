@@ -224,11 +224,23 @@
         "variables": {
           "anyOf": [
             {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Variables",
+          "title": "Variables"
+        },
+        "variable_groups": {
+          "anyOf": [
+            {
               "items": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "type": "string"
               },
               "type": "array"
             },
@@ -236,8 +248,8 @@
               "type": "null"
             }
           ],
-          "description": "Variables for azure CI jobs. The entry `group: anaconda-org` is required for uploads to conda-forge.",
-          "title": "Variables"
+          "description": "List of variable groups to use in Azure CI jobs.",
+          "title": "Variable Groups"
         },
         "install_atl": {
           "anyOf": [
