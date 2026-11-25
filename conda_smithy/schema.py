@@ -104,8 +104,7 @@ class AzureRunnerSettings(BaseModel):
     )
 
     variables: Optional[dict[str, str]] = Field(
-        default_factory=dict,
-        description="Variables",
+        default_factory=dict, description="Variables",
     )
 
     variable_groups: Optional[list[str]] = Field(
@@ -196,9 +195,7 @@ class AzureConfig(BaseModel):
     ##### Self-hosted runners settings ######
     #########################################
     settings_linux: AzureRunnerSettings = Field(
-        default_factory=lambda: AzureRunnerSettings(
-            swapfile_size="0GiB",
-        ),
+        default_factory=lambda: AzureRunnerSettings(swapfile_size="0GiB"),
         description="Linux-specific settings for runners",
     )
 
@@ -212,7 +209,9 @@ class AzureConfig(BaseModel):
         default_factory=lambda: AzureRunnerSettings(
             install_atl=False,
             pool={},
-            variables={"UPLOAD_TEMP": "D:\\\\tmp"},
+            variables={
+                "UPLOAD_TEMP": "D:\\\\tmp",
+            },
         ),
         description=cleandoc("""
             Windows-specific settings for runners. Aside from overriding the `vmImage`,
