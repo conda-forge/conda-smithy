@@ -12,24 +12,21 @@ azure:
     pool: {}
     swapfile_size: 0GiB
     timeoutInMinutes: 360
-    variable_groups:
-    - anaconda-org
+    variable_groups: []
     variables: {}
   settings_osx:
     install_atl: false
     pool: {}
     swapfile_size: null
     timeoutInMinutes: 360
-    variable_groups:
-    - anaconda-org
+    variable_groups: []
     variables: {}
   settings_win:
     install_atl: false
     pool: {}
     swapfile_size: null
     timeoutInMinutes: 360
-    variable_groups:
-    - anaconda-org
+    variable_groups: []
     variables:
       UPLOAD_TEMP: D:\\tmp
   store_build_artifacts: false

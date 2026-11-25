@@ -1854,6 +1854,13 @@ def _azure_specific_setup(jinja_env, forge_config, forge_dir, platform):
     azure_settings.setdefault("strategy", {})
     azure_settings["strategy"].setdefault("matrix", {})
     variable_groups = azure_settings.pop("variable_groups", []) or []
+    # add default group for conda-forge if we are setting up for conda-forge and
+    # there are not any overrides
+    if (
+        forge_config["azure"]["project_id"] == "84710dde-1620-425b-80d0-4cf5baca359d"
+        and not variable_groups
+    ):
+        variable_groups.append("anaconda-org")
     azure_settings.setdefault("pool", {})
     # If explicit pool name is specified, use that. Otherwise, use the vm image
     # specified in config.
