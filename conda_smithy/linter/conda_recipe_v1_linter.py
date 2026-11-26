@@ -137,14 +137,7 @@ def lint_recipe_name(
     lints: list[str],
 ) -> str | None:
     name = get_recipe_name(recipe_content)
-    # Avoid false positives if the recipe is using variables
-    # from conda_build_config.yaml.
-    # https://github.com/conda-forge/conda-smithy/issues/2224
-    if "${{" in name:
-        return None
-
-    lints.extend(x.as_string() for x in _lint_recipe_name_str(name))
-
+    lints.extend(x.as_string() for x in _lint_recipe_name_str(name, recipe_version=1))
     return name
 
 

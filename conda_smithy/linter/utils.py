@@ -252,7 +252,14 @@ def jinja_lines(lines):
             yield line, i
 
 
-def _lint_recipe_name_str(recipe_name: str) -> Generator[LinterMessage]:
+def _lint_recipe_name_str(
+    recipe_name: str, recipe_version: int
+) -> Generator[LinterMessage]:
+    # Avoid false positives if the recipe is using variables
+    # from conda_build_config.yaml.
+    # https://github.com/conda-forge/conda-smithy/issues/2224
+    if recipe_version == 1 and "${{" in recipe_name:
+        return
     if re.match(r"^[a-z0-9_\-.]+$", recipe_name) is None:
         yield msg.r.InvalidPackageName()
 

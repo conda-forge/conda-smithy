@@ -260,7 +260,9 @@ def lint_recipe_name(
     lints: list[str],
 ) -> str:
     recipe_name = package_section.get("name", "").strip()
-    lints.extend(x.as_string() for x in _lint_recipe_name_str(recipe_name))
+    lints.extend(
+        x.as_string() for x in _lint_recipe_name_str(recipe_name, recipe_version=0)
+    )
     return recipe_name
 
 
