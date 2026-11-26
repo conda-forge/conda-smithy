@@ -253,14 +253,16 @@ def _lint_license_family_should_be_valid(
 @deprecated(
     "2026.11",
     "2027.2",
-    addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
+    addendum="Please use 'conda_smithy.lint_recipe.lint_recipe' to get all the lints and hints for a recipe.",
 )
 def lint_recipe_name(
     package_section: dict[str, Any],
     lints: list[str],
 ) -> str:
     recipe_name = package_section.get("name", "").strip()
-    lints.extend(x.as_string() for x in _lint_recipe_name_str(recipe_name))
+    lints.extend(
+        x.as_string() for x in _lint_recipe_name_str(recipe_name, recipe_version=0)
+    )
     return recipe_name
 
 

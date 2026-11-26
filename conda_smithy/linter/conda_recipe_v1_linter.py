@@ -130,21 +130,14 @@ def get_recipe_version(recipe_content: RecipeWithContext) -> Optional[str]:
 @deprecated(
     "2026.11",
     "2027.2",
-    addendum="Please use 'conda_smithy.lint_recipe.lintify_meta_yaml' to get all the lints and hints for a recipe.",
+    addendum="Please use 'conda_smithy.lint_recipe.lint_recipe' to get all the lints and hints for a recipe.",
 )
 def lint_recipe_name(
     recipe_content: RecipeWithContext,
     lints: list[str],
 ) -> str | None:
     name = get_recipe_name(recipe_content)
-    # Avoid false positives if the recipe is using variables
-    # from conda_build_config.yaml.
-    # https://github.com/conda-forge/conda-smithy/issues/2224
-    if "${{" in name:
-        return None
-
-    lints.extend(x.as_string() for x in _lint_recipe_name_str(name))
-
+    lints.extend(x.as_string() for x in _lint_recipe_name_str(name, recipe_version=1))
     return name
 
 
