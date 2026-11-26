@@ -6,7 +6,7 @@ import os
 import re
 import time
 import tomllib
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import Generator, Iterable, Mapping, Sequence
 from functools import lru_cache, wraps
 from glob import glob
 from typing import Any, Optional, Union
@@ -395,6 +395,22 @@ def get_version_independent(
     return version_independent
 
 
+def split_lints_hints(
+    lints_and_hints: Iterable[LinterMessage],
+) -> tuple[list[LinterMessage], list[LinterMessage]]:
+    """Split an iterable of ``LinterMessage``s into lists of lints and hints"""
+    lints = []
+    hints = []
+    for lint_or_hint in lints_and_hints:
+        if lint_or_hint.kind == "lint":
+            lints.append(lint_or_hint)
+        elif lint_or_hint.kind == "hint":
+            hints.append(lint_or_hint)
+        else:
+            assert False, f"{lint_or_hint} neither lint or hint"
+    return lints, hints
+
+
 def _wrap_lint(
     func, *, lints: bool = True, hints: bool = False, args_after_lints_hints: int = 0
 ):
@@ -435,15 +451,17 @@ def _wrap_lint(
             )
         legacy_sig = wrapped_sig.replace(parameters=params)
         bound_args = legacy_sig.bind(*args, **kwargs)
-        lints_list = bound_args.arguments.pop("lints") if lints else []
-        hints_list = bound_args.arguments.pop("hints") if hints else []
-        for lint_or_hint in func(*bound_args.args, **bound_args.kwargs):
-            if lint_or_hint.kind == "lint":
-                lints_list.append(lint_or_hint.as_string())
-            elif lint_or_hint.kind == "hint":
-                hints_list.append(lint_or_hint.as_string())
-            else:
-                assert False, f"{lint_or_hint} neither lint or hint"
+        if lints:
+            lints_list = bound_args.arguments.pop("lints")
+        if hints:
+            hints_list = bound_args.arguments.pop("hints")
+        lints_found, hints_found = split_lints_hints(
+            func(*bound_args.args, **bound_args.kwargs)
+        )
+        if lints:
+            lints_list.extend(x.as_string() for x in lints_found)
+        if hints:
+            hints_list.extend(x.as_string() for x in hints_found)
 
     return wrapper
 
