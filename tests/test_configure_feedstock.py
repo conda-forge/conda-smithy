@@ -2613,6 +2613,7 @@ def test_store_build_artifacts_gha_and_azure_conditions(py_recipe, jinja_env):
         "blacksmith-8vcpu-windows-2025",
         "windows-2022",
         "windows-2025",
+        "windows-2025-vs2026",
         "namespace-profile-16cpu-on-win-64",
     ],
 )

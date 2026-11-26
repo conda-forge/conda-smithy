@@ -1695,6 +1695,7 @@ def _github_actions_specific_setup(jinja_env, forge_config, forge_dir, platform)
             "windows-latest",
             "windows-2022",
             "windows-2025",
+            "windows-2025-vs2026",
         }.intersection(data["gha_runs_on"])
         fill_workflow_settings_defaults(
             workflow_settings,
