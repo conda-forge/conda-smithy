@@ -132,7 +132,7 @@ powershell -ExecutionPolicy Bypass -Command "(New-Object Net.WebClient).Download
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 if "%MINIFORGE_SHA256%"=="" exit /b 1
-powershell -ExecutionPolicy Bypass -Command "$h = Get-FileHash '%MINIFORGE_EXE%' -ErrorAction Stop; if ($h.Hash -ne $env:MINIFORGE_EXE) { Write-Error "SHA256 mismatch:`n  Expected: $env:MINIFORGE_EXE`n  Actual:   $($h.Hash)"; exit 1 }"
+powershell -ExecutionPolicy Bypass -Command "$h = Get-FileHash '%MINIFORGE_EXE%' -ErrorAction Stop; if ($h.Hash -ne $env:MINIFORGE_SHA256) { Write-Error "SHA256 mismatch:`n  Expected: $env:MINIFORGE_SHA256`n  Actual:   $($h.Hash)"; exit 1 }"
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 echo Installing Miniforge
