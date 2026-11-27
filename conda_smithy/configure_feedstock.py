@@ -77,6 +77,35 @@ conda_forge_content = os.path.abspath(os.path.dirname(__file__))
 
 logger = logging.getLogger(__name__)
 
+# Variant keys that are written to the CI configuration files whether or not the
+# recipe uses them.
+_ALWAYS_KEEP_VARIANT_KEYS = frozenset(
+    {
+        "zip_keys",
+        "pin_run_as_build",
+        "MACOSX_SDK_VERSION",
+        "macos_min_version",
+        "macos_machine",
+        "channel_sources",
+        "channel_targets",
+        "docker_image",
+        "build_number_decrement",
+    }
+)
+
+# MPI implementations selected via the `mpi` variant, whose pins are written to the
+# CI configuration files whenever `mpi` is used.  Future MPI variants have to be
+# added here.
+_MPI_VARIANT_KEYS = ("mpich", "openmpi", "msmpi", "mpi_serial", "impi")
+
+# Keys conda-build has to keep fully exploded in the rendered variants because
+# conda-smithy reads them even if the recipe does not appear to use them.
+_CONDA_BUILD_EXPLODE_VARIANT_KEYS = sorted(
+    _ALWAYS_KEEP_VARIANT_KEYS
+    | {"target_platform", "github_actions_labels"}
+    | set(_MPI_VARIANT_KEYS)
+)
+
 # feedstocks listed here are allowed to use GHA on
 # conda-forge
 # this should solve issues where other CI providers have too many
@@ -691,9 +720,8 @@ def _collapse_subpackage_variants(
         # via an `mpi` variable in the CBC but we do not parse our recipes
         # twice to ensure the pins given by the variant also show up in the
         # smithy CI support scripts
-        # future MPI variants have to be added here
         if "mpi" in all_used_vars:
-            all_used_vars.update(["mpich", "openmpi", "msmpi", "mpi_serial", "impi"])
+            all_used_vars.update(_MPI_VARIANT_KEYS)
         all_variants.update(HashableDict(v) for v in meta.config.variants)
 
         all_variants.add(HashableDict(meta.config.variant))
@@ -762,17 +790,7 @@ def _collapse_subpackage_variants(
     logger.debug("preserve_top_level_loops %s", preserve_top_level_loops)
 
     # Add in some variables that should always be preserved
-    always_keep_keys = {
-        "zip_keys",
-        "pin_run_as_build",
-        "MACOSX_SDK_VERSION",
-        "macos_min_version",
-        "macos_machine",
-        "channel_sources",
-        "channel_targets",
-        "docker_image",
-        "build_number_decrement",
-    }
+    always_keep_keys = set(_ALWAYS_KEEP_VARIANT_KEYS)
 
     if not is_noarch:
         always_keep_keys.add("target_platform")
@@ -1309,6 +1327,8 @@ def _render_ci_provider(
                     arch=arch,
                     ignore_system_variants=True,
                     variants=migrated_combined_variant_spec,
+                    # older conda-build versions ignore this
+                    explode_variant_keys=_CONDA_BUILD_EXPLODE_VARIANT_KEYS,
                     permit_undefined_jinja=True,
                     finalize=False,
                     bypass_env_check=True,
