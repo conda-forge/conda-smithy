@@ -1101,18 +1101,17 @@ def main(recipe_dir, conda_forge=False, return_hints=False, feedstock_dir=None):
     # see https://github.com/prefix-dev/rattler-build-conda-compat/issues/88
     validation_errors, validation_hints = lintify_forge_yaml(recipe_dir=recipe_dir)
 
-    results, hints = lintify_meta_yaml(
-        meta,
-        recipe_dir,
-        conda_forge,
-        recipe_version=recipe_version,
+    lints, hints = split_lints_hints(
+        lint_recipe(meta, recipe_dir, conda_forge, recipe_version=recipe_version)
     )
 
+    results = [x.as_string() for x in lints]
     results.extend([_format_validation_msg(err) for err in validation_errors])
-    hints.extend(validation_hints)
 
     if return_hints:
-        return results, hints
+        hint_strings = [x.as_string() for x in hints]
+        hint_strings.extend(validation_hints)
+        return results, hint_strings
     else:
         return results
 
