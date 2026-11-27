@@ -23,6 +23,17 @@ class ConfigYAML(typing.NamedTuple):
     type: str
 
 
+@pytest.fixture(autouse=True)
+def isolated_conda_bld_path(tmp_path_factory, monkeypatch):
+    """Give every test its own conda-build root directory.
+
+    By default conda-build uses ``<prefix>/conda-bld`` and moves its ``work``
+    directory around while rendering, so tests rendering recipes at the same
+    time (e.g. with ``pytest -n``) would race on it.
+    """
+    monkeypatch.setenv("CONDA_BLD_PATH", str(tmp_path_factory.mktemp("conda-bld")))
+
+
 @pytest.fixture(scope="function")
 def testing_workdir(tmpdir, request):
     """Create a workdir in a safe temporary folder; cd into dir above before test, cd out after

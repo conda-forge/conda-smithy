@@ -1,10 +1,10 @@
 **Added:**
 
-* <news item>
+* ``linter.skip`` now accepts ``lint_check_usage_of_whls`` to skip this check. (#2748)
 
 **Changed:**
 
-* The micromamba version used for osx & win builds has been updated to 2.10.0 (#2740).
+* <news item>
 
 **Deprecated:**
 

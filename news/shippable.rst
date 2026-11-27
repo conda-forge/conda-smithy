@@ -4,7 +4,7 @@
 
 **Changed:**
 
-* Widen `py-rattler` constraint to allow v0.28. (#2738)
+* <news item>
 
 **Deprecated:**
 
@@ -12,7 +12,7 @@
 
 **Removed:**
 
-* <news item>
+* Removed unnecessary ``shippable.yml`` from ``.gitattributes``. (#2762)
 
 **Fixed:**
 

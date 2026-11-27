@@ -236,6 +236,23 @@
           "description": "Variables",
           "title": "Variables"
         },
+        "variable_groups": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": [
+            "List of variable groups to use in Azure CI jobs. If empty and the conda-forge azure project ID is being used, then the value `anaconda-org` is automatically used."
+          ],
+          "title": "Variable Groups"
+        },
         "install_atl": {
           "anyOf": [
             {
@@ -1016,6 +1033,7 @@
     },
     "Lints": {
       "enum": [
+        "lint_check_usage_of_whls",
         "lint_noarch_selectors",
         "lint_stdlib",
         "hint_os_version",
@@ -2389,22 +2407,6 @@
       ],
       "description": "This is a mapping for Docker-specific configuration options.\nSome options are\n\n```yaml\ndocker:\n    executable: docker\n    command: \"bash\"\n```"
     },
-    "idle_timeout_minutes": {
-      "anyOf": [
-        {
-          "type": "integer"
-        },
-        {
-          "$ref": "#/$defs/Nullable"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Configurable idle timeout. Used for packages that don't have chatty enough\nbuilds. Applicable only to circleci and travis.\n\n```yaml\nidle_timeout_minutes: 60\n```",
-      "title": "Idle Timeout Minutes"
-    },
     "noarch_platforms": {
       "anyOf": [
         {
@@ -2766,45 +2768,6 @@
       ],
       "description": "Per-workflow settings.\n\n```yaml\nworkflow_settings:\n  store_build_artifacts:\n    # there can be at most one value for each workflow\n    - provider: github_actions\n      platform: linux_aarch64\n      value: true\n    - platform: [linux_64, win_64]  # OR\n      value: true\n```"
     },
-    "travis": {
-      "anyOf": [
-        {
-          "additionalProperties": true,
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Travis CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
-      "title": "Travis"
-    },
-    "circle": {
-      "anyOf": [
-        {
-          "additionalProperties": true,
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Circle CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
-      "title": "Circle"
-    },
-    "appveyor": {
-      "anyOf": [
-        {
-          "additionalProperties": true,
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "AppVeyor CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
-      "title": "Appveyor"
-    },
     "azure": {
       "anyOf": [
         {
@@ -2815,21 +2778,6 @@
         }
       ],
       "description": "Azure Pipelines CI settings. This is usually read-only and should not\nnormally be manually modified. Tools like conda-smithy may modify this, as needed.\nFor example:\n\n```yaml\nazure:\n    # flag for forcing the building all supported providers\n    force: False\n    # toggle for storing the conda build_artifacts directory (including the\n    # built packages) as an Azure pipeline artifact that can be downloaded\n    store_build_artifacts: False\n    # limit the amount of CI jobs running concurrently at a given time\n    # each OS will get its proportional share of the configured value\n    max_parallel: 25\n```\n\nFreeing up disk space before a build is no longer configured here. Use the\ntop-level `workflow_settings.free_disk_space` option instead, which accepts\n`skip` (default), `quick` or `max`.\n\nBelow is an example configuration for setting up a self-hosted Azure agent for Linux:\n\n```yaml\nazure:\n    settings_linux:\n        pool:\n            name: your_local_pool_name\n            demands:\n                - some_key -equals some_value\n        workspace:\n            clean: all\n        strategy:\n            maxParallel: 1\n```\n\nBelow is an example configuration for adding a swapfile on an Azure agent for Linux and Windows:\n\n```yaml\nazure:\n    settings_linux:\n        swapfile_size: 10GiB\n    settings_win:\n        variables:\n            SET_PAGEFILE: 'True'\n```\n\nIf you need more space on Windows, you can use `C:` at the cost of IO performance:\n\n```yaml\nazure:\n    settings_win:\n        variables:\n            CONDA_BLD_PATH: \"C:\\bld\"\n            MINIFORGE_HOME: \"C:\\Miniforge\"\n```"
-    },
-    "drone": {
-      "anyOf": [
-        {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Drone CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
-      "title": "Drone"
     },
     "github_actions": {
       "anyOf": [
@@ -2842,20 +2790,19 @@
       ],
       "description": "GitHub Actions CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed."
     },
-    "woodpecker": {
+    "appveyor": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "type": "string"
-          },
+          "additionalProperties": true,
           "type": "object"
         },
         {
           "type": "null"
         }
       ],
-      "description": "Woodpecker CI settings. This is usually read-only and should not normally be\nmanually modified. Tools like conda-smithy may modify this, as needed.",
-      "title": "Woodpecker"
+      "deprecated": true,
+      "description": "AppVeyor settings. AppVeyor is no longer supported by conda-smithy, so this\nsetting has no effect and can be removed.",
+      "title": "Appveyor"
     },
     "build_with_mambabuild": {
       "anyOf": [
@@ -2871,6 +2818,53 @@
       "description": "build_with_mambabuild is deprecated, use `conda_build_tool` instead.",
       "title": "Build With Mambabuild"
     },
+    "circle": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "deprecated": true,
+      "description": "CircleCI settings. CircleCI is no longer supported by conda-smithy, so this\nsetting has no effect and can be removed.",
+      "title": "Circle"
+    },
+    "drone": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "deprecated": true,
+      "description": "Drone CI settings. Drone CI is no longer supported by conda-smithy, so this\nsetting has no effect and can be removed.",
+      "title": "Drone"
+    },
+    "idle_timeout_minutes": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/$defs/Nullable"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "deprecated": true,
+      "description": "Configurable idle timeout. Used for packages that don't have chatty enough\nbuilds. It only applied to CircleCI and Travis CI, which are no longer\nsupported by conda-smithy, so this setting has no effect and can be removed.",
+      "title": "Idle Timeout Minutes"
+    },
     "matrix": {
       "anyOf": [
         {
@@ -2884,6 +2878,36 @@
       "deprecated": true,
       "description": "Build matrices were used to specify a set of build configurations to run for each\npackage pinned dependency. This has been deprecated in favor of the `provider` field.\nMore information can be found in the\n[Build Matrices](/docs/maintainer/knowledge_base/#build-matrices) section of the\nconda-forge docs.",
       "title": "Matrix"
+    },
+    "travis": {
+      "anyOf": [
+        {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "deprecated": true,
+      "description": "Travis CI settings. Travis CI is no longer supported by conda-smithy, so this\nsetting has no effect and can be removed.",
+      "title": "Travis"
+    },
+    "woodpecker": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "deprecated": true,
+      "description": "Woodpecker CI settings. Woodpecker CI is no longer supported by conda-smithy, so this\nsetting has no effect and can be removed.",
+      "title": "Woodpecker"
     }
   },
   "title": "ConfigModel",

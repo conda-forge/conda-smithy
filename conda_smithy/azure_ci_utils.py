@@ -137,9 +137,6 @@ def get_default_build_definition(
         BuildDefinition,
         BuildRepository,
     )
-    from vsts.task_agent.v4_0.task_agent_client import TaskAgentClient
-
-    aclient = TaskAgentClient(config.instance_base_url, config.credentials)
 
     source_repo = get_repo_reference(config, github_org, repo_name)
 
@@ -202,9 +199,6 @@ def get_default_build_definition(
                 "triggerType": "continuousIntegration",
             },
         ],
-        variable_groups=aclient.get_variable_groups(
-            project=config.project_name, group_name="anaconda-org"
-        ),
         type="build",
         **kwargs,
     )

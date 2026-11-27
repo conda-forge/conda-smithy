@@ -17,7 +17,6 @@ jobs:
 - job: osx
   {{ azure_yaml|indent(2) }}
   steps:
-  # TODO: Fast finish on azure pipelines?
 {%- if clone_depth is not none %}
   - checkout: self
     fetchDepth: {{ clone_depth }}

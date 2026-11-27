@@ -13,9 +13,7 @@ from rattler_build_conda_compat.render import MetaData as RattlerMetaData
 from rattler_build_conda_compat.utils import has_recipe as has_recipe_v1
 from ruamel.yaml import YAML
 
-import conda_smithy.cirun_utils
 from conda_smithy import __version__, configure_feedstock, feedstock_io
-from conda_smithy import lint_recipe as linter
 from conda_smithy.configure_feedstock import (
     _load_forge_config,
     get_cached_cfp_file_path,
@@ -77,6 +75,28 @@ def generate_feedstock_content(
             merge_dict(_cfg, _cfg_feedstock)
         with feedstock_io.write_file(forge_yml) as fp:
             yaml.dump(_cfg_feedstock, fp)
+
+
+def _add_removed_ci_flags(subcommand_parser, removed_ci_names):
+    """Add the flags of removed CI providers, which have no effect and warn when used."""
+    from conda_smithy.deprecations import deprecated
+
+    addendum = "The CI provider was removed, and the flag has no effect. See #2627."
+    depr = subcommand_parser.add_argument_group("Deprecated flags without effect")
+    for ci in removed_ci_names:
+        depr.add_argument(
+            f"--without-{ci.lower()}",
+            action=deprecated.action(
+                "2026.11", "2027.2", argparse._StoreConstAction, addendum=addendum
+            ),
+            const=False,
+        )
+    depr.add_argument(
+        "--drone-endpoints",
+        action=deprecated.action(
+            "2026.11", "2027.2", argparse._AppendAction, addendum=addendum
+        ),
+    )
 
 
 class Subcommand:
@@ -323,17 +343,7 @@ class RegisterCI(Subcommand):
             "Only available for Cirun, Namespace and Blacksmith for now",
         )
 
-        depr = scp.add_argument_group("Unused flags kept for backwards compatibility")
-        for ci in self.removed_ci_names:
-            depr.add_argument(
-                f"--without-{ci.lower()}",
-                action="store_const",
-                const=False,
-            )
-        depr.add_argument(
-            "--drone-endpoints",
-            action="append",
-        )
+        _add_removed_ci_flags(scp, self.removed_ci_names)
 
     def __call__(self, args):
         from conda_smithy import ci_register
@@ -397,6 +407,9 @@ class RegisterCI(Subcommand):
 
         if args.cirun:
             print("Cirun Registration")
+            # imported here: it pulls in the GitHub client, which a rerender never needs
+            import conda_smithy.cirun_utils
+
             if args.remove:
                 if args.cirun_resources:
                     to_remove = args.cirun_resources
@@ -623,6 +636,8 @@ class RecipeLint(Subcommand):
         scp.add_argument("recipe_directory", default=[os.getcwd()], nargs="*")
 
     def __call__(self, args):
+        from conda_smithy import lint_recipe as linter
+
         all_good = True
         for recipe in args.recipe_directory:
             lints, hints = linter.main(
@@ -885,17 +900,7 @@ class RegisterFeedstockToken(Subcommand):
             help="If set, none of the CI providers are registered and need to be enabled individually.",
         )
 
-        depr = scp.add_argument_group("Unused flags kept for backwards compatibility")
-        for ci in self.removed_ci_names:
-            depr.add_argument(
-                f"--without-{ci.lower()}",
-                action="store_const",
-                const=False,
-            )
-        depr.add_argument(
-            "--drone-endpoints",
-            action="append",
-        )
+        _add_removed_ci_flags(scp, self.removed_ci_names)
 
     def __call__(self, args):
         from conda_smithy.feedstock_tokens import (
@@ -1030,17 +1035,7 @@ class UpdateAnacondaToken(Subcommand):
             help="If set, none of the CI providers are registered and need to be enabled individually.",
         )
 
-        depr = scp.add_argument_group("Unused flags kept for backwards compatibility")
-        for ci in self.removed_ci_names:
-            depr.add_argument(
-                f"--without-{ci.lower()}",
-                action="store_const",
-                const=False,
-            )
-        depr.add_argument(
-            "--drone-endpoints",
-            action="append",
-        )
+        _add_removed_ci_flags(scp, self.removed_ci_names)
 
     def __call__(self, args):
         from conda_smithy.anaconda_token_rotation import rotate_anaconda_token
