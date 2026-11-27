@@ -5,7 +5,7 @@ import logging
 import os
 import re
 import tempfile
-from collections.abc import Generator, Sequence
+from collections.abc import Generator, Mapping, Sequence
 from typing import Any, Literal, Optional
 from urllib.parse import urlsplit
 
@@ -906,6 +906,53 @@ def _lint_stdlib(
         )
 
     yield from lints
+
+
+def _lint_v1_malformed_sections(meta: dict[str, Any]) -> Generator[LinterMessage]:
+    """Report v1 sections the linter had to skip because of their shape.
+
+    The guards in `flatten_v1_if_else` and `get_all_test_requirements` stop these
+    from raising, which would otherwise lose every other lint for the recipe. This
+    reports what was skipped so the author still learns what is wrong, since
+    rattler-build will not read those sections either.
+    """
+    tests = meta.get("tests")
+    if tests is not None:
+        if not isinstance(tests, list):
+            yield msg.r.MalformedSectionV1(
+                section="tests",
+                detail="expected a list of test elements",
+            )
+        else:
+            for element in tests:
+                if not isinstance(element, Mapping):
+                    yield msg.r.MalformedSectionV1(
+                        section="tests",
+                        detail=f"`{element}` is not a test element mapping",
+                    )
+                    break
+
+    requirements = meta.get("requirements")
+    if isinstance(requirements, Mapping):
+        for name, entries in requirements.items():
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if not isinstance(entry, Mapping):
+                    continue
+                if "if" in entry and "then" not in entry:
+                    yield msg.r.MalformedSectionV1(
+                        section=f"requirements.{name}",
+                        detail="an `if` has no `then`",
+                    )
+                    break
+                if "if" not in entry:
+                    key = next(iter(entry), "?")
+                    yield msg.r.MalformedSectionV1(
+                        section=f"requirements.{name}",
+                        detail=f"`{key}` is a mapping but not an `if`/`then` conditional",
+                    )
+                    break
 
 
 def _lint_recipe_is_parsable(

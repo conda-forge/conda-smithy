@@ -18,6 +18,7 @@ from conda_smithy.linter.utils import (
     _lint_recipe_name_str,
     _wrap_hint,
     _wrap_lint,
+    flatten_v1_if_else,
 )
 
 REQUIREMENTS_ORDER = ["build", "host", "run"]
@@ -82,7 +83,9 @@ def _hint_noarch_usage(
     build_section: dict[str, Any],
     requirement_section: dict[str, Any],
 ) -> Generator[LinterMessage]:
-    build_reqs = requirement_section.get("build", None)
+    # An `if`/`then` conditional is valid here, so flatten it rather than
+    # reading it raw: a mapping has no `startswith` and the hint raised.
+    build_reqs = flatten_v1_if_else(requirement_section.get("build") or [])
     if (
         build_reqs
         and not any(
@@ -99,7 +102,8 @@ def _hint_noarch_usage(
 
         for _, section_requirements in requirement_section.items():
             if any(
-                isinstance(requirement, dict) for requirement in section_requirements
+                isinstance(requirement, dict)
+                for requirement in section_requirements or []
             ):
                 no_arch_possible = False
                 break
