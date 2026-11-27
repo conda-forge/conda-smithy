@@ -403,6 +403,8 @@ def _hint_redundant_python_min(
 
     if (
         declared is None
+        # YAML here parses 3.10 as "3.1", but rattler-build parses it as "3.10";
+        # skip to avoid false positives
         or not isinstance(declared, str)
         or "${{" in declared
         or declared == "python_min"
