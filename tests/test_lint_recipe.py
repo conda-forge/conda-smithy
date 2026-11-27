@@ -5075,7 +5075,7 @@ def test_lint_recipe_hint_redundant_python_min(
 
 
 def test_lint_recipe_unquoted_python_min_float_lets_r040_run(monkeypatch):
-    """GH #2760: unquoted context.python_min used to crash before R-040 ran."""
+    """GH #2760: unquoted python_min must still let R-040 fire."""
     monkeypatch.setattr(
         "conda_smithy.linter.hints.get_global_pinning_python_min",
         lambda: "3.9",
