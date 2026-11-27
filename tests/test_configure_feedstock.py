@@ -95,6 +95,81 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     )
 
 
+def _render_github_workflow(recipe, jinja_env):
+    recipe.config["provider"]["linux"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=recipe.config,
+        forge_dir=recipe.recipe,
+    )
+    workflow = Path(recipe.recipe, ".github", "workflows", "conda-build.yml")
+    return yaml.safe_load(workflow.read_text())
+
+
+def _build_steps(workflow):
+    return [
+        step
+        for step in workflow["jobs"]["build"]["steps"]
+        if step.get("name", "").startswith("Build on ")
+    ]
+
+
+def _docker_build(recipe):
+    # rendered by render_github_actions for the linux builds
+    return Path(recipe.recipe, ".scripts", "run_docker_build.sh").read_text()
+
+
+OIDC_ENV = (
+    "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+    "ACTIONS_ID_TOKEN_REQUEST_URL",
+    "GITHUB_REPOSITORY",
+    "GITHUB_TOKEN",
+)
+
+
+def test_github_actions_no_attestations_by_default(py_recipe, jinja_env):
+    workflow = _render_github_workflow(py_recipe, jinja_env)
+    assert set(workflow["jobs"]) == {"build"}
+    assert "permissions" not in workflow
+    assert "permissions" not in workflow["jobs"]["build"]
+    for step in _build_steps(workflow):
+        assert "GITHUB_TOKEN" not in step["env"]
+    docker = _docker_build(py_recipe)
+    for name in OIDC_ENV:
+        assert f"-e {name} " not in docker
+
+
+def test_github_actions_attest_packages(py_recipe, jinja_env):
+    py_recipe.config["github_actions"]["attest_packages"] = True
+    workflow = _render_github_workflow(py_recipe, jinja_env)
+
+    # conda-forge-ci-setup signs in the build job, there is no other job
+    assert set(workflow["jobs"]) == {"build"}
+    assert workflow["permissions"] == {
+        "attestations": "write",
+        "contents": "read",
+        "id-token": "write",
+    }
+    steps = _build_steps(workflow)
+    assert {step["name"] for step in steps} == {
+        "Build on Linux",
+        "Build on macOS",
+        "Build on windows",
+    }
+    for step in steps:
+        # never handed to pull request builds
+        assert step["env"]["GITHUB_TOKEN"] == (
+            "${{ github.event_name != 'pull_request' && github.token || '' }}"
+        )
+    for step in workflow["jobs"]["build"]["steps"]:
+        assert "attest" not in step.get("uses", "")
+
+    # the upload in docker needs the OIDC environment
+    docker = _docker_build(py_recipe)
+    for name in OIDC_ENV:
+        assert f"-e {name} " in docker
+
+
 def test_channel_sources_not_used_in_ci_support_filename(
     recipe_migration_with_channel_sources, jinja_env
 ):
