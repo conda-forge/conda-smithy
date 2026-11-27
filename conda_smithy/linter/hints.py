@@ -401,14 +401,21 @@ def _hint_redundant_python_min(
         )
         declared = match.group(1) if match else None
 
-    if declared is None or "${{" in declared or declared == "python_min":
+    if (
+        declared is None
+        # YAML here parses 3.10 as "3.1", but rattler-build parses it as "3.10";
+        # skip to avoid false positives
+        or not isinstance(declared, str)
+        or "${{" in declared
+        or declared == "python_min"
+    ):
         return
 
     global_python_min = get_global_pinning_python_min()
-    if global_python_min is not None and VersionOrder(str(declared)) <= VersionOrder(
+    if global_python_min is not None and VersionOrder(declared) <= VersionOrder(
         global_python_min
     ):
-        yield msg.r.RedundantPythonMin(value=str(declared))
+        yield msg.r.RedundantPythonMin(value=declared)
 
 
 def _python_tests_cover_latest(tests_section, run_reqs):

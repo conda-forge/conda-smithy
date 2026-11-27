@@ -4989,6 +4989,20 @@ def test_lint_recipe_v1_python_version_independent_test_latest(text, expected_hi
             None,
             False,
         ),
+        # v1: unquoted python_min parsed as a float (GH #2760) -> no hint
+        (
+            "recipe.yaml",
+            textwrap.dedent("""
+                context:
+                  python_min: 3.10
+
+                package:
+                  name: mypackage
+                  version: 1.0.0
+                """),
+            "3.9",
+            False,
+        ),
         # v0: jinja set matching the global default -> hint
         (
             "meta.yaml",
@@ -5058,6 +5072,31 @@ def test_lint_recipe_hint_redundant_python_min(
         _, hints = linter.main(tmpdir, return_hints=True, conda_forge=True)
         has_hint = any("remove the redefinition" in h for h in hints)
         assert has_hint == expected_hint, hints
+
+
+def test_lint_recipe_unquoted_python_min_float_lets_r040_run(monkeypatch):
+    """GH #2760: unquoted python_min must still let R-040 fire."""
+    monkeypatch.setattr(
+        "conda_smithy.linter.hints.get_global_pinning_python_min",
+        lambda: "3.9",
+    )
+    recipe = textwrap.dedent("""
+        context:
+          python_min: 3.10
+
+        package:
+          name: mypackage
+          version: 1.0.0
+        """)
+    with tmp_directory() as recipe_dir:
+        with open(os.path.join(recipe_dir, "recipe.yaml"), "w") as fh:
+            fh.write(recipe)
+        lints, hints = linter.main(recipe_dir, return_hints=True, conda_forge=True)
+
+    assert any(
+        "has a value that is interpreted as a floating-point" in lint for lint in lints
+    ), lints
+    assert not any("remove the redefinition" in h for h in hints), hints
 
 
 @pytest.mark.parametrize(
