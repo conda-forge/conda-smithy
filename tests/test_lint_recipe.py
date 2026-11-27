@@ -19,8 +19,8 @@ import pytest
 
 import conda_smithy.lint_recipe as linter
 from conda_smithy.linter import hints
+from conda_smithy.linter import messages as msg
 from conda_smithy.linter.conda_recipe_v1_linter import lint_recipe_tests
-from conda_smithy.linter.messages.recipe import SectionHasInvalidType
 from conda_smithy.linter.utils import (
     CONDA_BUILD_TOOL,
     RATTLER_BUILD_TOOL,
@@ -461,9 +461,10 @@ def test_license_file_required(recipe_version: int):
             "license": "MIT",
         }
     }
-    lints, hints = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
-    expected_message = "license_file entry is missing, but is required."
-    assert expected_message in lints
+    assert any(
+        isinstance(x, msg.r.LicenseFamily)
+        for x in linter.lint_recipe(meta, recipe_version=recipe_version)
+    )
 
 
 @pytest.mark.parametrize("recipe_version", [0, 1])
@@ -477,9 +478,10 @@ def test_license_file_empty(recipe_version: int):
             "license_file": None,
         }
     }
-    lints, hints = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
-    expected_message = "license_file entry is missing, but is required."
-    assert expected_message in lints
+    assert any(
+        isinstance(x, msg.r.LicenseFamily)
+        for x in linter.lint_recipe(meta, recipe_version=recipe_version)
+    )
 
 
 @pytest.mark.parametrize(
@@ -652,18 +654,20 @@ def test_lint_macdt(recipe_version, config_file):
 @pytest.mark.parametrize("recipe_version", [0, 1])
 def test_noarch_value_invalid(recipe_version, noarch_value):
     meta = {"build": {"noarch": noarch_value}}
-    expected = f"Invalid `noarch` value `{noarch_value}`. Should be one of"
-    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
-    assert any(lint.startswith(expected) for lint in lints)
+    assert any(
+        isinstance(x, msg.r.NoarchValue) and x.given == noarch_value
+        for x in linter.lint_recipe(meta, recipe_version=recipe_version)
+    )
 
 
 @pytest.mark.parametrize("noarch_value", ["python", "generic"])
 @pytest.mark.parametrize("recipe_version", [0, 1])
 def test_noarch_value_valid(recipe_version, noarch_value):
     meta = {"build": {"noarch": noarch_value}}
-    unexpected_lint = "Invalid `noarch` value"
-    lints, _ = linter.lintify_meta_yaml(meta, recipe_version=recipe_version)
-    assert not any(lint.startswith(unexpected_lint) for lint in lints)
+    assert not any(
+        isinstance(x, msg.r.NoarchValue)
+        for x in linter.lint_recipe(meta, recipe_version=recipe_version)
+    )
 
 
 def test_noarch_value_recipe_v0_rejects_conditional():
@@ -6788,7 +6792,7 @@ extra:
 
 
 def test_invalid_type_lint_message():
-    section_invalid = SectionHasInvalidType(
+    section_invalid = msg.r.SectionHasInvalidType(
         name="section-name",
         section_type="wrong.type",
         allowed_types=["dictionary", "str", "list"],
