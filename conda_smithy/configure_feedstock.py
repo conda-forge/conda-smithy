@@ -49,6 +49,7 @@ from rattler_build_conda_compat.render import render as rattler_render
 from conda_smithy import __version__
 from conda_smithy.feedstock_io import (
     copy_file,
+    get_repo,
     remove_file,
     remove_file_or_dir,
     set_exe_file,
@@ -2616,6 +2617,19 @@ def _load_forge_config(forge_dir, exclusive_config_file, forge_yml=None):
     config["package"] = os.path.basename(forge_dir)
     if not config["github"]["repo_name"]:
         feedstock_name = os.path.basename(forge_dir)
+        # a linked worktree's directory name is arbitrary; use the main repository's
+        repo = get_repo(forge_dir, search_parent_directories=False)
+        if repo and os.path.isfile(commondir := os.path.join(repo.path, "commondir")):
+            with open(commondir, encoding="utf-8") as f:
+                common = Path(repo.path, f.read().strip()).resolve()
+            main_name = (
+                common.parent.name if common.name.startswith(".") else common.name
+            ).removesuffix(".git")
+            if main_name and (
+                main_name.endswith("-feedstock")
+                or not feedstock_name.endswith("-feedstock")
+            ):
+                feedstock_name = main_name
         if not feedstock_name.endswith("-feedstock"):
             feedstock_name += "-feedstock"
         config["github"]["repo_name"] = feedstock_name
