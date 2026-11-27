@@ -252,6 +252,47 @@ jobs:
 {%- for secret in secrets %}
         {{ secret }}: {% raw %}${{{% endraw %} secrets.{{ secret }} {% raw %}}}{% endraw %}
 {%- endfor %}
+{%- if github_actions.attest_packages %}
+
+    - name: Find uploaded packages for attestation
+      id: attest-subjects
+      # Attestations are best effort and must never fail the build.
+      continue-on-error: true
+      # conda-forge-ci-setup writes an attest-subjects-<time>.json file into
+      # the build folder after each copy request to conda-forge. The folder is
+      # mounted into docker, so the files are visible here.
+      if: {% raw %}${{ github.event_name != 'pull_request' }}{% endraw %}
+      shell: bash
+      env:
+        CONDA_BLD_PATH: {% raw %}${{ matrix.build_workspace_dir }}{% endraw %}
+      run: |
+        {%- raw %}
+        set -euo pipefail
+        bld="${CONDA_BLD_PATH/#~/${HOME}}"
+        if command -v cygpath >/dev/null 2>&1; then
+          bld="$(cygpath -u "${bld}")"
+        fi
+        shopt -s nullglob
+        files=("${bld}"/attest-subjects-*.json)
+        if [[ ${#files[@]} -eq 0 ]]; then
+          echo "No packages to attest"
+          exit 0
+        fi
+        # move them, so that a runner that is reused does not attest them again
+        mkdir -p attest-subjects
+        mv "${files[@]}" attest-subjects/
+        echo "found=true" >> "${GITHUB_OUTPUT}"
+        {%- endraw %}
+
+    - name: Store package list for attestation
+      if: {% raw %}${{ steps.attest-subjects.outputs.found == 'true' }}{% endraw %}
+      continue-on-error: true
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: {% raw %}attest-subjects-${{ matrix.CONFIG }}{% endraw %}
+        path: attest-subjects/
+        retention-days: 1
+{%- endif %}
 {%- if vars.store_build_artifacts %}
 
     - name: Determine build outcome
@@ -343,4 +384,46 @@ jobs:
         retention-days: {{ github_actions.artifact_retention_days }}
         archive: false
       continue-on-error: true
+{%- endif %}
+
+{%- if github_actions.attest_packages %}
+
+  attest:
+    name: Attest packages
+    needs: build
+    # run even if some builds failed, so that every uploaded package is attested
+    if: {% raw %}${{ !cancelled() && github.event_name != 'pull_request' }}{% endraw %}
+    runs-on: ubuntu-latest
+    # Attestations are best effort and must never fail the workflow.
+    continue-on-error: true
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+    steps:
+    - name: Download package lists
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        pattern: attest-subjects-*
+        path: attest-subjects
+
+    - name: Install pixi
+      uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
+      with:
+        pixi-version: v0.84.2
+        run-install: false
+
+    # One attestation per package, as required by CEP-27, signed with
+    # sigstore-python by the attest_packages command of conda-forge-ci-setup.
+    # They are stored in the GitHub attestation API of this repository, where
+    # channels can look them up by the package's SHA-256.
+    - name: Attest packages
+      env:
+        GITHUB_TOKEN: {% raw %}${{ github.token }}{% endraw %}
+      run: |
+        if [[ ! -d attest-subjects ]]; then
+          echo "No packages to attest"
+          exit 0
+        fi
+        pixi exec -s "conda-forge-ci-setup>=4.34" -- attest_packages attest-subjects
 {%- endif %}

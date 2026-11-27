@@ -95,6 +95,59 @@ def test_py_matrix_on_github(py_recipe, jinja_env):
     )
 
 
+def _render_github_workflow(recipe, jinja_env):
+    recipe.config["provider"]["linux"] = "github_actions"
+    configure_feedstock.render_github_actions(
+        jinja_env=jinja_env,
+        forge_config=recipe.config,
+        forge_dir=recipe.recipe,
+    )
+    workflow = Path(recipe.recipe, ".github", "workflows", "conda-build.yml")
+    return yaml.safe_load(workflow.read_text())
+
+
+def test_github_actions_no_attestations_by_default(py_recipe, jinja_env):
+    workflow = _render_github_workflow(py_recipe, jinja_env)
+    assert set(workflow["jobs"]) == {"build"}
+    assert "permissions" not in workflow["jobs"]["build"]
+    step_ids = [step.get("id") for step in workflow["jobs"]["build"]["steps"]]
+    assert "attest-subjects" not in step_ids
+
+
+def test_github_actions_attest_packages(py_recipe, jinja_env):
+    py_recipe.config["github_actions"]["attest_packages"] = True
+    workflow = _render_github_workflow(py_recipe, jinja_env)
+    jobs = workflow["jobs"]
+    assert set(jobs) == {"build", "attest"}
+
+    # the build job itself gets no extra permissions
+    assert "permissions" not in jobs["build"]
+    (collect,) = [
+        step for step in jobs["build"]["steps"] if step.get("id") == "attest-subjects"
+    ]
+    assert collect["continue-on-error"] is True
+    assert "github.event_name != 'pull_request'" in collect["if"]
+    # the package lists are written by conda-forge-ci-setup after the upload
+    assert '"${bld}"/attest-subjects-*.json' in collect["run"]
+    assert "jq" not in collect["run"]
+
+    # a single job signs all packages
+    attest = jobs["attest"]
+    assert attest["needs"] == "build"
+    assert attest["continue-on-error"] is True
+    assert "strategy" not in attest
+    assert attest["permissions"] == {
+        "attestations": "write",
+        "contents": "read",
+        "id-token": "write",
+    }
+    # signing is done by conda-forge-ci-setup, no script in the feedstock
+    assert "attest_packages attest-subjects" in attest["steps"][-1]["run"]
+    assert "conda-forge-ci-setup" in attest["steps"][-1]["run"]
+    assert not any("actions/checkout" in step.get("uses", "") for step in attest["steps"])
+    assert not Path(py_recipe.recipe, ".scripts", "attest_packages.py").exists()
+
+
 def test_channel_sources_not_used_in_ci_support_filename(
     recipe_migration_with_channel_sources, jinja_env
 ):
