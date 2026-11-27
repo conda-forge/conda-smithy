@@ -71,7 +71,10 @@ rm -rf "${MAMBA_ROOT_PREFIX}" "${MICROMAMBA_EXE}" || :
 ( startgroup "Provisioning base env with pixi" ) 2> /dev/null
 
 echo Installing pixi
-curl -fsSL https://pixi.sh/install.sh | bash
+PIXI_INSTALLER="$(mktemp)"
+curl --fail --retry 5 --retry-delay 5 -sSL -o "${PIXI_INSTALLER}" https://pixi.sh/install.sh
+bash "${PIXI_INSTALLER}"
+rm -f "${PIXI_INSTALLER}"
 export PATH="~/.pixi/bin:$PATH"
 
 pushd "${FEEDSTOCK_ROOT}"

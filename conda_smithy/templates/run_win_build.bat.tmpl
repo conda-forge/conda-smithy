@@ -59,7 +59,7 @@ set "MICROMAMBA_EXE=%MICROMAMBA_TMPDIR%\micromamba.exe"
 
 echo Downloading micromamba %MICROMAMBA_VERSION% from %MICROMAMBA_URL%
 if not exist "%MICROMAMBA_TMPDIR%" mkdir "%MICROMAMBA_TMPDIR%"
-powershell -ExecutionPolicy Bypass -Command "(New-Object Net.WebClient).DownloadFile('%MICROMAMBA_URL%', '%MICROMAMBA_EXE%')"
+call :download "%MICROMAMBA_URL%" "%MICROMAMBA_EXE%"
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 if "%MICROMAMBA_SHA256%"=="" exit /b 1
@@ -86,7 +86,10 @@ call :end_group
 call :start_group "Provisioning base env with pixi"
 
 echo Installing pixi
-powershell -NoProfile -ExecutionPolicy unrestricted -Command "iwr -useb https://pixi.sh/install.ps1 | iex"
+set "PIXI_INSTALLER=%TMP%\pixi-install-%RANDOM%.ps1"
+call :download "https://pixi.sh/install.ps1" "%PIXI_INSTALLER%"
+if !errorlevel! neq 0 exit /b !errorlevel!
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PIXI_INSTALLER%"
 if !errorlevel! neq 0 exit /b !errorlevel!
 set "PATH=%USERPROFILE%\.pixi\bin;%PATH%"
 
@@ -128,7 +131,7 @@ set "MINIFORGE_URL=https://github.com/conda-forge/miniforge/releases/%MINIFORGE_
 set "MINIFORGE_EXE=Miniforge3-Windows-%full_arch%.exe"
 
 echo Downloading Miniforge %MINIFORGE_VERSION% from %MINIFORGE_URL%
-powershell -ExecutionPolicy Bypass -Command "(New-Object Net.WebClient).DownloadFile('%MINIFORGE_URL%', '%MINIFORGE_EXE%')"
+call :download "%MINIFORGE_URL%" "%MINIFORGE_EXE%"
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 if "%MINIFORGE_SHA256%"=="" exit /b 1
@@ -306,6 +309,12 @@ if /i "%UPLOAD_PACKAGES%" == "true" (
 )
 
 exit
+
+:: Download a URL (first argument) to a file (second argument), retrying transient failures
+
+:download
+powershell -NoProfile -ExecutionPolicy Bypass -Command "for ($i = 1; $i -le 5; $i++) { try { (New-Object Net.WebClient).DownloadFile('%~1', '%~2'); exit 0 } catch { Write-Host ('Download of %~1 failed (attempt ' + $i + '/5): ' + $_.Exception.Message); if ($i -lt 5) { Start-Sleep -Seconds 10 } } }; exit 1"
+exit /b %errorlevel%
 
 :: Logging subroutines
 
