@@ -23,6 +23,7 @@ from conda_smithy.linter.utils import (
 REQUIREMENTS_ORDER = ["build", "host", "run"]
 
 EXPECTED_SINGLE_OUTPUT_SECTION_ORDER = [
+    "$schema",
     "schema_version",
     "context",
     "package",
@@ -35,6 +36,7 @@ EXPECTED_SINGLE_OUTPUT_SECTION_ORDER = [
 ]
 
 EXPECTED_MULTIPLE_OUTPUT_SECTION_ORDER = [
+    "$schema",
     "schema_version",
     "context",
     "recipe",
